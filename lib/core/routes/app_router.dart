@@ -12,7 +12,7 @@ import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/property_management_page.dart';
-import '../../features/auth/presentation/pages/tenant_dashboard_page.dart';
+import '../../features/tenant/presentation/pages/tenant_dashboard_page.dart';
 
 class AppRouter {
   final AuthCubit authCubit;
