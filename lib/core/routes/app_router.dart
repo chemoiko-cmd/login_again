@@ -14,6 +14,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/property_management_page.dart';
 import '../../features/tenant/presentation/pages/tenant_dashboard_page.dart';
 import '../../features/maintenance/presentation/pages/maintenance_page.dart';
+import '../../features/contracts/presentation/pages/contract_details_page.dart';
 
 class AppRouter {
   final AuthCubit authCubit;
@@ -71,6 +72,10 @@ class AppRouter {
       GoRoute(
         path: '/maintenance',
         builder: (context, state) => const MaintenancePage(),
+      ),
+      GoRoute(
+        path: '/contracts',
+        builder: (context, state) => const ContractPage(),
       ),
     ],
   );

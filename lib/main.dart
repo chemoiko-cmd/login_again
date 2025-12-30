@@ -25,7 +25,7 @@ void main() {
 class MyApp extends StatelessWidget {
   final AuthRepositoryImpl authRepository;
   final ApiClient apiClient;
-        
+
   const MyApp({
     super.key,
     required this.authRepository,

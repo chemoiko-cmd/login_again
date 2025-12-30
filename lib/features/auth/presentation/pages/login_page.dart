@@ -3,6 +3,7 @@
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:login_again/styles/colors.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
@@ -134,6 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.all(16),
+                          backgroundColor: AppColors.primary,
                         ),
                         child: isLoading
                             ? const SizedBox(
@@ -143,7 +145,11 @@ class _LoginPageState extends State<LoginPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text('Login'),
+                            : const Text(
+                                'Login',
+
+                                style: TextStyle(color: Colors.white),
+                              ),
                       ),
                     ],
                   ),
