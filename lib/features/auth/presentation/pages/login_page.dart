@@ -66,10 +66,15 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.home_work,
-                        size: 80,
-                        color: Theme.of(context).primaryColor,
+                      Container(
+                        width: 80,
+                        height: 80,
+                        child: Image.asset(
+                          'assets/app_icon.png',
+                          fit:
+                              BoxFit.contain, // keeps the image from stretching
+                          // optional: tint it like the Icon
+                        ),
                       ),
                       const SizedBox(height: 24),
                       Text(
@@ -79,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Odoo Authentication',
+                        '',
                         textAlign: TextAlign.center,
                         style: Theme.of(
                           context,
