@@ -15,6 +15,7 @@ import '../../features/auth/presentation/pages/property_management_page.dart';
 import '../../features/tenant/presentation/pages/tenant_dashboard_page.dart';
 import '../../features/maintenance/presentation/pages/maintenance_page.dart';
 import '../../features/contracts/presentation/pages/contract_details_page.dart';
+import '../../core/widgets/app_side_drawer.dart'; // Make sure this exists
 
 class AppRouter {
   final AuthCubit authCubit;
@@ -32,51 +33,52 @@ class AppRouter {
 
       // ───────── AUTHENTICATED ─────────
       if (authState is Authenticated && isLoginRoute) {
-        final isTenant = authState.isTenant;
-        final isLandlord = authState.isLandlord;
-
-        if (isTenant) {
-          return '/tenant-dashboard';
-        }
-        if (isLandlord) {
-          return '/property-management';
-        }
+        if (authState.isTenant) return '/tenant-dashboard';
+        if (authState.isLandlord) return '/property-management';
 
         // Unknown role → safe fallback
-        final messenger = ScaffoldMessenger.maybeOf(context);
-        messenger?.showSnackBar(
-          const SnackBar(content: Text('Unknown role. Logging out.')),
-        );
         authCubit.logout();
         return '/login';
       }
 
       // ───────── UNAUTHENTICATED ─────────
-      if (authState is! Authenticated && !isLoginRoute) {
-        return '/login';
-      }
+      if (authState is! Authenticated && !isLoginRoute) return '/login';
 
       return null;
     },
 
     routes: [
+      // Global drawer shell
+      ShellRoute(
+        builder: (context, state, child) {
+          return Scaffold(
+            appBar: AppBar(),
+            drawer: const AppSideDrawer(),
+            body: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/property-management',
+            builder: (context, state) => const PropertyManagementPage(),
+          ),
+          GoRoute(
+            path: '/tenant-dashboard',
+            builder: (context, state) => const TenantDashboardPage(),
+          ),
+          GoRoute(
+            path: '/maintenance',
+            builder: (context, state) => const MaintenancePage(),
+          ),
+          GoRoute(
+            path: '/contracts',
+            builder: (context, state) => const ContractPage(),
+          ),
+        ],
+      ),
+
+      // Login route outside the shell (no drawer)
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
-      GoRoute(
-        path: '/property-management',
-        builder: (context, state) => const PropertyManagementPage(),
-      ),
-      GoRoute(
-        path: '/tenant-dashboard',
-        builder: (context, state) => const TenantDashboardPage(),
-      ),
-      GoRoute(
-        path: '/maintenance',
-        builder: (context, state) => const MaintenancePage(),
-      ),
-      GoRoute(
-        path: '/contracts',
-        builder: (context, state) => const ContractPage(),
-      ),
     ],
   );
 }
