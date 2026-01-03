@@ -7,6 +7,7 @@
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:login_again/features/payments/presentation/pages/payments_page.dart';
 
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
@@ -69,6 +70,10 @@ class AppRouter {
           GoRoute(
             path: '/maintenance',
             builder: (context, state) => const MaintenancePage(),
+          ),
+          GoRoute(
+            path: '/pay-rent',
+            builder: (context, state) => const PaymentsPage(),
           ),
           GoRoute(
             path: '/contracts',
