@@ -1,4 +1,4 @@
-package com.example.login_again
+package com.kolapro.krental
 
 import io.flutter.embedding.android.FlutterActivity
 

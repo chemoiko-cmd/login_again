@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../../../../../../odoo-18.0/custom-addons/kolaapps/rental_management"
+		},
+		{
+			"path": "../../../../../../eBroker 1.2.5 app code"
 		}
 	],
 	"settings": {}

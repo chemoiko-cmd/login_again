@@ -1,12 +1,9 @@
 // ============================================================================
-// COMPLETE PROJECT STRUCTURE - COPY EACH FILE SEPARATELY
-// ============================================================================
-
-// ============================================================================
 // FILE: lib/main.dart
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'core/api/api_client.dart';
 import 'core/routes/app_router.dart';
 import 'core/currency/currency_repository.dart';
@@ -17,10 +14,8 @@ import 'features/auth/presentation/cubit/auth_cubit.dart';
 import 'features/auth/presentation/cubit/auth_state.dart';
 
 void main() {
-  // TODO: Replace with your actual Odoo server URL
-  final apiClient = ApiClient(baseUrl: 'http://192.168.1.4:8069');
-  final authDataSource = AuthRemoteDataSource(apiClient);
-  final authRepository = AuthRepositoryImpl(authDataSource);
+  final apiClient = ApiClient(baseUrl: 'http://192.168.1.6:8069');
+  final authRepository = AuthRepositoryImpl(AuthRemoteDataSource(apiClient));
 
   runApp(MyApp(authRepository: authRepository, apiClient: apiClient));
 }
@@ -40,7 +35,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthCubit>(
-          create: (context) => AuthCubit(authRepository, apiClient),
+          create: (_) => AuthCubit(authRepository, apiClient),
         ),
         BlocProvider<CurrencyCubit>(
           create: (context) => CurrencyCubit(
@@ -54,27 +49,35 @@ class MyApp extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final router = AppRouter(context.read<AuthCubit>());
-          return BlocListener<AuthCubit, AuthState>(
-            listenWhen: (prev, curr) => prev.runtimeType != curr.runtimeType,
-            listener: (context, state) {
-              final currency = context.read<CurrencyCubit>();
-              if (state is Authenticated) {
-                currency.load();
-              } else {
-                currency.reset();
-              }
-            },
-            child: MaterialApp.router(
-              title: 'Odoo Property Management',
-              theme: ThemeData(
-                colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-                useMaterial3: true,
-              ),
-              routerConfig: router.router,
-              debugShowCheckedModeBanner: false,
-            ),
-          );
+          return _buildAppWithAuthListener(context, router);
         },
+      ),
+    );
+  }
+
+  // ========================================================================
+  // Wrap MaterialApp with Auth State Listener
+  // ========================================================================
+  Widget _buildAppWithAuthListener(BuildContext context, AppRouter router) {
+    return BlocListener<AuthCubit, AuthState>(
+      listenWhen: (previous, current) =>
+          previous.runtimeType != current.runtimeType,
+      listener: (context, state) {
+        final currencyCubit = context.read<CurrencyCubit>();
+        if (state is Authenticated) {
+          currencyCubit.load();
+        } else {
+          currencyCubit.reset();
+        }
+      },
+      child: MaterialApp.router(
+        title: 'Odoo Property Management',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+        ),
+        routerConfig: router.router,
+        debugShowCheckedModeBanner: false,
       ),
     );
   }

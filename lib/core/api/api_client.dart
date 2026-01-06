@@ -6,7 +6,7 @@ class ApiClient {
   final Dio dio;
   final String baseUrl;
 
-  ApiClient({required this.baseUrl})
+  ApiClient({this.baseUrl = 'http://192.168.1.4:8069'})
     : dio = Dio(
         BaseOptions(
           baseUrl: baseUrl,

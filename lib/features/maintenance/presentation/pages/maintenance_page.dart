@@ -356,7 +356,6 @@ class _MaintenancePageState extends State<MaintenancePage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(),
       body: FutureBuilder<List<MaintenanceRequestItem>>(
         future: _future,
         builder: (context, snapshot) {
