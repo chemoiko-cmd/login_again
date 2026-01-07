@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:login_again/features/landlord/presentation/widgets/action_tile.dart';
+import 'package:login_again/features/landlord/presentation/cubit/inspections_cubit.dart';
+import 'package:login_again/features/landlord/presentation/cubit/inspections_state.dart';
+import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
+import 'package:login_again/styles/colors.dart';
+import 'package:login_again/features/landlord/presentation/widgets/inspection_create_overlay.dart';
+
+class InspectionScreen extends StatefulWidget {
+  const InspectionScreen({super.key});
+
+  @override
+  State<InspectionScreen> createState() => _InspectionScreenState();
+}
+
+class _InspectionScreenState extends State<InspectionScreen> {
+  bool _isCreating = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Inspections')),
+      body: Stack(
+        children: [
+          BlocBuilder<InspectionsCubit, InspectionsState>(
+            builder: (context, state) {
+              if (state is InspectionsLoading && !_isCreating) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state is InspectionsError) {
+                return Center(child: Text(state.message));
+              }
+
+              if (state is InspectionsLoaded) {
+                if (state.inspections.isEmpty) {
+                  return const Center(child: Text('No inspections found'));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: state.inspections.length,
+                  itemBuilder: (context, index) {
+                    final inspection = state.inspections[index];
+
+                    return ActionTile(
+                      icon: Icons.assignment,
+                      title: inspection.name,
+                      subtitle:
+                          '${inspection.propertyName} • ${inspection.unitName}',
+                      state: inspection.state,
+                      onTap: () {},
+                    );
+                  },
+                );
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
+          if (_isCreating)
+            Builder(
+              builder: (context) {
+                final authState = context.read<AuthCubit>().state;
+                final partnerId = authState is Authenticated
+                    ? authState.user.partnerId
+                    : 0;
+                return InspectionCreateOverlay(
+                  partnerId: partnerId,
+                  onClose: () => setState(() => _isCreating = false),
+                );
+              },
+            ),
+        ],
+      ),
+      floatingActionButton: _isCreating
+          ? null
+          : FloatingActionButton(
+              onPressed: () => setState(() => _isCreating = true),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.add),
+            ),
+    );
+  }
+}
