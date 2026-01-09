@@ -20,9 +20,13 @@ class ActionTile extends StatelessWidget {
   /// Badge color based on state string
   Color getBadgeColor(String? state) {
     switch (state) {
+      case 'paid':
+        return AppColors.success;
+      case 'overdue':
+        return AppColors.error;
       case 'draft':
       case 'pending':
-        return const Color.fromARGB(255, 99, 98, 96);
+        return AppColors.warning;
       case 'scheduled':
         return const Color.fromARGB(255, 255, 166, 0);
       case 'in_progress':

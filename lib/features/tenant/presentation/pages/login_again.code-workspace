@@ -10,5 +10,7 @@
 			"path": "../../../../../../eBroker 1.2.5 app code"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"xml.symbols.enabled": false
+	}
 }

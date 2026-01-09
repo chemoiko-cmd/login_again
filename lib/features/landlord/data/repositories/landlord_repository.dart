@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/features/landlord/data/models/landlord_inpsections_model.dart';
+import 'package:login_again/features/landlord/data/models/landlord_tenant_row.dart';
 import '../models/landlord_metrics_model.dart';
 
 class LandlordRepository {
@@ -37,6 +38,352 @@ class LandlordRepository {
       }).toList();
     } catch (_) {
       return [];
+    }
+  }
+
+  /// Fetch maintenance partners (for rental.maintenance.task.assigned_to)
+  Future<List<Map<String, dynamic>>> fetchMaintenancePartners() async {
+    try {
+      // Find group id by name (Rental Maintenance Worker)
+      final groupsResp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'res.groups',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['name', '=', 'Rental Maintenance Worker'],
+              ],
+              'fields': ['name'],
+              'limit': 1,
+            },
+          },
+          'id': 1,
+        },
+      );
+
+      final groups = (groupsResp.data['result'] as List?) ?? [];
+      if (groups.isEmpty) return [];
+      final groupId = (groups.first as Map)['id'] as int;
+
+      // Partners whose related users belong to the group
+      final partnersResp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'res.partner',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                [
+                  'user_ids.groups_id',
+                  'in',
+                  [groupId],
+                ],
+              ],
+              'fields': ['name'],
+              'limit': 200,
+              'order': 'name',
+            },
+          },
+          'id': 1,
+        },
+      );
+
+      final partners = (partnersResp.data['result'] as List?) ?? [];
+      return partners.map<Map<String, dynamic>>((e) {
+        final m = Map<String, dynamic>.from(e);
+        return {
+          'id': m['id'] as int,
+          'name': m['name'] as String? ?? 'Partner',
+        };
+      }).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchMaintenanceTasks({
+    required int partnerId,
+  }) async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.maintenance.task',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['property_id.owner_id', '=', partnerId],
+              ],
+              'fields': [
+                'name',
+                'state',
+                'priority',
+                'unit_id',
+                'assigned_to',
+                'create_date',
+              ],
+              'limit': 200,
+              'order': 'create_date desc',
+            },
+          },
+          'id': 1,
+        },
+      );
+
+      final list = (resp.data['result'] as List?) ?? [];
+      return list
+          .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> createMaintenanceTask({
+    required int landlordPartnerId,
+    required int unitId,
+    required String name,
+    int? assignedToPartnerId,
+    String? priority,
+  }) async {
+    try {
+      final vals = <String, dynamic>{
+        'name': name,
+        'unit_id': unitId,
+        'requested_by': landlordPartnerId,
+        if (assignedToPartnerId != null) 'assigned_to': assignedToPartnerId,
+        if (priority != null) 'priority': priority,
+      };
+
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.maintenance.task',
+            'method': 'create',
+            'args': [vals],
+            'kwargs': {},
+          },
+          'id': 1,
+        },
+      );
+
+      return resp.data['result'] != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<List<LandlordTenantRow>> fetchTenantsWithStatus({
+    required int partnerId,
+  }) async {
+    try {
+      final contractsResp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.contract',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['property_id.owner_id', '=', partnerId],
+                ['state', '=', 'active'],
+              ],
+              'fields': ['name', 'tenant_id', 'unit_id', 'property_id'],
+              'limit': 500,
+              'order': 'id desc',
+            },
+          },
+          'id': 1,
+        },
+      );
+
+      final rawContracts = (contractsResp.data['result'] as List?) ?? [];
+      if (rawContracts.isEmpty) return const [];
+
+      final rows = rawContracts.map((e) {
+        final m = Map<String, dynamic>.from(e as Map);
+        final tenantTuple = m['tenant_id'] as List?;
+        final unitTuple = m['unit_id'] as List?;
+        final propertyTuple = m['property_id'] as List?;
+
+        final tenantPartnerId = (tenantTuple != null && tenantTuple.isNotEmpty)
+            ? (tenantTuple.first as int?)
+            : null;
+
+        return LandlordTenantRow(
+          contractId: (m['id'] as int?) ?? 0,
+          contractName: (m['name'] ?? '').toString(),
+          tenantPartnerId: tenantPartnerId ?? 0,
+          tenantName: tenantTuple != null && tenantTuple.length > 1
+              ? (tenantTuple[1] ?? '').toString()
+              : 'Tenant',
+          propertyName: propertyTuple != null && propertyTuple.length > 1
+              ? (propertyTuple[1] ?? '').toString()
+              : 'Property',
+          unitName: unitTuple != null && unitTuple.length > 1
+              ? (unitTuple[1] ?? '').toString()
+              : 'Unit',
+          status: null,
+        );
+      }).toList();
+
+      final tenantIds = rows
+          .map((r) => r.tenantPartnerId)
+          .where((id) => id > 0)
+          .toSet()
+          .toList();
+
+      if (tenantIds.isEmpty) return rows;
+
+      // Fetch ALL unpaid/partial invoices for all tenants in one call.
+      final invoicesResp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'account.move',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['partner_id', 'in', tenantIds],
+                [
+                  'move_type',
+                  'in',
+                  ['out_invoice'],
+                ],
+                ['state', '=', 'posted'],
+                [
+                  'payment_state',
+                  'in',
+                  ['not_paid', 'partial'],
+                ],
+              ],
+              'fields': ['partner_id', 'amount_residual', 'invoice_date_due'],
+              'limit': 2000,
+              'order': 'invoice_date_due asc, id asc',
+            },
+          },
+          'id': 1,
+        },
+      );
+
+      final rawInvoices = (invoicesResp.data['result'] as List?) ?? [];
+      final Map<int, DateTime?> earliestDueByTenant = {};
+
+      for (final inv in rawInvoices) {
+        final m = (inv as Map).cast<String, dynamic>();
+        final partnerTuple = m['partner_id'] as List?;
+        final tenantId = (partnerTuple != null && partnerTuple.isNotEmpty)
+            ? (partnerTuple.first as int?)
+            : null;
+        if (tenantId == null) continue;
+
+        final residual = (m['amount_residual'] as num?)?.toDouble() ?? 0.0;
+        if (residual <= 0.0001) continue;
+
+        final dueStr = m['invoice_date_due']?.toString();
+        final due = (dueStr != null && dueStr.isNotEmpty)
+            ? DateTime.tryParse(dueStr)
+            : null;
+        if (due == null) {
+          earliestDueByTenant.putIfAbsent(tenantId, () => null);
+          continue;
+        }
+
+        final existing = earliestDueByTenant[tenantId];
+        if (existing == null || due.isBefore(existing)) {
+          earliestDueByTenant[tenantId] = due;
+        }
+      }
+
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      String statusForTenant(int tenantId) {
+        final due = earliestDueByTenant[tenantId];
+        if (!earliestDueByTenant.containsKey(tenantId)) return 'paid';
+        if (due == null) return 'pending';
+        return due.isBefore(today) ? 'overdue' : 'pending';
+      }
+
+      return rows
+          .map((r) => r.copyWith(status: statusForTenant(r.tenantPartnerId)))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchPartnerProfile({
+    required int partnerId,
+  }) async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'res.partner',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['id', '=', partnerId],
+              ],
+              'fields': [
+                'name',
+                'email',
+                'phone',
+                'mobile',
+                'street',
+                'city',
+                'country_id',
+              ],
+              'limit': 1,
+            },
+          },
+          'id': 1,
+        },
+      );
+
+      final list = (resp.data['result'] as List?) ?? [];
+      if (list.isEmpty) return null;
+      final m = Map<String, dynamic>.from(list.first as Map);
+      final countryTuple = m['country_id'] as List?;
+      return {
+        'name': m['name'],
+        'email': m['email'],
+        'phone': m['phone'],
+        'mobile': m['mobile'],
+        'street': m['street'],
+        'city': m['city'],
+        'country': countryTuple != null && countryTuple.length > 1
+            ? (countryTuple[1] ?? '').toString()
+            : '',
+      };
+    } catch (_) {
+      return null;
     }
   }
 

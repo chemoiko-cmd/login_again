@@ -109,15 +109,30 @@ class AppSideDrawer extends StatelessWidget {
                       ),
                       ListTile(
                         leading: const Icon(
+                          Icons.people_outline,
+                          color: AppColors.textSecondary,
+                        ),
+                        title: const Text('Tenants'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          context.go('/landlord-tenants');
+                        },
+                        selected: location == '/landlord-tenants',
+                        selectedTileColor: AppColors.primary.withValues(
+                          alpha: 0.08,
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(
                           Icons.build_outlined,
                           color: AppColors.textSecondary,
                         ),
-                        title: const Text('Request Maintenance'),
+                        title: const Text('Maintenance Tasks'),
                         onTap: () {
                           Navigator.of(context).pop();
-                          context.go('/maintenance');
+                          context.go('/landlord-maintenance');
                         },
-                        selected: location == '/maintenance',
+                        selected: location == '/landlord-maintenance',
                         selectedTileColor: AppColors.primary.withValues(
                           alpha: 0.08,
                         ),

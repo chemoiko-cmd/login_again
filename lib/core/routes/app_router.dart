@@ -10,7 +10,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:login_again/features/landlord/data/repositories/landlord_repository.dart';
 import 'package:login_again/features/landlord/presentation/cubit/inspections_cubit.dart';
+import 'package:login_again/features/landlord/presentation/cubit/maintenance_tasks_cubit.dart';
+import 'package:login_again/features/landlord/presentation/cubit/tenants_cubit.dart';
+import 'package:login_again/features/landlord/presentation/landlord_maintenance_screen.dart';
 import 'package:login_again/features/landlord/presentation/inspection_screen.dart';
+import 'package:login_again/features/landlord/presentation/landlord_tenant_profile_screen.dart';
+import 'package:login_again/features/landlord/presentation/landlord_tenants_screen.dart';
 import 'package:login_again/features/payments/presentation/pages/payments_page.dart';
 
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
@@ -107,6 +112,70 @@ class AppRouter {
                   return cubit;
                 },
                 child: const InspectionScreen(),
+              );
+            },
+          ),
+
+          GoRoute(
+            path: '/landlord-maintenance',
+            builder: (context, state) {
+              final auth = context.read<AuthCubit>();
+
+              return BlocProvider(
+                create: (_) {
+                  final cubit = MaintenanceTasksCubit(
+                    LandlordRepository(apiClient: auth.apiClient),
+                  );
+
+                  final authState = auth.state;
+                  if (authState is Authenticated) {
+                    cubit.load(partnerId: authState.user.partnerId);
+                  }
+
+                  return cubit;
+                },
+                child: const LandlordMaintenanceScreen(),
+              );
+            },
+          ),
+
+          GoRoute(
+            path: '/landlord-tenants',
+            builder: (context, state) {
+              final auth = context.read<AuthCubit>();
+
+              return BlocProvider(
+                create: (_) {
+                  final cubit = TenantsCubit(
+                    LandlordRepository(apiClient: auth.apiClient),
+                  );
+
+                  final authState = auth.state;
+                  if (authState is Authenticated) {
+                    cubit.load(partnerId: authState.user.partnerId);
+                  }
+
+                  return cubit;
+                },
+                child: const LandlordTenantsScreen(),
+              );
+            },
+          ),
+
+          GoRoute(
+            path: '/landlord-tenants/:tenantPartnerId',
+            builder: (context, state) {
+              final idStr = state.pathParameters['tenantPartnerId'] ?? '0';
+              final tenantPartnerId = int.tryParse(idStr) ?? 0;
+              final extra = state.extra;
+              final m = extra is Map ? extra.cast<String, dynamic>() : const {};
+
+              return LandlordTenantProfileScreen(
+                tenantPartnerId: tenantPartnerId,
+                tenantName: (m['tenantName'] ?? '').toString(),
+                propertyName: (m['propertyName'] ?? '').toString(),
+                unitName: (m['unitName'] ?? '').toString(),
+                status: (m['status'] as String?),
               );
             },
           ),
