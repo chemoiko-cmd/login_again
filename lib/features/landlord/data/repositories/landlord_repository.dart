@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/features/landlord/data/models/landlord_inpsections_model.dart';
 import 'package:login_again/features/landlord/data/models/landlord_tenant_row.dart';
+import 'package:login_again/features/landlord/data/models/partner_profile.dart';
 import '../models/landlord_metrics_model.dart';
 
 class LandlordRepository {
@@ -334,56 +335,51 @@ class LandlordRepository {
     }
   }
 
-  Future<Map<String, dynamic>?> fetchPartnerProfile({
-    required int partnerId,
-  }) async {
+  Future<PartnerProfile?> fetchPartnerProfile({required int partnerId}) async {
     try {
-      final resp = await apiClient.post(
-        '/web/dataset/call_kw',
-        data: {
-          'jsonrpc': '2.0',
-          'method': 'call',
-          'params': {
-            'model': 'res.partner',
-            'method': 'search_read',
-            'args': [],
-            'kwargs': {
-              'domain': [
-                ['id', '=', partnerId],
-              ],
-              'fields': [
-                'name',
-                'email',
-                'phone',
-                'mobile',
-                'street',
-                'city',
-                'country_id',
-              ],
-              'limit': 1,
-            },
+      final payload = {
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {
+          'model': 'res.partner',
+          'method': 'search_read',
+          'args': [
+            [
+              ['id', '=', partnerId],
+            ],
+          ],
+          'kwargs': {
+            'fields': [
+              'name',
+              'email',
+              'email_normalized',
+              'phone',
+              'mobile',
+              'street',
+              'city',
+              'country_id',
+            ],
+            'limit': 1,
           },
-          'id': 1,
         },
-      );
+        'id': 1,
+      };
+
+      print('fetchPartnerProfile partnerId=$partnerId payload=$payload');
+
+      final resp = await apiClient.post('/web/dataset/call_kw', data: payload);
 
       final list = (resp.data['result'] as List?) ?? [];
+      print(
+        'fetchPartnerProfile result count=${list.length} first=${list.isNotEmpty ? list.first : null}',
+      );
       if (list.isEmpty) return null;
       final m = Map<String, dynamic>.from(list.first as Map);
-      final countryTuple = m['country_id'] as List?;
-      return {
-        'name': m['name'],
-        'email': m['email'],
-        'phone': m['phone'],
-        'mobile': m['mobile'],
-        'street': m['street'],
-        'city': m['city'],
-        'country': countryTuple != null && countryTuple.length > 1
-            ? (countryTuple[1] ?? '').toString()
-            : '',
-      };
-    } catch (_) {
-      return null;
+      return PartnerProfile.fromOdoo(m);
+    } catch (e, stack) {
+      print('fetchPartnerProfile ERROR: $e');
+      print('Stack trace: $stack');
+      rethrow;
     }
   }
 
