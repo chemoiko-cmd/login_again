@@ -17,6 +17,7 @@ import 'package:login_again/features/landlord/presentation/inspection_screen.dar
 import 'package:login_again/features/landlord/presentation/landlord_tenant_profile_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenants_screen.dart';
 import 'package:login_again/features/payments/presentation/pages/payments_page.dart';
+import 'package:login_again/features/profile/presentation/my_profile_screen.dart';
 
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
@@ -88,6 +89,10 @@ class AppRouter {
           GoRoute(
             path: '/maintenance2',
             builder: (context, state) => const MaintenanceScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const MyProfileScreen(),
           ),
           GoRoute(
             path: '/landlord-dashboard',

@@ -11,6 +11,7 @@ import '../../domain/payment_provider.dart';
 import '../cubit/payments_cubit.dart';
 import '../cubit/payments_state.dart';
 import '../widgets/payment_status_icon.dart';
+import 'invoice_checkout_screen.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
@@ -55,7 +56,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 0.0,
                 (sum, p) => sum + p.amount,
               );
-              final c = context.watch<CurrencyCubit>().state;
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
@@ -88,28 +88,21 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   Widget _totalDueCard(BuildContext context, double amount, bool processing) {
     final c = context.watch<CurrencyCubit>().state;
-    final selectedProviderId = context.select<PaymentsCubit, int?>(
-      (cubit) => cubit.state.selectedProviderId,
+    final pendingItems = context.select<PaymentsCubit, List<PaymentItem>>(
+      (cubit) => cubit.state.items
+          .where((p) => p.status == 'pending' || p.status == 'overdue')
+          .toList(),
     );
 
     Future<void> _handlePayAll() async {
-      if (selectedProviderId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a payment method first')),
-        );
-        return;
-      }
-      final isDemo = _isSelectedProviderDemo(context, selectedProviderId);
-      if (isDemo) {
-        final proceed = await _promptDemoPaymentDetails(
-          context,
-          title: 'Demo Payment',
-          message: 'Enter demo payment details to simulate a payment.',
-          amount: amount,
-        );
-        if (proceed != true) return;
-      }
-      context.read<PaymentsCubit>().payAllPending();
+      // Navigate to checkout with all pending invoices
+      final invoiceNames = pendingItems.map((p) => p.id).toList();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) =>
+              InvoiceCheckoutScreen(invoiceNames: invoiceNames),
+        ),
+      );
     }
 
     return Container(
@@ -198,9 +191,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   Widget _pendingCard(BuildContext context, PaymentItem p, int index) {
     final textTheme = Theme.of(context).textTheme;
-    final selectedProviderId = context.select<PaymentsCubit, int?>(
-      (cubit) => cubit.state.selectedProviderId,
-    );
     return AnimatedContainer(
       duration: Duration(milliseconds: 200 + (index * 60)),
       curve: Curves.easeOut,
@@ -259,35 +249,29 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 ),
               ),
               const SizedBox(height: 4),
-              TextButton(
-                onPressed: () async {
-                  if (selectedProviderId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please select a payment method first'),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      // Navigate to new checkout flow
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              InvoiceCheckoutScreen(invoiceNames: [p.id]),
+                        ),
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
-                    );
-                    return;
-                  }
-                  final isDemo = _isSelectedProviderDemo(
-                    context,
-                    selectedProviderId,
-                  );
-                  if (isDemo) {
-                    final proceed = await _promptDemoPaymentDetails(
-                      context,
-                      title: 'Demo Payment',
-                      message:
-                          'Enter demo payment details to simulate a payment.',
-                      amount: p.amount,
-                    );
-                    if (proceed != true) return;
-                  }
-                  // Simulate/trigger payment
-                  await context.read<PaymentsCubit>().pay(p);
-                },
-                style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-                child: const Text('Pay'),
+                    ),
+                    child: const Text('Pay Now'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -530,83 +514,4 @@ class _PaymentsPageState extends State<PaymentsPage> {
       ],
     );
   }
-}
-
-bool _isSelectedProviderDemo(BuildContext context, int providerId) {
-  final providers = context.read<PaymentsCubit>().state.providers;
-  for (final p in providers) {
-    if (p.id == providerId) {
-      final code = (p.code).toLowerCase();
-      final state = (p.state).toLowerCase();
-      return code == 'demo' || code == 'test' || state.contains('test');
-    }
-  }
-  return false;
-}
-
-Future<bool?> _promptDemoPaymentDetails(
-  BuildContext context, {
-  required String title,
-  required String message,
-  required double amount,
-}) async {
-  final nameCtrl = TextEditingController();
-  final refCtrl = TextEditingController();
-  final contactCtrl = TextEditingController();
-  bool canSubmit() => refCtrl.text.trim().isNotEmpty;
-  return showDialog<bool>(
-    context: context,
-    builder: (ctx) {
-      return StatefulBuilder(
-        builder: (ctx, setState) {
-          return AlertDialog(
-            title: Text(title),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Align(alignment: Alignment.centerLeft, child: Text(message)),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Payer name'),
-                  ),
-                  TextField(
-                    controller: contactCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Contact (phone or email)',
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  TextField(
-                    controller: refCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Reference / Txn ID (required)',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Amount: ' + formatMoney(amount)),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: canSubmit()
-                    ? () => Navigator.of(ctx).pop(true)
-                    : null,
-                child: const Text('Confirm'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
 }

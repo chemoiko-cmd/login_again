@@ -350,9 +350,11 @@ class LandlordRepository {
           ],
           'kwargs': {
             'fields': [
+              'id',
               'name',
               'email',
               'email_normalized',
+              'image_128',
               'phone',
               'mobile',
               'street',

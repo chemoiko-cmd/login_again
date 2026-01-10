@@ -113,7 +113,7 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                         _ActionCircle(
                           icon: Icons.receipt_long,
                           label: 'Receipts',
-                          onTap: () {},
+                          onTap: () => context.go('/pay-rent'),
                           color: Colors.indigo,
                         ),
                         _ActionCircle(

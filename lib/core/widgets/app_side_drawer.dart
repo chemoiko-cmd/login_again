@@ -88,6 +88,21 @@ class AppSideDrawer extends StatelessWidget {
                           alpha: 0.08,
                         ),
                       ),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.description_outlined,
+                          color: AppColors.textSecondary,
+                        ),
+                        title: const Text('Contract Info'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          context.go('/contracts');
+                        },
+                        selected: location == '/contracts',
+                        selectedTileColor: AppColors.primary.withValues(
+                          alpha: 0.08,
+                        ),
+                      ),
                     ],
 
                     // Landlord-only items
@@ -148,6 +163,21 @@ class AppSideDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context).pop();
                     },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.person_outline,
+                      color: AppColors.textSecondary,
+                    ),
+                    title: const Text('Profile'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/profile');
+                    },
+                    selected: location == '/profile',
+                    selectedTileColor: AppColors.primary.withValues(
+                      alpha: 0.08,
+                    ),
                   ),
                   // ListTile(
                   //   leading: const Icon(

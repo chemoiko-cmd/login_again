@@ -45,12 +45,14 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final authState = context.watch<AuthCubit>().state;
+    final userName = authState is Authenticated ? authState.user.name : 'User';
 
     return BlocProvider.value(
       value: cubit,
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(title: const Text('Landlord Dashboard')),
+        appBar: AppBar(title: Text('Hello $userName')),
         body: BlocBuilder<MetricsCubit, MetricsState>(
           builder: (context, state) {
             if (state is MetricsLoading) {
@@ -65,18 +67,12 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
               final metrics = state.metrics;
               print('metrics ${metrics.occupiedUnits}');
 
-              final authState = context.watch<AuthCubit>().state;
-              final userName = authState is Authenticated
-                  ? authState.user.name
-                  : 'User';
-
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Hello $userName'),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
 
                     /// ===============================            /// RENT CARD (Reusable)
                     ///

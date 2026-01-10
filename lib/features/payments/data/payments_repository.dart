@@ -8,6 +8,10 @@ import '../../auth/presentation/cubit/auth_cubit.dart';
 import '../../auth/presentation/cubit/auth_state.dart';
 import '../domain/payment.dart';
 import '../domain/payment_provider.dart';
+import '../domain/payment_transaction.dart';
+import '../domain/payment_method.dart';
+import '../domain/invoice.dart';
+import '../domain/provider_with_method.dart';
 
 typedef PaymentProcessor = Future<void> Function(PaymentItem payment);
 
@@ -26,7 +30,7 @@ class PaymentsRepository {
     await Future<void>.delayed(const Duration(milliseconds: 600));
   }
 
-  Future<List<dynamic>> _searchRead(
+  Future<List<dynamic>> searchRead(
     String model, {
     required List<dynamic> domain,
     List<String>? fields,
@@ -60,7 +64,7 @@ class PaymentsRepository {
       int? partnerId;
       final auth = authCubit.state;
       if (auth is Authenticated) {
-        final users = await _searchRead(
+        final users = await searchRead(
           'res.users',
           domain: [
             ['login', '=', auth.user.username],
@@ -79,19 +83,17 @@ class PaymentsRepository {
 
       if (partnerId == null) return const [];
 
-      // Get invoices
-      final moves = await _searchRead(
+      // Get unpaid invoices
+      final invoices = await searchRead(
         'account.move',
         domain: [
           ['partner_id', '=', partnerId],
-          [
-            'move_type',
-            'in',
-            ['out_invoice'],
-          ],
+          ['move_type', '=', 'out_invoice'],
           ['state', '=', 'posted'],
+          ['payment_state', '!=', 'paid'],
         ],
         fields: const [
+          'id',
           'name',
           'invoice_date_due',
           'invoice_date',
@@ -103,35 +105,76 @@ class PaymentsRepository {
         limit: 200,
       );
 
+      // Get ALL payment transactions for this partner (any state)
+      final transactions = await searchRead(
+        'payment.transaction',
+        domain: [
+          ['partner_id', '=', partnerId],
+        ],
+        fields: const ['reference', 'amount', 'invoice_ids', 'state'],
+        order: 'create_date desc',
+        limit: 200,
+      );
+
+      // Build map of invoice_id -> transaction state
+      final invoiceToTxnState = <int, String>{};
+      for (final txn in transactions) {
+        final txnMap = txn as Map<String, dynamic>;
+        final txnState = (txnMap['state'] ?? '').toString();
+        final invoiceIds = txnMap['invoice_ids'] as List?;
+
+        if (invoiceIds != null && invoiceIds.isNotEmpty) {
+          for (final invId in invoiceIds) {
+            final actualId = invId is int ? invId : null;
+            if (actualId != null && !invoiceToTxnState.containsKey(actualId)) {
+              // Store the first transaction state found for this invoice
+              invoiceToTxnState[actualId] = txnState;
+            }
+          }
+        }
+      }
+
       final now = DateTime.now();
+      final results = <PaymentItem>[];
 
-      // Map to PaymentItem
-      return moves.map((raw) {
-        final m = (raw as Map).cast<String, dynamic>();
-        final id = (m['name'] ?? '').toString();
-        final total = (m['amount_total'] as num?)?.toDouble() ?? 0.0;
-        final residual = (m['amount_residual'] as num?)?.toDouble() ?? 0.0;
-        final dueDate =
-            DateTime.tryParse(m['invoice_date_due']?.toString() ?? '') ?? now;
-        final paid = residual <= 0.0001;
-        final status = paid
-            ? 'paid'
-            : (dueDate.isBefore(DateTime(now.year, now.month, now.day))
-                  ? 'overdue'
-                  : 'pending');
+      // Process each invoice
+      for (final raw in invoices) {
+        final inv = raw as Map<String, dynamic>;
+        final invoiceId = inv['id'] as int;
+        final txnState = invoiceToTxnState[invoiceId];
 
-        return PaymentItem(
-          id: id,
-          amount: paid ? total : residual,
-          dueDate: dueDate,
-          paidDate: paid
-              ? DateTime.tryParse(m['invoice_date']?.toString() ?? '')
-              : null,
-          status: status,
-          type: 'rent',
-          description: id,
-        );
-      }).toList();
+        // Only show if: no transaction OR transaction is in draft state
+        if (txnState == null || txnState == 'draft') {
+          final name = (inv['name'] ?? '').toString();
+          final total = (inv['amount_total'] as num?)?.toDouble() ?? 0.0;
+          final residual = (inv['amount_residual'] as num?)?.toDouble() ?? 0.0;
+          final dueDate =
+              DateTime.tryParse(inv['invoice_date_due']?.toString() ?? '') ??
+              now;
+          final paid = residual <= 0.0001;
+          final status = paid
+              ? 'paid'
+              : (dueDate.isBefore(DateTime(now.year, now.month, now.day))
+                    ? 'overdue'
+                    : 'pending');
+
+          results.add(
+            PaymentItem(
+              id: name,
+              amount: paid ? total : residual,
+              dueDate: dueDate,
+              paidDate: paid
+                  ? DateTime.tryParse(inv['invoice_date']?.toString() ?? '')
+                  : null,
+              status: status,
+              type: 'rent',
+              description: name,
+            ),
+          );
+        }
+      }
+
+      return results;
     } catch (e, st) {
       print('Failed to fetch payments: $e\n$st');
       return const [];
@@ -168,7 +211,7 @@ class PaymentsRepository {
   Future<int> _getInvoiceIdByName(String invoiceName) async {
     print('🔍 Searching for invoice: $invoiceName');
 
-    final moves = await _searchRead(
+    final moves = await searchRead(
       'account.move',
       domain: [
         ['name', '=', invoiceName],
@@ -211,36 +254,260 @@ class PaymentsRepository {
     return Uint8List.fromList(response.data as List<int>);
   }
 
-  Future<List<PaymentProvider>> fetchProviders() async {
-    // Try modern model first (Odoo 16+): payment.provider
+  /// Fetch providers with their payment methods from the API
+  Future<List<ProviderWithMethod>> fetchProvidersWithMethods() async {
     try {
-      List<dynamic> rows = await _searchRead(
-        'payment.provider',
-        domain: [
-          [
-            'state',
-            'in',
-            ['is_published', 'test'],
-          ],
-        ],
-        fields: const ['id', 'name', 'code', 'state'],
-        order: 'name asc',
-        limit: 100,
-      );
-      print('Payment provider guys: $rows');
+      print('🔍 Fetching payment providers...');
 
-      return rows.map((r) {
-        final m = (r as Map).cast<String, dynamic>();
-        return PaymentProvider(
-          id: (m['id'] as int?) ?? 0,
-          name: (m['name'] ?? '').toString(),
-          code: (m['code'] ?? '').toString(),
-          state: (m['state'] ?? '').toString(),
-        );
-      }).toList();
-    } on Exception catch (e) {
+      final response = await apiClient.post(
+        '/rental/api/v1/payment/providers',
+        data: {},
+      );
+      final data = response.data as Map<String, dynamic>;
+      final result = data['result'] as Map<String, dynamic>?;
+      final providersList = result?['providers'] as List<dynamic>? ?? [];
+
+      final providers = providersList
+          .map((p) => ProviderWithMethod.fromJson(p as Map<String, dynamic>))
+          .toList();
+
+      print('✅ Got ${providers.length} provider-method combinations');
+      return providers;
+    } catch (e, st) {
+      print('❌ Error fetching providers: $e\n$st');
+      return [];
+    }
+  }
+
+  /// Get unique providers from the list
+  Future<List<PaymentProvider>> fetchProviders() async {
+    try {
+      final items = await fetchProvidersWithMethods();
+      final seen = <int>{};
+      final providers = <PaymentProvider>[];
+
+      for (final item in items) {
+        if (!seen.contains(item.providerId)) {
+          seen.add(item.providerId);
+          providers.add(
+            PaymentProvider(
+              id: item.providerId,
+              name: item.providerName,
+              code: item.providerCode,
+              state: item.providerState,
+            ),
+          );
+        }
+      }
+      return providers;
+    } catch (e) {
       print('Error fetching payment providers: $e');
       return [];
+    }
+  }
+
+  /// Get payment methods for a specific provider
+  Future<List<PaymentMethod>> fetchPaymentMethods(int providerId) async {
+    try {
+      final items = await fetchProvidersWithMethods();
+      return items
+          .where((item) => item.providerId == providerId)
+          .map(
+            (item) => PaymentMethod(
+              id: item.paymentMethodId,
+              name: item.paymentMethodName,
+              code: item.paymentCode,
+              providerId: item.providerId,
+              providerName: item.providerName,
+              active: true,
+            ),
+          )
+          .toList();
+    } catch (e) {
+      print('Error fetching payment methods: $e');
+      return [];
+    }
+  }
+
+  /// Fetch invoice details by ID
+  Future<Invoice?> fetchInvoice(int invoiceId) async {
+    try {
+      final rows = await searchRead(
+        'account.move',
+        domain: [
+          ['id', '=', invoiceId],
+        ],
+        fields: const [
+          'id',
+          'name',
+          'amount_total',
+          'amount_residual',
+          'payment_state',
+          'invoice_date',
+          'invoice_date_due',
+          'state',
+          'move_type',
+          'partner_id',
+          'currency_id',
+        ],
+        limit: 1,
+      );
+
+      if (rows.isEmpty) return null;
+      return Invoice.fromJson((rows.first as Map).cast<String, dynamic>());
+    } catch (e) {
+      print('Error fetching invoice: $e');
+      return null;
+    }
+  }
+
+  /// Fetch invoices by name
+  Future<List<Invoice>> fetchInvoicesByNames(List<String> invoiceNames) async {
+    try {
+      final rows = await searchRead(
+        'account.move',
+        domain: [
+          ['name', 'in', invoiceNames],
+          ['state', '=', 'posted'],
+        ],
+        fields: const [
+          'id',
+          'name',
+          'amount_total',
+          'amount_residual',
+          'payment_state',
+          'invoice_date',
+          'invoice_date_due',
+          'state',
+          'move_type',
+          'partner_id',
+          'currency_id',
+        ],
+        order: 'invoice_date_due asc',
+      );
+
+      return rows.map((r) {
+        return Invoice.fromJson((r as Map).cast<String, dynamic>());
+      }).toList();
+    } catch (e) {
+      print('Error fetching invoices: $e');
+      return [];
+    }
+  }
+
+  /// Create a payment transaction
+  Future<int?> createPaymentTransaction(PaymentTransaction transaction) async {
+    try {
+      final payload = {
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {
+          'model': 'payment.transaction',
+          'method': 'create',
+          'args': [transaction.toJson()],
+          'kwargs': {},
+        },
+        'id': DateTime.now().millisecondsSinceEpoch,
+      };
+
+      print('Creating payment transaction: $payload');
+      final resp = await apiClient.post('/web/dataset/call_kw', data: payload);
+      final body = resp.data;
+
+      if (body is Map && body['result'] != null) {
+        final transactionId = body['result'] as int;
+        print('✅ Payment transaction created with ID: $transactionId');
+        return transactionId;
+      }
+
+      return null;
+    } catch (e, st) {
+      print('❌ Failed to create payment transaction: $e\n$st');
+      rethrow;
+    }
+  }
+
+  /// Set payment transaction as done (simulate successful payment in demo mode)
+  Future<bool> setPaymentTransactionDone(int transactionId) async {
+    try {
+      final payload = {
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {
+          'model': 'payment.transaction',
+          'method': 'action_demo_set_done',
+          'args': [
+            [transactionId],
+          ],
+          'kwargs': {},
+        },
+        'id': DateTime.now().millisecondsSinceEpoch,
+      };
+
+      print('Setting payment transaction $transactionId as done: $payload');
+      final resp = await apiClient.post('/web/dataset/call_kw', data: payload);
+      final body = resp.data;
+
+      print('📥 Set done response: $body');
+
+      // Success is indicated by absence of error key
+      if (body is Map && !body.containsKey('error')) {
+        print('✅ Payment transaction $transactionId set as done');
+        return true;
+      }
+
+      // If there's an error, extract and log it
+      if (body is Map && body['error'] != null) {
+        final error = body['error'];
+        print('❌ Error setting transaction as done: $error');
+      }
+
+      return false;
+    } catch (e, st) {
+      print('❌ Failed to set payment transaction as done: $e\n$st');
+      rethrow;
+    }
+  }
+
+  /// Complete payment flow: create transaction and set as done
+  Future<bool> processPayment({
+    required double amount,
+    required int currencyId,
+    required int partnerId,
+    required int providerIndex,
+    required List<int> invoiceIds,
+  }) async {
+    try {
+      // Fetch provider details using index
+      final providers = await fetchProvidersWithMethods();
+      if (providerIndex < 0 || providerIndex >= providers.length) {
+        throw Exception('Invalid provider index: $providerIndex');
+      }
+
+      final selectedProvider = providers[providerIndex];
+
+      // Step 1: Create payment transaction
+      final transaction = PaymentTransaction(
+        amount: amount,
+        currencyId: currencyId,
+        partnerId: partnerId,
+        providerId: selectedProvider.providerId,
+        paymentMethodId: selectedProvider.paymentMethodId,
+        invoiceIds: invoiceIds,
+        operation: 'online_direct',
+      );
+
+      final transactionId = await createPaymentTransaction(transaction);
+      if (transactionId == null) {
+        throw Exception('Failed to create payment transaction');
+      }
+
+      // Step 2: Set transaction as done
+      final success = await setPaymentTransactionDone(transactionId);
+      return success;
+    } catch (e, st) {
+      print('❌ Payment processing failed: $e\n$st');
+      rethrow;
     }
   }
 }
