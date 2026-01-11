@@ -74,8 +74,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
                     _historySection(context, history),
 
                     const SizedBox(height: 16),
-                    _methodsSection(context, state.providers),
-                    const SizedBox(height: 24),
                   ],
                 ),
               );
@@ -398,120 +396,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _methodsSection(
-    BuildContext context,
-    List<PaymentProvider> providers,
-  ) {
-    final textTheme = Theme.of(context).textTheme;
-    final selectedId = context.select<PaymentsCubit, int?>(
-      (cubit) => cubit.state.selectedProviderId,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Payment Methods',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            TextButton(
-              onPressed: () {},
-              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-              child: const Text('Add New'),
-            ),
-          ],
-        ),
-        if (providers.isEmpty)
-          Text(
-            'No payment methods available',
-            style: textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          )
-        else
-          Column(
-            children: [
-              for (final p in providers)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Radio<int>(
-                            value: p.id,
-                            groupValue: selectedId,
-                            onChanged: (val) => context
-                                .read<PaymentsCubit>()
-                                .selectProvider(val),
-                          ),
-                          Container(
-                            width: 40,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              p.code.toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                p.displayAs?.isNotEmpty == true
-                                    ? p.displayAs!
-                                    : p.name,
-                                style: textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Text(
-                                p.code,
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: () =>
-                            context.read<PaymentsCubit>().selectProvider(p.id),
-                        icon: Icon(
-                          Icons.chevron_right,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-      ],
     );
   }
 }

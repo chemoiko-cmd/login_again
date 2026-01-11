@@ -4,17 +4,64 @@ import 'package:go_router/go_router.dart';
 import '../../styles/colors.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
+import '../../features/profile/data/profile_repository.dart';
+import '../../features/landlord/data/models/partner_profile.dart';
 
-class AppSideDrawer extends StatelessWidget {
+class AppSideDrawer extends StatefulWidget {
   const AppSideDrawer({super.key});
 
   @override
+  State<AppSideDrawer> createState() => _AppSideDrawerState();
+}
+
+class _AppSideDrawerState extends State<AppSideDrawer> {
+  PartnerProfile? _profile;
+  bool _loadingProfile = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final authState = context.read<AuthCubit>().state;
+    if (authState is! Authenticated) return;
+    if (_loadingProfile || _profile != null) return;
+
+    setState(() => _loadingProfile = true);
+    try {
+      final repo = ProfileRepository(
+        apiClient: context.read<AuthCubit>().apiClient,
+      );
+      final profile = await repo.fetchPartnerProfile(
+        partnerId: authState.user.partnerId,
+      );
+      if (mounted) {
+        setState(() {
+          _profile = profile;
+          _loadingProfile = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingProfile = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final location = GoRouter.of(context).state.uri.path; // FIXED
+    final location = GoRouter.of(context).state.uri.path;
     final authState = context.watch<AuthCubit>().state;
     final bool isAuthenticated = authState is Authenticated;
     final bool isTenant = authState is Authenticated && authState.isTenant;
     final bool isLandlord = authState is Authenticated && authState.isLandlord;
+
+    final String userName = authState is Authenticated
+        ? authState.user.name
+        : 'Guest';
+
     return Drawer(
       backgroundColor: AppColors.backgroundLight,
       child: SafeArea(
@@ -26,20 +73,41 @@ class AppSideDrawer extends StatelessWidget {
               color: AppColors.primary,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   CircleAvatar(
                     radius: 28,
                     backgroundColor: AppColors.backgroundLight,
+                    backgroundImage: _profile?.imageBytes != null
+                        ? MemoryImage(_profile!.imageBytes!)
+                        : null,
+                    child: _profile?.imageBytes == null
+                        ? Icon(Icons.person, size: 32, color: AppColors.primary)
+                        : null,
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(
-                    'Menu',
-                    style: TextStyle(
+                    userName,
+                    style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  if (_profile?.email.isNotEmpty ?? false)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        _profile!.email,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 13,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                 ],
               ),
             ),

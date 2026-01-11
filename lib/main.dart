@@ -14,7 +14,7 @@ import 'features/auth/presentation/cubit/auth_cubit.dart';
 import 'features/auth/presentation/cubit/auth_state.dart';
 
 void main() {
-  final apiClient = ApiClient(baseUrl: 'http://192.168.1.7:8069');
+  final apiClient = ApiClient(baseUrl: 'http://192.168.1.6:8069');
   final authRepository = AuthRepositoryImpl(AuthRemoteDataSource(apiClient));
 
   runApp(MyApp(authRepository: authRepository, apiClient: apiClient));
