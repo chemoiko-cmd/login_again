@@ -181,6 +181,87 @@ class PaymentsRepository {
     }
   }
 
+  Future<List<PaymentItem>> fetchPaymentHistory() async {
+    try {
+      // Get partner ID
+      int? partnerId;
+      final auth = authCubit.state;
+      if (auth is Authenticated) {
+        final users = await searchRead(
+          'res.users',
+          domain: [
+            ['login', '=', auth.user.username],
+          ],
+          fields: const ['partner_id'],
+          limit: 1,
+        );
+
+        partnerId =
+            (users.isNotEmpty
+                        ? (users.first as Map)['partner_id'] as List?
+                        : null)
+                    ?.first
+                as int?;
+      }
+
+      if (partnerId == null) return const [];
+
+      // Get PAID invoices only
+      final invoices = await searchRead(
+        'account.move',
+        domain: [
+          ['partner_id', '=', partnerId],
+          ['move_type', '=', 'out_invoice'],
+          ['state', '=', 'posted'],
+          ['payment_state', '=', 'paid'],
+        ],
+        fields: const [
+          'id',
+          'name',
+          'invoice_date_due',
+          'invoice_date',
+          'amount_total',
+          'amount_residual',
+          'payment_state',
+        ],
+        order: 'invoice_date desc',
+        limit: 200,
+      );
+
+      final results = <PaymentItem>[];
+      final now = DateTime.now();
+
+      // Process each paid invoice
+      for (final raw in invoices) {
+        final inv = raw as Map<String, dynamic>;
+        final name = (inv['name'] ?? '').toString();
+        final total = (inv['amount_total'] as num?)?.toDouble() ?? 0.0;
+        final dueDate =
+            DateTime.tryParse(inv['invoice_date_due']?.toString() ?? '') ?? now;
+        final paidDate = DateTime.tryParse(
+          inv['invoice_date']?.toString() ?? '',
+        );
+
+        results.add(
+          PaymentItem(
+            id: name,
+            amount: total,
+            dueDate: dueDate,
+            paidDate: paidDate,
+            status: 'paid',
+            type: 'rent',
+            description: name,
+          ),
+        );
+      }
+
+      return results;
+    } catch (e, st) {
+      print('Failed to fetch payment history: $e\n$st');
+      return const [];
+    }
+  }
+
   Future<void> pay(PaymentItem payment) async {
     // Delegates to configured processor (e.g., Stripe, Flutterwave, M-Pesa) injected at composition time.
     await _processor(payment);

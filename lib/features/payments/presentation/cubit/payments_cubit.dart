@@ -10,12 +10,18 @@ class PaymentsCubit extends Cubit<PaymentsState> {
   Future<void> load() async {
     emit(state.copyWith(loading: true, error: null));
     try {
-      final items = await repo.fetchPayments();
+      // Fetch both pending/unpaid and paid invoices
+      final pendingItems = await repo.fetchPayments();
+      final historyItems = await repo.fetchPaymentHistory();
+
+      // Combine both lists
+      final allItems = [...pendingItems, ...historyItems];
+
       final providers = await repo.fetchProviders();
       emit(
         state.copyWith(
           loading: false,
-          items: items,
+          items: allItems,
           providers: providers,
           error: null,
         ),

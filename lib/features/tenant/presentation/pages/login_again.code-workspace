@@ -11,6 +11,12 @@
 		},
 		{
 			"path": "../../../../../../egrocer_v2.0.5"
+		},
+		{
+			"path": "../../../../../build/app/outputs/bundle/release"
+		},
+		{
+			"path": "../../../../../build/app/outputs/flutter-apk"
 		}
 	],
 	"settings": {
