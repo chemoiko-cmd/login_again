@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/core/utils/formatters.dart';
+import 'package:login_again/features/landlord/presentation/inspection_screen.dart';
 import 'package:login_again/features/landlord/presentation/widgets/action_tile.dart';
 import '../data/repositories/landlord_repository.dart';
 import 'cubit/metrics_cubit.dart';
@@ -148,22 +150,22 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
                       icon: Icons.playlist_add_check,
                       title: 'Start New Inspection',
                       subtitle: '',
-                      onTap: () => (),
+                      onTap: () => context.go('/inspections'),
                     ),
 
                     ActionTile(
                       icon: Icons.build,
                       title: 'View Maintenance Tasks',
                       subtitle: '',
-                      onTap: () => (),
+                      onTap: () => context.go('/landlord-maintenance'),
                     ),
 
-                    ActionTile(
-                      icon: Icons.pending_actions,
-                      title: 'Pending Approvals',
-                      subtitle: '',
-                      onTap: () => (),
-                    ),
+                    // ActionTile(
+                    //   icon: Icons.pending_actions,
+                    //   title: 'Pending Approvals',
+                    //   subtitle: '',
+                    //   onTap: () => (),
+                    // ),
                   ],
                 ),
               );
