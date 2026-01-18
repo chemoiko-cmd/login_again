@@ -7,7 +7,6 @@
 // - Provides logout endpoint to destroy the server session.
 // ============================================================================
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import '../../../../core/api/api_client.dart';
 import '../models/user_model.dart';
 import '../../domain/entities/user.dart';
@@ -57,12 +56,10 @@ class AuthRemoteDataSource {
           throw ServerException('Invalid credentials');
         }
 
-        if (kDebugMode) {
-          try {
-            debugPrint('auth result keys: ${result.keys.toList()}');
-            debugPrint('auth result.group: ${result['group']}');
-          } catch (_) {}
-        }
+        try {
+          print('auth result keys: ${result.keys.toList()}');
+          print('auth result.group: ${result['group']}');
+        } catch (_) {}
 
         // Extract session from cookies in `Set-Cookie: session_id=<val>; ...`
         final cookies = response.headers['set-cookie'];
@@ -81,19 +78,18 @@ class AuthRemoteDataSource {
           throw ServerException('No session ID received');
         }
 
-        if (kDebugMode) {
-          final sidPreview = (sessionId.length > 10)
-              ? '${sessionId.substring(0, 10)}...'
-              : sessionId;
-          debugPrint('session_id: $sidPreview');
-        }
+        final sidPreview = (sessionId.length > 10)
+            ? '${sessionId.substring(0, 10)}...'
+            : sessionId;
+        print('session_id: $sidPreview');
 
         final user = UserModel.fromJson(result);
         return (user: user, sessionId: sessionId);
       }
 
       throw ServerException('Login failed with status: ${response.statusCode}');
-    } on DioException catch (e) {
+    } on DioException catch (e, st) {
+      print(st.toString());
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException('Connection timeout');
@@ -101,6 +97,9 @@ class AuthRemoteDataSource {
         throw NetworkException('No internet connection $e');
       }
       throw ServerException(e.message ?? 'Unknown error');
+    } catch (e, st) {
+      print(st.toString());
+      throw ServerException('Unexpected error: $e');
     }
   }
 
@@ -112,7 +111,11 @@ class AuthRemoteDataSource {
         '/web/session/destroy',
         data: {'jsonrpc': '2.0', 'method': 'call', 'params': {}},
       );
-    } catch (e) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      // Ignore logout errors
+    } catch (e, st) {
+      print(st.toString());
       // Ignore logout errors
     }
   }

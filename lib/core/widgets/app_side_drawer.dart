@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:login_again/theme/app_gradients.dart';
 
 import '../../styles/colors.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
@@ -71,7 +72,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              color: AppColors.primary,
+              decoration: BoxDecoration(gradient: AppGradients.primaryGradient),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

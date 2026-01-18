@@ -37,25 +37,33 @@ class PaymentsRepository {
     int? limit,
     String? order,
   }) async {
-    final payload = {
-      'jsonrpc': '2.0',
-      'method': 'call',
-      'params': {
-        'model': model,
-        'method': 'search_read',
-        'args': [domain],
-        'kwargs': {
-          if (fields != null) 'fields': fields,
-          if (limit != null) 'limit': limit,
-          if (order != null) 'order': order,
+    try {
+      final payload = {
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {
+          'model': model,
+          'method': 'search_read',
+          'args': [domain],
+          'kwargs': {
+            if (fields != null) 'fields': fields,
+            if (limit != null) 'limit': limit,
+            if (order != null) 'order': order,
+          },
         },
-      },
-    };
-    final resp = await apiClient.post('/web/dataset/call_kw', data: payload);
-    final body = resp.data;
-    return (body is Map && body['result'] is List)
-        ? body['result'] as List
-        : const [];
+      };
+      final resp = await apiClient.post('/web/dataset/call_kw', data: payload);
+      final body = resp.data;
+      return (body is Map && body['result'] is List)
+          ? body['result'] as List
+          : const [];
+    } on DioException catch (e, st) {
+      print(st.toString());
+      throw Exception('${e.message}');
+    } catch (e, st) {
+      print(st.toString());
+      throw Exception('Unexpected error: $e');
+    }
   }
 
   Future<List<PaymentItem>> fetchPayments() async {
@@ -354,8 +362,13 @@ class PaymentsRepository {
 
       print('✅ Got ${providers.length} provider-method combinations');
       return providers;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      print('❌ Error fetching providers: ${e.message}');
+      return [];
     } catch (e, st) {
-      print('❌ Error fetching providers: $e\n$st');
+      print(st.toString());
+      print('❌ Error fetching providers: $e');
       return [];
     }
   }
@@ -381,7 +394,12 @@ class PaymentsRepository {
         }
       }
       return providers;
-    } catch (e) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      print('Error fetching payment providers: ${e.message}');
+      return [];
+    } catch (e, st) {
+      print(st.toString());
       print('Error fetching payment providers: $e');
       return [];
     }
@@ -404,7 +422,12 @@ class PaymentsRepository {
             ),
           )
           .toList();
-    } catch (e) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      print('Error fetching payment methods: ${e.message}');
+      return [];
+    } catch (e, st) {
+      print(st.toString());
       print('Error fetching payment methods: $e');
       return [];
     }
@@ -436,7 +459,12 @@ class PaymentsRepository {
 
       if (rows.isEmpty) return null;
       return Invoice.fromJson((rows.first as Map).cast<String, dynamic>());
-    } catch (e) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      print('Error fetching invoice: ${e.message}');
+      return null;
+    } catch (e, st) {
+      print(st.toString());
       print('Error fetching invoice: $e');
       return null;
     }
@@ -470,7 +498,12 @@ class PaymentsRepository {
       return rows.map((r) {
         return Invoice.fromJson((r as Map).cast<String, dynamic>());
       }).toList();
-    } catch (e) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      print('Error fetching invoices: ${e.message}');
+      return [];
+    } catch (e, st) {
+      print(st.toString());
       print('Error fetching invoices: $e');
       return [];
     }
@@ -502,9 +535,12 @@ class PaymentsRepository {
       }
 
       return null;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      throw Exception('${e.message}');
     } catch (e, st) {
-      print('❌ Failed to create payment transaction: $e\n$st');
-      rethrow;
+      print(st.toString());
+      throw Exception('Unexpected error: $e');
     }
   }
 
@@ -544,9 +580,12 @@ class PaymentsRepository {
       }
 
       return false;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      throw Exception('${e.message}');
     } catch (e, st) {
-      print('❌ Failed to set payment transaction as done: $e\n$st');
-      rethrow;
+      print(st.toString());
+      throw Exception('Unexpected error: $e');
     }
   }
 
@@ -586,9 +625,12 @@ class PaymentsRepository {
       // Step 2: Set transaction as done
       final success = await setPaymentTransactionDone(transactionId);
       return success;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      throw Exception('${e.message}');
     } catch (e, st) {
-      print('❌ Payment processing failed: $e\n$st');
-      rethrow;
+      print(st.toString());
+      throw Exception('Unexpected error: $e');
     }
   }
 }

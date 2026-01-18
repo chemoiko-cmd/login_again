@@ -37,7 +37,11 @@ class LandlordRepository {
         final m = Map<String, dynamic>.from(e);
         return {'id': m['id'] as int, 'name': m['name'] as String? ?? 'Unit'};
       }).toList();
-    } catch (_) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
       return [];
     }
   }
@@ -106,7 +110,11 @@ class LandlordRepository {
           'name': m['name'] as String? ?? 'Partner',
         };
       }).toList();
-    } catch (_) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
       return [];
     }
   }
@@ -148,7 +156,11 @@ class LandlordRepository {
       return list
           .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e))
           .toList();
-    } catch (_) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
       return [];
     }
   }
@@ -185,7 +197,11 @@ class LandlordRepository {
       );
 
       return resp.data['result'] != null;
-    } catch (_) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return false;
+    } catch (e, st) {
+      print(st.toString());
       return false;
     }
   }
@@ -330,7 +346,11 @@ class LandlordRepository {
       return rows
           .map((r) => r.copyWith(status: statusForTenant(r.tenantPartnerId)))
           .toList();
-    } catch (_) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return const [];
+    } catch (e, st) {
+      print(st.toString());
       return const [];
     }
   }
@@ -378,10 +398,12 @@ class LandlordRepository {
       if (list.isEmpty) return null;
       final m = Map<String, dynamic>.from(list.first as Map);
       return PartnerProfile.fromOdoo(m);
-    } catch (e, stack) {
-      print('fetchPartnerProfile ERROR: $e');
-      print('Stack trace: $stack');
-      rethrow;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      throw Exception('${e.message}');
+    } catch (e, st) {
+      print(st.toString());
+      throw Exception('Unexpected error: $e');
     }
   }
 
@@ -449,7 +471,11 @@ class LandlordRepository {
           'name': m['name'] as String? ?? 'Partner',
         };
       }).toList();
-    } catch (_) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
       return [];
     }
   }
@@ -520,7 +546,11 @@ class LandlordRepository {
           'name': partnerName ?? (m['name'] as String? ?? 'User'),
         };
       }).toList();
-    } catch (_) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
       return [];
     }
   }
@@ -710,7 +740,11 @@ class LandlordRepository {
 
         return Inspection.fromJson(map);
       }).toList();
-    } catch (_) {
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
       return [];
     }
   }

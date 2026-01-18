@@ -41,24 +41,32 @@ class ContractsRepository {
     int? limit,
     String? order,
   }) async {
-    final payload = {
-      'jsonrpc': '2.0',
-      'method': 'call',
-      'params': {
-        'model': model,
-        'method': 'search_read',
-        'args': [domain],
-        'kwargs': {
-          if (fields != null) 'fields': fields,
-          if (limit != null) 'limit': limit,
-          if (order != null) 'order': order,
+    try {
+      final payload = {
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {
+          'model': model,
+          'method': 'search_read',
+          'args': [domain],
+          'kwargs': {
+            if (fields != null) 'fields': fields,
+            if (limit != null) 'limit': limit,
+            if (order != null) 'order': order,
+          },
         },
-      },
-    };
-    final resp = await apiClient.post('/web/dataset/call_kw', data: payload);
-    final body = resp.data;
-    if (body is Map && body['result'] is List) return body['result'] as List;
-    return const [];
+      };
+      final resp = await apiClient.post('/web/dataset/call_kw', data: payload);
+      final body = resp.data;
+      if (body is Map && body['result'] is List) return body['result'] as List;
+      return const [];
+    } on DioException catch (e, st) {
+      print(st.toString());
+      throw Exception('${e.message}');
+    } catch (e, st) {
+      print(st.toString());
+      throw Exception('Unexpected error: $e');
+    }
   }
 
   Future<int?> _currentPartnerId() async {

@@ -30,7 +30,6 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      drawer: const AppSideDrawer(),
       body: BlocBuilder<TenantDashboardCubit, TenantDashboardState>(
         builder: (context, state) {
           if (state.loading) {

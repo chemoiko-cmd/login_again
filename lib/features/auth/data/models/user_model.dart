@@ -3,7 +3,6 @@
 // NOTE: Groups are sourced ONLY from the single 'group' field in the response.
 //       We no longer derive from 'primary_group' or 'rental_groups'.
 // ============================================================================
-import 'package:flutter/foundation.dart';
 import '../../domain/entities/user.dart';
 
 class UserModel extends User {
@@ -28,14 +27,10 @@ class UserModel extends User {
     // If absent, default to empty string.
     final String primaryGroup = (json['group'] ?? '').toString().trim();
 
-    if (kDebugMode) {
-      try {
-        debugPrint('UserModel.fromJson group: $primaryGroup');
-        debugPrint(
-          'UserModel.fromJson uid: ${json['uid']}, name: ${json['name']}',
-        );
-      } catch (_) {}
-    }
+    try {
+      print('UserModel.fromJson group: $primaryGroup');
+      print('UserModel.fromJson uid: ${json['uid']}, name: ${json['name']}');
+    } catch (_) {}
 
     return UserModel(
       id: json['uid'] ?? 0,

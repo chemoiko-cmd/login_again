@@ -16,28 +16,36 @@ class TenantRepository {
     int? limit,
     String? order,
   }) async {
-    final payload = {
-      'jsonrpc': '2.0',
-      'method': 'call',
-      'params': {
-        'model': model,
-        'method': 'search_read',
-        'args': [domain],
-        'kwargs': {
-          if (fields != null) 'fields': fields,
-          if (limit != null) 'limit': limit,
-          if (order != null) 'order': order,
+    try {
+      final payload = {
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {
+          'model': model,
+          'method': 'search_read',
+          'args': [domain],
+          'kwargs': {
+            if (fields != null) 'fields': fields,
+            if (limit != null) 'limit': limit,
+            if (order != null) 'order': order,
+          },
         },
-      },
-    };
-    final Response resp = await apiClient.post(
-      '/web/dataset/call_kw',
-      data: payload,
-    );
-    final body = resp.data;
-    return (body is Map && body['result'] is List)
-        ? body['result'] as List
-        : const [];
+      };
+      final Response resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: payload,
+      );
+      final body = resp.data;
+      return (body is Map && body['result'] is List)
+          ? body['result'] as List
+          : const [];
+    } on DioException catch (e, st) {
+      print(st.toString());
+      throw Exception('${e.message}');
+    } catch (e, st) {
+      print(st.toString());
+      throw Exception('Unexpected error: $e');
+    }
   }
 
   Future<Map<String, dynamic>> loadDashboard() async {

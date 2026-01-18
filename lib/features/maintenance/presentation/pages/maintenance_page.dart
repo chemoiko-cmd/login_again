@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
 import '../../../../styles/colors.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/maintenance_repository.dart';
@@ -464,10 +465,8 @@ class _MaintenancePageState extends State<MaintenancePage> {
       ),
       floatingActionButton: _isCreating
           ? null
-          : FloatingActionButton(
+          : GradientFloatingActionButton(
               onPressed: () => setState(() => _isCreating = true),
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
               child: const Icon(Icons.add),
             ),
       // overlay handled via Stack

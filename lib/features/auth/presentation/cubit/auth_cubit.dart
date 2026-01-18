@@ -2,7 +2,7 @@
 // FILE: lib/features/auth/presentation/cubit/auth_cubit.dart
 // ============================================================================
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_interceptor.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -33,24 +33,21 @@ class AuthCubit extends Cubit<AuthState> {
 
     await result.fold<Future<void>>(
       (failure) async {
-        if (kDebugMode) {
-          debugPrint('Login failed: ${failure.message}');
-        }
+        print('Login failed: ${failure.message}');
         emit(AuthError(failure.message));
       },
       (data) async {
         _authInterceptor.setSession(data.sessionId);
-        if (kDebugMode) {
-          final sidPreview = data.sessionId.length > 10
-              ? '${data.sessionId.substring(0, 10)}...'
-              : data.sessionId;
-          debugPrint(
-            'Authenticated: id=${data.user.id}, name=${data.user.name}, group=${data.user.primaryGroup}, session=$sidPreview',
-          );
-        }
+        final sidPreview = data.sessionId.length > 10
+            ? '${data.sessionId.substring(0, 10)}...'
+            : data.sessionId;
+        print(
+          'Authenticated: id=${data.user.id}, name=${data.user.name}, group=${data.user.primaryGroup}, session=$sidPreview',
+        );
 
         bool isTenant = false;
         bool isLandlord = false;
+        final isInternalUser = data.user.isInternalUser;
         try {
           final tenantPayload = {
             'jsonrpc': '2.0',
@@ -71,14 +68,20 @@ class AuthCubit extends Cubit<AuthState> {
             data: tenantPayload,
           );
           final tenantBody = tenantResp.data;
-          isTenant = (tenantBody is Map && tenantBody['result'] is bool)
+          final inTenantGroup =
+              (tenantBody is Map && tenantBody['result'] is bool)
               ? tenantBody['result'] as bool
               : false;
-          if (kDebugMode) {
-            debugPrint('has_group(tenant) => $isTenant');
-          }
-        } catch (e) {
-          if (kDebugMode) debugPrint('has_group tenant check failed: $e');
+          isTenant = inTenantGroup || !isInternalUser;
+          print(
+            'has_group(tenant) => $inTenantGroup | is_internal_user=$isInternalUser | isTenant=$isTenant',
+          );
+        } on DioException catch (e, st) {
+          print(st.toString());
+          print('has_group tenant check failed: ${e.message}');
+        } catch (e, st) {
+          print(st.toString());
+          print('has_group tenant check failed: $e');
         }
 
         try {
@@ -104,18 +107,18 @@ class AuthCubit extends Cubit<AuthState> {
           isLandlord = (landlordBody is Map && landlordBody['result'] is bool)
               ? landlordBody['result'] as bool
               : false;
-          if (kDebugMode) {
-            debugPrint('has_group(landlord) => $isLandlord');
-          }
-        } catch (e) {
-          if (kDebugMode) debugPrint('has_group landlord check failed: $e');
+          print('has_group(landlord) => $isLandlord');
+        } on DioException catch (e, st) {
+          print(st.toString());
+          print('has_group landlord check failed: ${e.message}');
+        } catch (e, st) {
+          print(st.toString());
+          print('has_group landlord check failed: $e');
         }
 
-        if (kDebugMode) {
-          debugPrint(
-            'Emitting Authenticated: id=${data.user.id}, tenant=$isTenant, landlord=$isLandlord',
-          );
-        }
+        print(
+          'Emitting Authenticated: id=${data.user.id}, tenant=$isTenant, landlord=$isLandlord',
+        );
 
         emit(
           Authenticated(data.user, isTenant: isTenant, isLandlord: isLandlord),

@@ -5,8 +5,8 @@ import 'package:login_again/features/landlord/presentation/cubit/inspections_cub
 import 'package:login_again/features/landlord/presentation/cubit/inspections_state.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
-import 'package:login_again/styles/colors.dart';
 import 'package:login_again/features/landlord/presentation/widgets/inspection_create_overlay.dart';
+import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
 
 class InspectionScreen extends StatefulWidget {
   const InspectionScreen({super.key});
@@ -87,10 +87,8 @@ class _InspectionScreenState extends State<InspectionScreen> {
       ),
       floatingActionButton: _isCreating
           ? null
-          : FloatingActionButton(
+          : GradientFloatingActionButton(
               onPressed: () => setState(() => _isCreating = true),
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
               child: const Icon(Icons.add),
             ),
     );
