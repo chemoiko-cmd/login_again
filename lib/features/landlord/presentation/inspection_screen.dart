@@ -19,6 +19,16 @@ class _InspectionScreenState extends State<InspectionScreen> {
   bool _isCreating = false;
 
   @override
+  void initState() {
+    super.initState();
+    final authState = context.read<AuthCubit>().state;
+    final partnerId = authState is Authenticated ? authState.user.partnerId : 0;
+    if (partnerId > 0) {
+      context.read<InspectionsCubit>().load(partnerId: partnerId);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Inspections')),

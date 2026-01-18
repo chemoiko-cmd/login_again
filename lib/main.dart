@@ -4,17 +4,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'core/api/api_client.dart';
-import 'core/routes/app_router.dart';
-import 'core/currency/currency_repository.dart';
 import 'core/currency/currency_cubit.dart';
+
+import 'core/api/api_client.dart';
+import 'core/register_cubits.dart';
+import 'core/routes/app_router.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/presentation/cubit/auth_cubit.dart';
 import 'features/auth/presentation/cubit/auth_state.dart';
 
 void main() {
-  final apiClient = ApiClient(baseUrl: 'http://192.168.49.140:8069');
+  final apiClient = ApiClient(baseUrl: 'http://rental.kolapro.com');
   final authRepository = AuthRepositoryImpl(AuthRemoteDataSource(apiClient));
 
   runApp(MyApp(authRepository: authRepository, apiClient: apiClient));
@@ -34,17 +35,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthCubit>(
-          create: (_) => AuthCubit(authRepository, apiClient),
-        ),
-        BlocProvider<CurrencyCubit>(
-          create: (context) => CurrencyCubit(
-            repo: CurrencyRepository(
-              apiClient: apiClient,
-              authCubit: context.read<AuthCubit>(),
-            ),
-          ),
-        ),
+        ...RegisterCubits(
+          apiClient: apiClient,
+          authRepository: authRepository,
+        ).register(),
       ],
       child: Builder(
         builder: (context) {

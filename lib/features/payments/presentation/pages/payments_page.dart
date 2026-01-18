@@ -4,8 +4,6 @@ import 'package:login_again/core/currency/currency_cubit.dart';
 import '../../../../styles/colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/file_utils.dart';
-import '../../../auth/presentation/cubit/auth_cubit.dart';
-import '../../data/payments_repository.dart';
 import '../../domain/payment.dart';
 import '../../domain/payment_provider.dart';
 import '../cubit/payments_cubit.dart';
@@ -21,64 +19,57 @@ class PaymentsPage extends StatefulWidget {
 }
 
 class _PaymentsPageState extends State<PaymentsPage> {
-  late PaymentsRepository _repo;
-
   @override
   void initState() {
     super.initState();
-    final auth = context.read<AuthCubit>();
-    // Use default processor; inject a real payment processor here when available.
-    _repo = PaymentsRepository(apiClient: auth.apiClient, authCubit: auth);
+    context.read<PaymentsCubit>().load();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: BlocProvider(
-          create: (_) => PaymentsCubit(repo: _repo)..load(),
-          child: BlocBuilder<PaymentsCubit, PaymentsState>(
-            builder: (context, state) {
-              if (state.loading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (state.error != null) {
-                return Center(
-                  child: Text('Failed to load payments\n${state.error}'),
-                );
-              }
-              final items = state.items;
-              final pending = items
-                  .where((p) => p.status == 'pending' || p.status == 'overdue')
-                  .toList();
-              final history = items.where((p) => p.status == 'paid').toList();
-              final totalDue = pending.fold<double>(
-                0.0,
-                (sum, p) => sum + p.amount,
+        child: BlocBuilder<PaymentsCubit, PaymentsState>(
+          builder: (context, state) {
+            if (state.loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.error != null) {
+              return Center(
+                child: Text('Failed to load payments\n${state.error}'),
               );
+            }
+            final items = state.items;
+            final pending = items
+                .where((p) => p.status == 'pending' || p.status == 'overdue')
+                .toList();
+            final history = items.where((p) => p.status == 'paid').toList();
+            final totalDue = pending.fold<double>(
+              0.0,
+              (sum, p) => sum + p.amount,
+            );
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
 
-                    if (pending.isNotEmpty)
-                      _totalDueCard(context, totalDue, state.processing),
+                  if (pending.isNotEmpty)
+                    _totalDueCard(context, totalDue, state.processing),
 
-                    if (pending.isNotEmpty) const SizedBox(height: 16),
-                    if (pending.isNotEmpty) _pendingSection(context, pending),
+                  if (pending.isNotEmpty) const SizedBox(height: 16),
+                  if (pending.isNotEmpty) _pendingSection(context, pending),
 
-                    const SizedBox(height: 16),
-                    _historySection(context, history),
+                  const SizedBox(height: 16),
+                  _historySection(context, history),
 
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              );
-            },
-          ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

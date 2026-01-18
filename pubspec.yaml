@@ -38,6 +38,7 @@ dependencies:
   flutter_bloc: ^9.1.1
   go_router: ^17.0.1
   image_picker: ^1.2.1
+  nested: ^1.0.0
   odoo_rpc: ^0.7.1
   path_provider: ^2.1.5
   share_plus: ^10.1.2
