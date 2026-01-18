@@ -603,6 +603,16 @@ class LandlordRepository {
       final int openMaintenanceTasks =
           (metrics['open_maintenance_tasks'] ?? 0) as int;
 
+      // Fetch pending approvals (expenses in submitted state) via RPC
+      int pendingApprovals = 0;
+      if (partnerId != null) {
+        try {
+          pendingApprovals = await fetchSubmittedExpensesCount(partnerId);
+        } catch (e) {
+          print('Failed to fetch submitted expenses count: $e');
+        }
+      }
+
       // 3) Map to model
       return LandlordMetricsModel(
         totalUnits: totalUnits,
@@ -612,7 +622,7 @@ class LandlordRepository {
         totalRentDue: totalRentDue,
         outstanding: outstanding,
         openMaintenanceTasks: openMaintenanceTasks,
-        pendingApprovals: 0, // backend not yet exposing
+        pendingApprovals: pendingApprovals,
       );
     } catch (e, s) {
       // Log the error for debugging
@@ -629,6 +639,40 @@ class LandlordRepository {
         openMaintenanceTasks: 0,
         pendingApprovals: 0,
       );
+    }
+  }
+
+  /// Simple helper: count expenses in 'submitted' state for this landlord's properties.
+  Future<int> fetchSubmittedExpensesCount(int partnerId) async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.expense',
+            'method': 'search_count',
+            'args': [
+              [
+                ['state', '=', 'submitted'],
+                ['property_id.owner_id', '=', partnerId],
+              ],
+            ],
+            'kwargs': {},
+          },
+          'id': 1,
+        },
+      );
+
+      final result = resp.data['result'];
+      if (result is num) {
+        return result.toInt();
+      }
+      return 0;
+    } catch (e) {
+      print('Error fetching submitted expenses count: $e');
+      return 0;
     }
   }
 

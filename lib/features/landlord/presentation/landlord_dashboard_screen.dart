@@ -92,6 +92,7 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       mainAxisSpacing: 14,
                       crossAxisSpacing: 14,
+                      childAspectRatio: 2.5,
                       children: [
                         MetricCard(
                           icon: Icons.apartment,

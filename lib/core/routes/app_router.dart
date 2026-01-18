@@ -28,6 +28,7 @@ import '../../features/maintenance/presentation/pages/maintenance_page.dart';
 import '../../features/contracts/presentation/pages/contract_details_page.dart';
 import '../../core/widgets/app_side_drawer.dart'; // Make sure this exists
 import '../../features/maintenance2/presentation/maintenance_screen.dart';
+import 'package:login_again/screens/privacy_policy_screen.dart';
 
 class AppRouter {
   final AuthCubit authCubit;
@@ -183,6 +184,10 @@ class AppRouter {
                 status: (m['status'] as String?),
               );
             },
+          ),
+          GoRoute(
+            path: '/privacy-policy',
+            builder: (context, state) => const PrivacyPolicyScreen(),
           ),
         ],
       ),

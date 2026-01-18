@@ -37,7 +37,7 @@ class MetricCard extends StatelessWidget {
         children: [
           // Icon container
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
@@ -57,7 +57,7 @@ class MetricCard extends StatelessWidget {
                   value,
                   style: TextStyle(
                     color: valueColor,
-                    fontSize: 20,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

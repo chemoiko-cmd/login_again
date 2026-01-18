@@ -98,7 +98,7 @@ class AuthRemoteDataSource {
           e.type == DioExceptionType.receiveTimeout) {
         throw NetworkException('Connection timeout');
       } else if (e.type == DioExceptionType.connectionError) {
-        throw NetworkException('No internet connection');
+        throw NetworkException('No internet connection $e');
       }
       throw ServerException(e.message ?? 'Unknown error');
     }

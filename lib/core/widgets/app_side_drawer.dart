@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import '../../styles/colors.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
@@ -254,18 +254,14 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                       color: AppColors.textSecondary,
                     ),
                     title: const Text('Privacy Policy'),
-                    onTap: () async {
+                    onTap: () {
                       Navigator.of(context).pop();
-                      final uri = Uri.parse(
-                        'https://sites.google.com/view/krental-privacypolicy/home',
-                      );
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(
-                          uri,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
+                      context.go('/privacy-policy');
                     },
+                    selected: location == '/privacy-policy',
+                    selectedTileColor: AppColors.primary.withValues(
+                      alpha: 0.08,
+                    ),
                   ),
                   // ListTile(
                   //   leading: const Icon(
