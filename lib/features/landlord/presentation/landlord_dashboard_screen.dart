@@ -39,7 +39,7 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(title: Text('Hello $userName')),
+      appBar: AppBar(title: Text('Hello ${capitalizeFirst(userName)}.')),
       body: BlocBuilder<MetricsCubit, MetricsState>(
         builder: (context, state) {
           if (state is MetricsLoading) {

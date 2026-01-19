@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:login_again/features/landlord/presentation/cubit/inspections_cubit.dart';
-import 'package:login_again/styles/colors.dart';
+import 'package:login_again/core/widgets/gradient_button.dart';
 
 class InspectionCreateOverlay extends StatefulWidget {
   final VoidCallback onClose;
@@ -213,26 +213,24 @@ class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
                           Row(
                             children: [
                               Expanded(
-                                child: OutlinedButton.icon(
+                                child: GradientOutlinedButton(
                                   onPressed: _pickDate,
-                                  icon: const Icon(Icons.event),
-                                  label: Text(
-                                    _date == null
-                                        ? 'Pick Date'
-                                        : _date!
-                                              .toIso8601String()
-                                              .split('T')
-                                              .first,
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(48),
-                                    side: BorderSide(
-                                      color: AppColors.border,
-                                      width: 1.2,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
+                                  minHeight: 48,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.event),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _date == null
+                                            ? 'Pick Date'
+                                            : _date!
+                                                  .toIso8601String()
+                                                  .split('T')
+                                                  .first,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -276,14 +274,10 @@ class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
                           const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
-                            child: ElevatedButton(
+                            child: GradientButton(
                               onPressed: _submit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                minimumSize: const Size.fromHeight(48),
-                                shape: const StadiumBorder(),
-                              ),
+                              minHeight: 48,
+                              borderRadius: BorderRadius.circular(24),
                               child: const Text('Submit Inspection'),
                             ),
                           ),

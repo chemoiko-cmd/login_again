@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:login_again/styles/colors.dart';
 
 class ActionTile extends StatelessWidget {
   final IconData icon;
@@ -17,12 +16,13 @@ class ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.teal.shade50,
-          child: Icon(icon, color: AppColors.primary),
+          child: Icon(icon, color: scheme.primary),
         ),
         title: Text(title),
         subtitle: Text(subtitle),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
-import '../../../../styles/colors.dart';
+import 'package:login_again/core/widgets/gradient_button.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/maintenance_repository.dart';
 import '../widgets/request_card.dart';
@@ -37,6 +37,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
   }
 
   Widget _categoryIcon(String category) {
+    final scheme = Theme.of(context).colorScheme;
     final config = <String, Map<String, dynamic>>{
       'plumbing': {
         'icon': Icons.build,
@@ -60,8 +61,8 @@ class _MaintenancePageState extends State<MaintenancePage> {
       },
       'other': {
         'icon': Icons.build,
-        'bg': AppColors.surface,
-        'fg': AppColors.textSecondary,
+        'bg': scheme.surface,
+        'fg': scheme.onSurface.withOpacity(0.7),
       },
     };
     final c = config[category] ?? config['other']!;
@@ -77,6 +78,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
 
   Widget _buildCreateOverlay(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     return Positioned.fill(
       child: AnimatedOpacity(
         opacity: _isCreating ? 1 : 0,
@@ -182,11 +184,11 @@ class _MaintenancePageState extends State<MaintenancePage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppColors.border),
+                            borderSide: BorderSide(color: scheme.outline),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: AppColors.primary),
+                            borderSide: BorderSide(color: scheme.primary),
                           ),
                         ),
                       ),
@@ -201,16 +203,21 @@ class _MaintenancePageState extends State<MaintenancePage> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      OutlinedButton.icon(
+                      GradientOutlinedButton(
                         onPressed: _handleAddPhotos,
-                        icon: const Icon(Icons.photo_camera_outlined),
-                        label: const Text('Tap to add photos'),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          side: BorderSide(color: AppColors.border, width: 1.2),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                        minHeight: 48,
+                        borderRadius: BorderRadius.circular(12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.photo_camera_outlined),
+                            SizedBox(width: 8),
+                            Text('Tap to add photos'),
+                          ],
                         ),
                       ),
                       if (_photos.isNotEmpty) ...[
@@ -226,14 +233,10 @@ class _MaintenancePageState extends State<MaintenancePage> {
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
+                        child: GradientButton(
                           onPressed: _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size.fromHeight(48),
-                            shape: const StadiumBorder(),
-                          ),
+                          minHeight: 48,
+                          borderRadius: BorderRadius.circular(24),
                           child: const Text('Submit Request'),
                         ),
                       ),
@@ -250,6 +253,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
 
   Widget _categoryChip(String id, String label) {
     final isActive = _newCategory == id;
+    final scheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () => setState(() => _newCategory = id),
       borderRadius: BorderRadius.circular(12),
@@ -258,10 +262,10 @@ class _MaintenancePageState extends State<MaintenancePage> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive ? AppColors.primary : AppColors.border,
+            color: isActive ? scheme.primary : scheme.outline,
             width: 2,
           ),
-          color: isActive ? AppColors.primary.withOpacity(0.08) : null,
+          color: isActive ? scheme.primary.withOpacity(0.08) : null,
         ),
         child: Row(
           children: [
@@ -269,9 +273,9 @@ class _MaintenancePageState extends State<MaintenancePage> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: scheme.onSurface,
               ),
             ),
           ],
@@ -356,6 +360,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: FutureBuilder<List<MaintenanceRequestItem>>(
         future: _future,
@@ -382,7 +387,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                     Text(
                       'Track and submit repair requests',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: scheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                     const SizedBox(height: 12),

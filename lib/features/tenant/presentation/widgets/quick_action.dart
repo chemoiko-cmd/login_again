@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../styles/colors.dart';
 
 class QuickAction extends StatelessWidget {
   final IconData icon;
@@ -17,6 +16,7 @@ class QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -24,15 +24,15 @@ class QuickAction extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           decoration: BoxDecoration(
-            color: primary ? AppColors.primary : AppColors.surface,
+            color: primary ? scheme.primary : scheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: primary ? AppColors.primary : AppColors.border,
+              color: primary ? scheme.primary : scheme.outline,
             ),
             boxShadow: [
               if (primary)
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.25),
+                  color: scheme.primary.withOpacity(0.25),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -44,7 +44,7 @@ class QuickAction extends StatelessWidget {
               Icon(
                 icon,
                 size: 22,
-                color: primary ? Colors.white : AppColors.primary,
+                color: primary ? scheme.onPrimary : scheme.primary,
               ),
               const SizedBox(height: 8),
               Text(
@@ -52,7 +52,7 @@ class QuickAction extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: primary ? Colors.white : AppColors.textPrimary,
+                  color: primary ? scheme.onPrimary : scheme.onSurface,
                 ),
               ),
             ],

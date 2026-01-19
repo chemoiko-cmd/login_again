@@ -3,7 +3,7 @@
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:login_again/styles/colors.dart';
+import 'package:login_again/core/widgets/gradient_button.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
@@ -136,26 +136,21 @@ class _LoginPageState extends State<LoginPage> {
                         enabled: !isLoading,
                       ),
                       const SizedBox(height: 24),
-                      ElevatedButton(
+                      GradientButton(
                         onPressed: isLoading ? null : _handleLogin,
-
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.all(16),
-                          backgroundColor: AppColors.primary,
-                        ),
+                        padding: const EdgeInsets.all(16),
                         child: isLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
-                            : const Text(
-                                'Login',
-
-                                style: TextStyle(color: Colors.white),
-                              ),
+                            : const Text('Login'),
                       ),
                     ],
                   ),

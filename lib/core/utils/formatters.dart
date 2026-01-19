@@ -40,3 +40,8 @@ String formatCurrency(
   if (sym.isEmpty) return numStr;
   return position == 'after' ? '$numStr $sym' : '$sym $numStr';
 }
+
+String capitalizeFirst(String text) {
+  if (text.isEmpty) return text;
+  return text[0].toUpperCase() + text.substring(1);
+}

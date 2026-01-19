@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:login_again/styles/colors.dart';
+import 'package:login_again/theme/app_theme.dart';
 
 class ActionTile extends StatelessWidget {
   final IconData icon;
@@ -18,15 +18,16 @@ class ActionTile extends StatelessWidget {
   });
 
   /// Badge color based on state string
-  Color getBadgeColor(String? state) {
+  Color getBadgeColor(BuildContext context, String? state) {
+    final scheme = Theme.of(context).colorScheme;
     switch (state) {
       case 'paid':
-        return AppColors.success;
+        return context.success;
       case 'overdue':
-        return AppColors.error;
+        return scheme.error;
       case 'draft':
       case 'pending':
-        return AppColors.warning;
+        return context.warning;
       case 'scheduled':
         return const Color.fromARGB(255, 255, 166, 0);
       case 'in_progress':
@@ -42,12 +43,13 @@ class ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.teal.shade50,
-          child: Icon(icon, color: AppColors.primary),
+          child: Icon(icon, color: scheme.primary),
         ),
         title: Row(
           children: [
@@ -62,7 +64,7 @@ class ActionTile extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-                backgroundColor: getBadgeColor(state),
+                backgroundColor: getBadgeColor(context, state),
                 side: BorderSide.none,
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 visualDensity: VisualDensity.compact,

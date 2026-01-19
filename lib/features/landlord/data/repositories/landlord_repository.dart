@@ -602,6 +602,122 @@ class LandlordRepository {
     }
   }
 
+  /// List candidate tenant partners to assign to a unit/contract.
+  /// Returns minimal label list: [{id, name}]
+  Future<List<Map<String, dynamic>>> fetchTenantPartners() async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'res.partner',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              // Keep domain broad; optionally filter to customers only by customer_rank > 0
+              'domain': [],
+              'fields': ['name'],
+              'limit': 200,
+              'order': 'name',
+            },
+          },
+          'id': 1,
+        },
+      );
+      final list = (resp.data['result'] as List?) ?? [];
+      return list.map<Map<String, dynamic>>((e) {
+        final m = Map<String, dynamic>.from(e as Map);
+        return {
+          'id': (m['id'] as num).toInt(),
+          'name': (m['name'] as String?) ?? 'Partner',
+        };
+      }).toList();
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
+      return [];
+    }
+  }
+
+  /// Inspect rental.contract model fields to include optional values safely.
+  Future<Map<String, dynamic>> fetchRentalContractFields() async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.contract',
+            'method': 'fields_get',
+            'args': [],
+            'kwargs': {
+              'attributes': ['string', 'type', 'required'],
+            },
+          },
+          'id': 1,
+        },
+      );
+      final result = resp.data['result'];
+      if (result is Map) {
+        return result.cast<String, dynamic>();
+      }
+      return const {};
+    } catch (e, st) {
+      print(st.toString());
+      return const {};
+    }
+  }
+
+  /// Create a rental.contract record to link a tenant (partner) to a unit.
+  Future<bool> createRentalContract({
+    required int tenantPartnerId,
+    required int unitId,
+    String? name,
+    String? startDate,
+  }) async {
+    try {
+      // Probe fields to avoid sending unknown field names
+      final fields = await fetchRentalContractFields();
+      final vals = <String, dynamic>{
+        'tenant_id': tenantPartnerId,
+        'unit_id': unitId,
+        if (name != null && name.isNotEmpty) 'name': name,
+        if (startDate != null &&
+            startDate.isNotEmpty &&
+            fields.containsKey('start_date'))
+          'start_date': startDate,
+      };
+
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.contract',
+            'method': 'create',
+            'args': [vals],
+            'kwargs': {},
+          },
+          'id': 1,
+        },
+      );
+
+      return resp.data['result'] != null;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return false;
+    } catch (e, st) {
+      print(st.toString());
+      return false;
+    }
+  }
+
   final ApiClient apiClient;
 
   LandlordRepository({required this.apiClient});

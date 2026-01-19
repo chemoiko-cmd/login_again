@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:login_again/styles/colors.dart';
 import 'package:login_again/core/utils/formatters.dart';
 import '../../data/contracts_repository.dart';
 import 'info_box.dart';
@@ -22,6 +21,7 @@ class ContractCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
     final sd = details.startDate;
     final ed = details.endDate;
@@ -52,10 +52,7 @@ class ContractCard extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       backgroundColor: Colors.teal.shade50,
-                      child: const Icon(
-                        Icons.apartment,
-                        color: AppColors.primary,
-                      ),
+                      child: Icon(Icons.apartment, color: scheme.primary),
                     ),
                     const SizedBox(width: 12),
                     Column(
@@ -107,7 +104,7 @@ class ContractCard extends StatelessWidget {
             LinearProgressIndicator(
               value: progress,
               backgroundColor: Colors.grey.shade300,
-              color: AppColors.primary,
+              color: scheme.primary,
               minHeight: 6,
             ),
             const SizedBox(height: 16),

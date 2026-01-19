@@ -13,6 +13,7 @@ import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/presentation/cubit/auth_cubit.dart';
 import 'features/auth/presentation/cubit/auth_state.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   final apiClient = ApiClient(baseUrl: 'http://rental.kolapro.com');
@@ -66,10 +67,7 @@ class MyApp extends StatelessWidget {
       },
       child: MaterialApp.router(
         title: 'Odoo Property Management',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-        ),
+        theme: AppTheme.theme,
         routerConfig: router.router,
         debugShowCheckedModeBanner: false,
       ),

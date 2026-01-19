@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../styles/colors.dart';
 
 class Section extends StatelessWidget {
   final String title;
@@ -15,11 +14,12 @@ class Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: scheme.outline),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(

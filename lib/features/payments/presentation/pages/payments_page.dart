@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:login_again/core/currency/currency_cubit.dart';
-import '../../../../styles/colors.dart';
+import 'package:login_again/core/widgets/gradient_button.dart';
+import 'package:login_again/theme/app_theme.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/file_utils.dart';
 import '../../domain/payment.dart';
@@ -76,6 +77,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
   }
 
   Widget _totalDueCard(BuildContext context, double amount, bool processing) {
+    final scheme = Theme.of(context).colorScheme;
     final c = context.watch<CurrencyCubit>().state;
     final pendingItems = context.select<PaymentsCubit, List<PaymentItem>>(
       (cubit) => cubit.state.items
@@ -96,16 +98,11 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary,
-            const Color.fromARGB(255, 72, 76, 97).withOpacity(0.8),
-          ],
-        ),
+        gradient: AppGradients.primaryGradient,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
+            color: scheme.primary.withOpacity(0.35),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -134,23 +131,18 @@ class _PaymentsPageState extends State<PaymentsPage> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: processing ? null : _handlePayAll,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    processing ? 'Processing...' : 'Pay All',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
+              // Expanded(
+              //   child: GradientButton(
+              //     onPressed: processing ? null : _handlePayAll,
+              //     minHeight: 48,
+              //     borderRadius: BorderRadius.circular(14),
+              //     padding: const EdgeInsets.symmetric(vertical: 14),
+              //     child: Text(
+              //       processing ? 'Processing...' : 'Pay All',
+              //       style: const TextStyle(fontWeight: FontWeight.w700),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ],
@@ -180,15 +172,16 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   Widget _pendingCard(BuildContext context, PaymentItem p, int index) {
     final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: Duration(milliseconds: 200 + (index * 60)),
       curve: Curves.easeOut,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: scheme.outline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -202,10 +195,10 @@ class _PaymentsPageState extends State<PaymentsPage> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.warning.withOpacity(0.12),
+              color: context.warning.withOpacity(0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.credit_card, color: AppColors.warning),
+            child: Icon(Icons.credit_card, color: context.warning),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -222,7 +215,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 Text(
                   'Due ${formatDate(p.dueDate)}',
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: scheme.onSurface.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -241,7 +234,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextButton(
+                  GradientTextButton(
                     onPressed: () {
                       // Navigate to new checkout flow
                       Navigator.of(context).push(
@@ -251,12 +244,9 @@ class _PaymentsPageState extends State<PaymentsPage> {
                         ),
                       );
                     },
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
                     child: const Text('Pay Now'),
                   ),
@@ -271,6 +261,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   Widget _historySection(BuildContext context, List<PaymentItem> history) {
     final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -283,7 +274,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
           Text(
             'No payments yet',
             style: textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: scheme.onSurface.withOpacity(0.7),
             ),
           )
         else
@@ -299,15 +290,16 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   Widget _historyCard(BuildContext context, PaymentItem p, int index) {
     final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: Duration(milliseconds: 200 + (index * 60)),
       curve: Curves.easeOut,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: scheme.outline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -334,7 +326,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 Text(
                   p.paidDate != null ? 'Paid ${formatDate(p.paidDate!)}' : '—',
                   style: textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: scheme.onSurface.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -381,7 +373,10 @@ class _PaymentsPageState extends State<PaymentsPage> {
                     ).showSnackBar(SnackBar(content: Text('❌ Failed: $e')));
                   }
                 },
-                icon: Icon(Icons.download, color: AppColors.textSecondary),
+                icon: Icon(
+                  Icons.download,
+                  color: scheme.onSurface.withOpacity(0.7),
+                ),
               ),
             ],
           ),

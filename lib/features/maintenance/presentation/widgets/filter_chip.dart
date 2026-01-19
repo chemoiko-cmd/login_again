@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:login_again/styles/colors.dart';
 
 class MaintenanceFilterChip extends StatelessWidget {
   final String id;
@@ -17,21 +16,20 @@ class MaintenanceFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return ChoiceChip(
       selected: isActive,
       label: Text(label),
       onSelected: onSelected,
-      selectedColor: AppColors.primary,
+      selectedColor: scheme.primary,
       labelStyle: TextStyle(
-        color: isActive ? Colors.white : AppColors.textPrimary,
+        color: isActive ? scheme.onPrimary : scheme.onSurface,
         fontWeight: FontWeight.w600,
       ),
-      backgroundColor: AppColors.surface,
+      backgroundColor: scheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isActive ? AppColors.primary : AppColors.border,
-        ),
+        side: BorderSide(color: isActive ? scheme.primary : scheme.outline),
       ),
     );
   }

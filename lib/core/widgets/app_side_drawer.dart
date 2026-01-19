@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:login_again/theme/app_gradients.dart';
+import 'package:login_again/theme/app_theme.dart';
 
-import '../../styles/colors.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
 import '../../features/profile/data/profile_repository.dart';
@@ -56,6 +55,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
   Widget build(BuildContext context) {
     final location = GoRouter.of(context).state.uri.path;
     final authState = context.watch<AuthCubit>().state;
+    final scheme = Theme.of(context).colorScheme;
     final bool isAuthenticated = authState is Authenticated;
     final bool isTenant = authState is Authenticated && authState.isTenant;
     final bool isLandlord = authState is Authenticated && authState.isLandlord;
@@ -65,7 +65,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
         : 'Guest';
 
     return Drawer(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -78,12 +78,12 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: AppColors.backgroundLight,
+                    backgroundColor: scheme.surface,
                     backgroundImage: _profile?.imageBytes != null
                         ? MemoryImage(_profile!.imageBytes!)
                         : null,
                     child: _profile?.imageBytes == null
-                        ? Icon(Icons.person, size: 32, color: AppColors.primary)
+                        ? Icon(Icons.person, size: 32, color: scheme.primary)
                         : null,
                   ),
                   const SizedBox(height: 12),
@@ -113,16 +113,16 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                 ],
               ),
             ),
-            Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: scheme.outline),
             Expanded(
               child: ListView(
                 children: [
                   if (isAuthenticated) ...[
                     // Dashboard item switches destination based on role
                     ListTile(
-                      leading: const Icon(
+                      leading: Icon(
                         Icons.dashboard_outlined,
-                        color: AppColors.primary,
+                        color: scheme.primary,
                       ),
                       title: const Text('Dashboard'),
                       onTap: () {
@@ -136,17 +136,15 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                       selected:
                           location == '/tenant-dashboard' ||
                           location == '/landlord-dashboard',
-                      selectedTileColor: AppColors.primary.withValues(
-                        alpha: 0.08,
-                      ),
+                      selectedTileColor: scheme.primary.withOpacity(0.08),
                     ),
 
                     // Tenant-only items
                     if (isTenant) ...[
                       ListTile(
-                        leading: const Icon(
+                        leading: Icon(
                           Icons.credit_card,
-                          color: AppColors.textSecondary,
+                          color: scheme.onSurface.withOpacity(0.7),
                         ),
                         title: const Text('Pay Rent'),
                         onTap: () {
@@ -154,14 +152,12 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                           context.go('/pay-rent');
                         },
                         selected: location == '/pay-rent',
-                        selectedTileColor: AppColors.primary.withValues(
-                          alpha: 0.08,
-                        ),
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
                       ),
                       ListTile(
-                        leading: const Icon(
+                        leading: Icon(
                           Icons.description_outlined,
-                          color: AppColors.textSecondary,
+                          color: scheme.onSurface.withOpacity(0.7),
                         ),
                         title: const Text('Contract Info'),
                         onTap: () {
@@ -169,18 +165,16 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                           context.go('/contracts');
                         },
                         selected: location == '/contracts',
-                        selectedTileColor: AppColors.primary.withValues(
-                          alpha: 0.08,
-                        ),
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
                       ),
                     ],
 
                     // Landlord-only items
                     if (isLandlord) ...[
                       ListTile(
-                        leading: const Icon(
+                        leading: Icon(
                           Icons.description_outlined,
-                          color: AppColors.textSecondary,
+                          color: scheme.onSurface.withOpacity(0.7),
                         ),
                         title: const Text('Inspections'),
                         onTap: () {
@@ -188,14 +182,12 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                           context.go('/inspections');
                         },
                         selected: location == '/inspections',
-                        selectedTileColor: AppColors.primary.withValues(
-                          alpha: 0.08,
-                        ),
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
                       ),
                       ListTile(
-                        leading: const Icon(
+                        leading: Icon(
                           Icons.people_outline,
-                          color: AppColors.textSecondary,
+                          color: scheme.onSurface.withOpacity(0.7),
                         ),
                         title: const Text('Tenants'),
                         onTap: () {
@@ -203,14 +195,12 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                           context.go('/landlord-tenants');
                         },
                         selected: location == '/landlord-tenants',
-                        selectedTileColor: AppColors.primary.withValues(
-                          alpha: 0.08,
-                        ),
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
                       ),
                       ListTile(
-                        leading: const Icon(
+                        leading: Icon(
                           Icons.build_outlined,
-                          color: AppColors.textSecondary,
+                          color: scheme.onSurface.withOpacity(0.7),
                         ),
                         title: const Text('Maintenance Tasks'),
                         onTap: () {
@@ -218,26 +208,24 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                           context.go('/landlord-maintenance');
                         },
                         selected: location == '/landlord-maintenance',
-                        selectedTileColor: AppColors.primary.withValues(
-                          alpha: 0.08,
-                        ),
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
                       ),
                     ],
                   ],
+                  // ListTile(
+                  //   leading: Icon(
+                  //     Icons.notifications_outlined,
+                  //     color: scheme.onSurface.withOpacity(0.7),
+                  //   ),
+                  //   title: const Text('Notices'),
+                  //   onTap: () {
+                  //     Navigator.of(context).pop();
+                  //   },
+                  // ),
                   ListTile(
-                    leading: const Icon(
-                      Icons.notifications_outlined,
-                      color: AppColors.textSecondary,
-                    ),
-                    title: const Text('Notices'),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.person_outline,
-                      color: AppColors.textSecondary,
+                      color: scheme.onSurface.withOpacity(0.7),
                     ),
                     title: const Text('Profile'),
                     onTap: () {
@@ -245,14 +233,12 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                       context.go('/profile');
                     },
                     selected: location == '/profile',
-                    selectedTileColor: AppColors.primary.withValues(
-                      alpha: 0.08,
-                    ),
+                    selectedTileColor: scheme.primary.withOpacity(0.08),
                   ),
                   ListTile(
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.privacy_tip_outlined,
-                      color: AppColors.textSecondary,
+                      color: scheme.onSurface.withOpacity(0.7),
                     ),
                     title: const Text('Privacy Policy'),
                     onTap: () {
@@ -260,9 +246,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                       context.go('/privacy-policy');
                     },
                     selected: location == '/privacy-policy',
-                    selectedTileColor: AppColors.primary.withValues(
-                      alpha: 0.08,
-                    ),
+                    selectedTileColor: scheme.primary.withOpacity(0.08),
                   ),
                   // ListTile(
                   //   leading: const Icon(
@@ -278,13 +262,10 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                 ],
               ),
             ),
-            Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: scheme.outline),
             if (isAuthenticated)
               ListTile(
-                leading: const Icon(
-                  Icons.power_settings_new,
-                  color: AppColors.error,
-                ),
+                leading: Icon(Icons.power_settings_new, color: scheme.error),
                 title: const Text('Sign Out'),
                 onTap: () async {
                   Navigator.of(context).pop();

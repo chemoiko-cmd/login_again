@@ -6,11 +6,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../styles/colors.dart';
+import 'package:login_again/core/utils/formatters.dart';
+import 'package:login_again/core/widgets/gradient_button.dart';
 import '../widgets/section.dart';
 import '../cubit/tenant_dashboard_cubit.dart';
 import '../cubit/tenant_dashboard_state.dart';
-import '../../../../core/widgets/app_side_drawer.dart';
 
 class TenantDashboardPage extends StatefulWidget {
   const TenantDashboardPage({super.key});
@@ -29,6 +29,7 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: BlocBuilder<TenantDashboardCubit, TenantDashboardState>(
         builder: (context, state) {
@@ -58,14 +59,14 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                       Text(
                         'Welcome back,',
                         style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: scheme.onSurface.withOpacity(0.7),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        userName.isEmpty ? 'Tenant' : userName,
+                        userName.isEmpty ? 'Tenant' : capitalizeFirst(userName),
                         style: textTheme.headlineSmall?.copyWith(
-                          color: AppColors.textPrimary,
+                          color: scheme.onSurface,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -73,7 +74,7 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                       Text(
                         '${unitName.isEmpty ? 'Your unit' : unitName} • ${propertyName.isEmpty ? 'Your property' : propertyName}',
                         style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: scheme.onSurface.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -112,7 +113,7 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                         icon: Icons.credit_card,
                         label: 'Pay Rent',
                         onTap: () => context.go('/pay-rent'),
-                        color: AppColors.primary,
+                        color: scheme.primary,
                       ),
                       _ActionCircle(
                         icon: Icons.announcement,
@@ -132,15 +133,12 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                     Text(
                       'No announcements',
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: scheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                   ],
-                  trailing: TextButton(
+                  trailing: GradientTextButton(
                     onPressed: () {},
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                    ),
                     child: const Text('View All'),
                   ),
                 ),
@@ -191,7 +189,7 @@ class _ActionCircle extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: textTheme.labelMedium?.copyWith(
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),
