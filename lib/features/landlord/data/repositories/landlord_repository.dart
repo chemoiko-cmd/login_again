@@ -23,6 +23,7 @@ class LandlordRepository {
             'kwargs': {
               'domain': [
                 ['property_id.owner_id', '=', partnerId],
+                ['state', '=', 'vacant'],
               ],
               'fields': ['name'],
               'limit': 200,
@@ -43,6 +44,46 @@ class LandlordRepository {
     } catch (e, st) {
       print(st.toString());
       return [];
+    }
+
+    Future<Map<String, int?>> _fetchUnitContext(int unitId) async {
+      try {
+        final resp = await apiClient.post(
+          '/web/dataset/call_kw',
+          data: {
+            'jsonrpc': '2.0',
+            'method': 'call',
+            'params': {
+              'model': 'rental.unit',
+              'method': 'search_read',
+              'args': [],
+              'kwargs': {
+                'domain': [
+                  ['id', '=', unitId],
+                ],
+                'fields': ['company_id', 'currency_id'],
+                'limit': 1,
+              },
+            },
+            'id': 1,
+          },
+        );
+        final list = (resp.data['result'] as List?) ?? const [];
+        if (list.isEmpty)
+          return const {'company_id': null, 'currency_id': null};
+        final m = Map<String, dynamic>.from(list.first as Map);
+        int? companyId;
+        int? currencyId;
+        final comp = m['company_id'];
+        if (comp is List && comp.isNotEmpty)
+          companyId = (comp.first as num).toInt();
+        final curr = m['currency_id'];
+        if (curr is List && curr.isNotEmpty)
+          currencyId = (curr.first as num).toInt();
+        return {'company_id': companyId, 'currency_id': currencyId};
+      } catch (e) {
+        return const {'company_id': null, 'currency_id': null};
+      }
     }
   }
 
@@ -616,9 +657,10 @@ class LandlordRepository {
             'method': 'search_read',
             'args': [],
             'kwargs': {
-              // Keep domain broad; optionally filter to customers only by customer_rank > 0
-              'domain': [],
-              'fields': ['name'],
+              'domain': [
+                ['is_tenant', '=', true],
+              ],
+              'fields': ['name', 'tenant_code'],
               'limit': 200,
               'order': 'name',
             },
@@ -629,9 +671,11 @@ class LandlordRepository {
       final list = (resp.data['result'] as List?) ?? [];
       return list.map<Map<String, dynamic>>((e) {
         final m = Map<String, dynamic>.from(e as Map);
+        final code = (m['tenant_code'] as String?)?.trim();
+        final name = (m['name'] as String?) ?? 'Partner';
         return {
           'id': (m['id'] as num).toInt(),
-          'name': (m['name'] as String?) ?? 'Partner',
+          'name': code != null && code.isNotEmpty ? '[$code] $name' : name,
         };
       }).toList();
     } on DioException catch (e, st) {
@@ -640,6 +684,110 @@ class LandlordRepository {
     } catch (e, st) {
       print(st.toString());
       return [];
+    }
+  }
+
+  /// Inspect res.partner model fields to include optional values safely.
+  Future<Map<String, dynamic>> fetchPartnerFields() async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'res.partner',
+            'method': 'fields_get',
+            'args': [],
+            'kwargs': {
+              'attributes': ['string', 'type', 'required'],
+            },
+          },
+          'id': 1,
+        },
+      );
+      final result = resp.data['result'];
+      if (result is Map) return result.cast<String, dynamic>();
+      return const {};
+    } catch (e, st) {
+      print(st.toString());
+      return const {};
+    }
+  }
+
+  /// Create a minimal customer partner (tenant) with dynamic support for
+  /// firstname/lastname when the model exposes them.
+  Future<int?> createPartner({
+    String? name,
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
+    String? mobile,
+  }) async {
+    try {
+      final fields = await fetchPartnerFields();
+      // Always send a display name. Prefer explicit name, else compose.
+      final displayName = (name != null && name.isNotEmpty)
+          ? name
+          : [
+              firstName,
+              lastName,
+            ].where((s) => (s ?? '').trim().isNotEmpty).join(' ').trim();
+
+      final vals = <String, dynamic>{
+        if (displayName.isNotEmpty) 'name': displayName,
+        if (email != null && email.isNotEmpty) 'email': email,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (mobile != null && mobile.isNotEmpty) 'mobile': mobile,
+        // Many DBs mark customers by customer_rank >= 1
+        'customer_rank': 1,
+        // Ensure partner is flagged as tenant for rental module hooks
+        'is_tenant': true,
+        // Be explicit; create override also defaults this when is_tenant is true
+        'tenant_state': 'active',
+      };
+
+      // Map split name fields if supported by the DB schema
+      if (firstName != null && firstName.isNotEmpty) {
+        if (fields.containsKey('firstname')) {
+          vals['firstname'] = firstName;
+        } else if (fields.containsKey('first_name')) {
+          vals['first_name'] = firstName;
+        }
+      }
+      if (lastName != null && lastName.isNotEmpty) {
+        if (fields.containsKey('lastname')) {
+          vals['lastname'] = lastName;
+        } else if (fields.containsKey('last_name')) {
+          vals['last_name'] = lastName;
+        }
+      }
+
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'res.partner',
+            'method': 'create',
+            'args': [vals],
+            'kwargs': {},
+          },
+          'id': 1,
+        },
+      );
+
+      final result = resp.data['result'];
+      if (result is num) return result.toInt();
+      return null;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return null;
+    } catch (e, st) {
+      print(st.toString());
+      return null;
     }
   }
 
@@ -673,24 +821,204 @@ class LandlordRepository {
     }
   }
 
+  /// Helper: fetch unit pricing (rent & deposit) to seed contract values.
+  Future<Map<String, double>> _fetchUnitPricing(int unitId) async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.unit',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['id', '=', unitId],
+              ],
+              'fields': ['rent_amount', 'deposit_amount'],
+              'limit': 1,
+            },
+          },
+          'id': 1,
+        },
+      );
+      final list = (resp.data['result'] as List?) ?? const [];
+      if (list.isEmpty)
+        return const {'rent_amount': 0.0, 'deposit_amount': 0.0};
+      final m = Map<String, dynamic>.from(list.first as Map);
+      return {
+        'rent_amount': (m['rent_amount'] as num?)?.toDouble() ?? 0.0,
+        'deposit_amount': (m['deposit_amount'] as num?)?.toDouble() ?? 0.0,
+      };
+    } catch (e) {
+      return const {'rent_amount': 0.0, 'deposit_amount': 0.0};
+    }
+  }
+
+  Future<Map<String, double>> _fetchPropertyDefaultsForUnit(int unitId) async {
+    try {
+      // 1) Get property_id from unit
+      final unitResp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.unit',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['id', '=', unitId],
+              ],
+              'fields': ['property_id'],
+              'limit': 1,
+            },
+          },
+          'id': 1,
+        },
+      );
+      final unitList = (unitResp.data['result'] as List?) ?? const [];
+      if (unitList.isEmpty) {
+        return const {'rent_amount': 0.0, 'deposit_amount': 0.0};
+      }
+      final unitMap = Map<String, dynamic>.from(unitList.first as Map);
+      final propTuple = unitMap['property_id'] as List?;
+      final int? propertyId = (propTuple != null && propTuple.isNotEmpty)
+          ? propTuple.first as int
+          : null;
+      if (propertyId == null) {
+        return const {'rent_amount': 0.0, 'deposit_amount': 0.0};
+      }
+
+      // 2) Read defaults from property
+      final propResp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.property',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['id', '=', propertyId],
+              ],
+              'fields': ['default_rent_amount', 'default_deposit_amount'],
+              'limit': 1,
+            },
+          },
+          'id': 1,
+        },
+      );
+      final propList = (propResp.data['result'] as List?) ?? const [];
+      if (propList.isEmpty) {
+        return const {'rent_amount': 0.0, 'deposit_amount': 0.0};
+      }
+      final propMap = Map<String, dynamic>.from(propList.first as Map);
+      return {
+        'rent_amount':
+            (propMap['default_rent_amount'] as num?)?.toDouble() ?? 0.0,
+        'deposit_amount':
+            (propMap['default_deposit_amount'] as num?)?.toDouble() ?? 0.0,
+      };
+    } catch (e) {
+      return const {'rent_amount': 0.0, 'deposit_amount': 0.0};
+    }
+  }
+
+  Future<Map<String, int?>> getUnitCompanyAndCurrency(int unitId) async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.unit',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['id', '=', unitId],
+              ],
+              'fields': ['company_id', 'currency_id'],
+              'limit': 1,
+            },
+          },
+          'id': 1,
+        },
+      );
+      final list = (resp.data['result'] as List?) ?? const [];
+      if (list.isEmpty) return const {'company_id': null, 'currency_id': null};
+      final m = Map<String, dynamic>.from(list.first as Map);
+      int? companyId;
+      int? currencyId;
+      final comp = m['company_id'];
+      if (comp is List && comp.isNotEmpty)
+        companyId = (comp.first as num).toInt();
+      final curr = m['currency_id'];
+      if (curr is List && curr.isNotEmpty)
+        currencyId = (curr.first as num).toInt();
+      return {'company_id': companyId, 'currency_id': currencyId};
+    } catch (e) {
+      return const {'company_id': null, 'currency_id': null};
+    }
+  }
+
   /// Create a rental.contract record to link a tenant (partner) to a unit.
   Future<bool> createRentalContract({
     required int tenantPartnerId,
     required int unitId,
+    required String startDate,
+    required String endDate,
     String? name,
-    String? startDate,
+    double? rentAmount,
+    double? depositAmount,
+    String? billingCycle,
+    String? contractType,
   }) async {
     try {
       // Probe fields to avoid sending unknown field names
       final fields = await fetchRentalContractFields();
+      // Ensure mandatory pricing is present - prefer property defaults
+      double rent = rentAmount ?? 0.0;
+      double deposit = depositAmount ?? 0.0;
+      if (rent <= 0.0 || deposit <= 0.0) {
+        final prop = await _fetchPropertyDefaultsForUnit(unitId);
+        if (rent <= 0.0) rent = prop['rent_amount'] ?? 0.0;
+        if (deposit <= 0.0) deposit = prop['deposit_amount'] ?? 0.0;
+      }
+      // Fallback to unit pricing if property defaults are not set
+      if (rent <= 0.0 || deposit <= 0.0) {
+        final pricing = await _fetchUnitPricing(unitId);
+        if (rent <= 0.0) rent = pricing['rent_amount'] ?? 0.0;
+        if (deposit <= 0.0) deposit = pricing['deposit_amount'] ?? 0.0;
+      }
+      final unitCtx = await getUnitCompanyAndCurrency(unitId);
+
       final vals = <String, dynamic>{
         'tenant_id': tenantPartnerId,
         'unit_id': unitId,
         if (name != null && name.isNotEmpty) 'name': name,
-        if (startDate != null &&
-            startDate.isNotEmpty &&
-            fields.containsKey('start_date'))
-          'start_date': startDate,
+        // Required dates
+        'start_date': startDate,
+        'end_date': endDate,
+        // Pricing
+        'rent_amount': rent,
+        'deposit_amount': deposit,
+        'billing_cycle': (billingCycle != null && billingCycle.isNotEmpty)
+            ? billingCycle
+            : 'monthly',
+        'contract_type': (contractType != null && contractType.isNotEmpty)
+            ? contractType
+            : 'long_term',
+        if (unitCtx['company_id'] != null) 'company_id': unitCtx['company_id'],
+        if (unitCtx['currency_id'] != null)
+          'currency_id': unitCtx['currency_id'],
       };
 
       final resp = await apiClient.post(
@@ -708,7 +1036,33 @@ class LandlordRepository {
         },
       );
 
-      return resp.data['result'] != null;
+      final result = resp.data['result'];
+      if (result is num) {
+        final contractId = result.toInt();
+        // Try to confirm so it becomes active and visible in list
+        try {
+          await apiClient.post(
+            '/web/dataset/call_kw',
+            data: {
+              'jsonrpc': '2.0',
+              'method': 'call',
+              'params': {
+                'model': 'rental.contract',
+                'method': 'action_confirm',
+                'args': [
+                  [contractId],
+                ],
+                'kwargs': {},
+              },
+              'id': 1,
+            },
+          );
+        } catch (_) {
+          // Even if confirm fails, we still created the contract
+        }
+        return true;
+      }
+      return false;
     } on DioException catch (e, st) {
       print(st.toString());
       return false;
