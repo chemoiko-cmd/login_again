@@ -47,6 +47,7 @@ class AuthCubit extends Cubit<AuthState> {
 
         bool isTenant = false;
         bool isLandlord = false;
+        bool isMaintenance = false;
         final isInternalUser = data.user.isInternalUser;
         try {
           final tenantPayload = {
@@ -116,12 +117,50 @@ class AuthCubit extends Cubit<AuthState> {
           print('has_group landlord check failed: $e');
         }
 
+        // Maintenance group check
+        try {
+          final maintPayload = {
+            'jsonrpc': '2.0',
+            'method': 'call',
+            'params': {
+              'model': 'res.users',
+              'method': 'has_group',
+              'args': [
+                [data.user.id],
+                'rental_management.group_rental_maintenance',
+              ],
+              'kwargs': {},
+            },
+            'id': 3,
+          };
+          final maintResp = await apiClient.post(
+            '/web/dataset/call_kw',
+            data: maintPayload,
+          );
+          final maintBody = maintResp.data;
+          isMaintenance = (maintBody is Map && maintBody['result'] is bool)
+              ? maintBody['result'] as bool
+              : false;
+          print('has_group(maintenance) => $isMaintenance');
+        } on DioException catch (e, st) {
+          print(st.toString());
+          print('has_group maintenance check failed: ${e.message}');
+        } catch (e, st) {
+          print(st.toString());
+          print('has_group maintenance check failed: $e');
+        }
+
         print(
           'Emitting Authenticated: id=${data.user.id}, tenant=$isTenant, landlord=$isLandlord',
         );
 
         emit(
-          Authenticated(data.user, isTenant: isTenant, isLandlord: isLandlord),
+          Authenticated(
+            data.user,
+            isTenant: isTenant,
+            isLandlord: isLandlord,
+            isMaintenance: isMaintenance,
+          ),
         );
       },
     );

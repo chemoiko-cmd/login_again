@@ -59,6 +59,8 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
     final bool isAuthenticated = authState is Authenticated;
     final bool isTenant = authState is Authenticated && authState.isTenant;
     final bool isLandlord = authState is Authenticated && authState.isLandlord;
+    final bool isMaintenance =
+        authState is Authenticated && authState.isMaintenance;
 
     final String userName = authState is Authenticated
         ? authState.user.name
@@ -131,11 +133,14 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                           context.go('/landlord-dashboard');
                         } else if (isTenant) {
                           context.go('/tenant-dashboard');
+                        } else if (isMaintenance) {
+                          context.go('/maintainer-tasks');
                         }
                       },
                       selected:
                           location == '/tenant-dashboard' ||
-                          location == '/landlord-dashboard',
+                          location == '/landlord-dashboard' ||
+                          location == '/maintainer-tasks',
                       selectedTileColor: scheme.primary.withOpacity(0.08),
                     ),
 
@@ -169,8 +174,51 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                       ),
                     ],
 
+                    // Maintainer-only items
+                    if (isMaintenance) ...[
+                      ListTile(
+                        leading: Icon(
+                          Icons.build_outlined,
+                          color: scheme.onSurface.withOpacity(0.7),
+                        ),
+                        title: const Text('My Tasks'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          context.go('/maintainer-tasks');
+                        },
+                        selected: location == '/maintainer-tasks',
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
+                      ),
+                      ListTile(
+                        leading: Icon(
+                          Icons.search_outlined,
+                          color: scheme.onSurface.withOpacity(0.7),
+                        ),
+                        title: const Text('Inspections'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          context.go('/maintainer-inspections');
+                        },
+                        selected: location == '/maintainer-inspections',
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
+                      ),
+                    ],
+
                     // Landlord-only items
                     if (isLandlord) ...[
+                      ListTile(
+                        leading: Icon(
+                          Icons.apartment_outlined,
+                          color: scheme.onSurface.withOpacity(0.7),
+                        ),
+                        title: const Text('My Properties'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          context.go('/landlord-properties');
+                        },
+                        selected: location == '/landlord-properties',
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
+                      ),
                       ListTile(
                         leading: Icon(
                           Icons.description_outlined,
@@ -229,7 +277,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                     ),
                     title: const Text('Profile'),
                     onTap: () {
-                      Navigator.of(context).pop();
+                      Navigator.of(context);
                       context.go('/profile');
                     },
                     selected: location == '/profile',

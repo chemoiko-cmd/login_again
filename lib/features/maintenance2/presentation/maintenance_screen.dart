@@ -4,6 +4,7 @@ import 'cubit/maintenance_cubit.dart';
 import 'cubit/maintenance_state.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 
 class MaintenanceScreen extends StatefulWidget {
   const MaintenanceScreen({super.key});
@@ -32,7 +33,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
       body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
         builder: (context, state) {
           if (state is MaintenanceLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: AppLoadingIndicator());
           } else if (state is MaintenanceLoaded) {
             if (state.requests.isEmpty) {
               return const Center(

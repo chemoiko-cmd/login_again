@@ -21,7 +21,8 @@ class MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      constraints: const BoxConstraints(minHeight: 104),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
@@ -55,6 +56,8 @@ class MetricCard extends StatelessWidget {
               children: [
                 Text(
                   value,
+                  maxLines: 2,
+                  softWrap: true,
                   style: TextStyle(
                     color: valueColor,
                     fontSize: 14,
@@ -65,6 +68,8 @@ class MetricCard extends StatelessWidget {
 
                 Text(
                   label,
+                  maxLines: 2,
+                  softWrap: true,
                   style: const TextStyle(
                     color: Colors.black54,
                     fontSize: 13,

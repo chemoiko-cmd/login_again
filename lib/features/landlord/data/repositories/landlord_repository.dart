@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/features/landlord/data/models/landlord_inpsections_model.dart';
 import 'package:login_again/features/landlord/data/models/landlord_tenant_row.dart';
@@ -45,45 +47,110 @@ class LandlordRepository {
       print(st.toString());
       return [];
     }
+  }
 
-    Future<Map<String, int?>> _fetchUnitContext(int unitId) async {
-      try {
-        final resp = await apiClient.post(
-          '/web/dataset/call_kw',
-          data: {
-            'jsonrpc': '2.0',
-            'method': 'call',
-            'params': {
-              'model': 'rental.unit',
-              'method': 'search_read',
-              'args': [],
-              'kwargs': {
-                'domain': [
-                  ['id', '=', unitId],
-                ],
-                'fields': ['company_id', 'currency_id'],
-                'limit': 1,
-              },
+  Future<Map<String, int?>> _fetchUnitContext(int unitId) async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.unit',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['id', '=', unitId],
+              ],
+              'fields': ['company_id', 'currency_id'],
+              'limit': 1,
             },
-            'id': 1,
           },
-        );
-        final list = (resp.data['result'] as List?) ?? const [];
-        if (list.isEmpty)
-          return const {'company_id': null, 'currency_id': null};
-        final m = Map<String, dynamic>.from(list.first as Map);
-        int? companyId;
-        int? currencyId;
-        final comp = m['company_id'];
-        if (comp is List && comp.isNotEmpty)
-          companyId = (comp.first as num).toInt();
-        final curr = m['currency_id'];
-        if (curr is List && curr.isNotEmpty)
-          currencyId = (curr.first as num).toInt();
-        return {'company_id': companyId, 'currency_id': currencyId};
-      } catch (e) {
-        return const {'company_id': null, 'currency_id': null};
-      }
+          'id': 1,
+        },
+      );
+      final list = (resp.data['result'] as List?) ?? const [];
+      if (list.isEmpty) return const {'company_id': null, 'currency_id': null};
+      final m = Map<String, dynamic>.from(list.first as Map);
+      int? companyId;
+      int? currencyId;
+      final comp = m['company_id'];
+      if (comp is List && comp.isNotEmpty)
+        companyId = (comp.first as num).toInt();
+      final curr = m['currency_id'];
+      if (curr is List && curr.isNotEmpty)
+        currencyId = (curr.first as num).toInt();
+      return {'company_id': companyId, 'currency_id': currencyId};
+    } catch (e) {
+      return const {'company_id': null, 'currency_id': null};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchProperties({
+    required int ownerPartnerId,
+  }) async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.property',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['owner_id', '=', ownerPartnerId],
+              ],
+              'fields': [
+                'name',
+                'code',
+                'units_count',
+                'vacant_count',
+                'occupancy_rate',
+                'street',
+                'city',
+                'image_128',
+              ],
+              'limit': 500,
+              'order': 'name',
+            },
+          },
+          'id': 1,
+        },
+      );
+      final list = (resp.data['result'] as List?) ?? [];
+      return list.map<Map<String, dynamic>>((e) {
+        final m = Map<String, dynamic>.from(e as Map);
+
+        Uint8List? imageBytes;
+        final img = m['image_128'];
+        if (img is String && img.trim().isNotEmpty) {
+          try {
+            imageBytes = base64Decode(img);
+          } catch (_) {}
+        }
+        return {
+          'id': (m['id'] as num).toInt(),
+          'name': (m['name'] ?? '').toString(),
+          'code': (m['code'] ?? '').toString(),
+          'units_count': (m['units_count'] as num?)?.toInt() ?? 0,
+          'vacant_count': (m['vacant_count'] as num?)?.toInt() ?? 0,
+          'occupancy_rate': (m['occupancy_rate'] as num?)?.toDouble() ?? 0.0,
+          'street': (m['street'] ?? '').toString(),
+          'city': (m['city'] ?? '').toString(),
+          'image_bytes': imageBytes,
+        };
+      }).toList();
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
+      return [];
     }
   }
 

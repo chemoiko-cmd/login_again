@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import '../widgets/section.dart';
 import '../cubit/tenant_dashboard_cubit.dart';
 import '../cubit/tenant_dashboard_state.dart';
@@ -34,7 +35,7 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
       body: BlocBuilder<TenantDashboardCubit, TenantDashboardState>(
         builder: (context, state) {
           if (state.loading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: AppLoadingIndicator());
           }
           if (state.error != null) {
             return Center(
@@ -115,12 +116,6 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                         onTap: () => context.go('/pay-rent'),
                         color: scheme.primary,
                       ),
-                      _ActionCircle(
-                        icon: Icons.announcement,
-                        label: 'Announcements',
-                        onTap: () {},
-                        color: Colors.purple,
-                      ),
                     ],
                   ),
                 ),
@@ -128,18 +123,18 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                 const SizedBox(height: 8),
 
                 Section(
-                  title: 'Announcements',
+                  title: 'The smarter way to rent',
                   children: [
                     Text(
-                      'No announcements',
+                      '',
                       style: textTheme.bodySmall?.copyWith(
                         color: scheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                   ],
                   trailing: GradientTextButton(
-                    onPressed: () {},
-                    child: const Text('View All'),
+                    onPressed: () => context.go('/pay-rent'),
+                    child: const Text('Pay your rent'),
                   ),
                 ),
               ],

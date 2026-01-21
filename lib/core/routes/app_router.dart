@@ -11,6 +11,9 @@ import 'package:login_again/features/landlord/presentation/landlord_maintenance_
 import 'package:login_again/features/landlord/presentation/inspection_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenant_profile_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenants_screen.dart';
+import 'package:login_again/features/landlord/presentation/landlord_properties_screen.dart';
+import 'package:login_again/features/maintainer/presentation/maintainer_tasks_screen.dart';
+import 'package:login_again/features/maintainer/presentation/maintainer_inspections_screen.dart';
 import 'package:login_again/features/payments/presentation/pages/payments_page.dart';
 import 'package:login_again/features/profile/presentation/my_profile_screen.dart';
 
@@ -43,6 +46,7 @@ class AppRouter {
       if (authState is Authenticated && isLoginRoute) {
         if (authState.isTenant) return '/tenant-dashboard';
         if (authState.isLandlord) return '/landlord-dashboard';
+        if (authState.isMaintenance) return '/maintainer-tasks';
 
         // Unknown role → safe fallback
         authCubit.logout();
@@ -95,6 +99,10 @@ class AppRouter {
             builder: (context, state) => const LandlordDashboardScreen(),
           ),
           GoRoute(
+            path: '/landlord-properties',
+            builder: (context, state) => const LandlordPropertiesScreen(),
+          ),
+          GoRoute(
             path: '/inspections',
             builder: (context, state) => const InspectionScreen(),
           ),
@@ -129,6 +137,16 @@ class AppRouter {
           GoRoute(
             path: '/privacy-policy',
             builder: (context, state) => const PrivacyPolicyScreen(),
+          ),
+
+          // Maintainer routes
+          GoRoute(
+            path: '/maintainer-tasks',
+            builder: (context, state) => const MaintainerTasksScreen(),
+          ),
+          GoRoute(
+            path: '/maintainer-inspections',
+            builder: (context, state) => const MaintainerInspectionsScreen(),
           ),
         ],
       ),

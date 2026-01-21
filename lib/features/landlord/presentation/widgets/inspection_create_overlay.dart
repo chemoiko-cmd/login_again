@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:login_again/features/landlord/presentation/cubit/inspections_cubit.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 
 class InspectionCreateOverlay extends StatefulWidget {
   final VoidCallback onClose;
@@ -156,7 +157,7 @@ class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
                           const Center(
                             child: Padding(
                               padding: EdgeInsets.all(24.0),
-                              child: CircularProgressIndicator(),
+                              child: AppLoadingIndicator(),
                             ),
                           )
                         else ...[

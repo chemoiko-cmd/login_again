@@ -19,15 +19,17 @@ class Authenticated extends AuthState {
   final User user;
   final bool isTenant;
   final bool isLandlord;
+  final bool isMaintenance;
 
   const Authenticated(
     this.user, {
     this.isTenant = false,
     this.isLandlord = false,
+    this.isMaintenance = false,
   });
 
   @override
-  List<Object> get props => [user, isTenant, isLandlord];
+  List<Object> get props => [user, isTenant, isLandlord, isMaintenance];
 }
 
 class Unauthenticated extends AuthState {}

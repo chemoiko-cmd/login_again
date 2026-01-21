@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
@@ -18,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _databaseController = TextEditingController(text: 'new3');
+  final _databaseController = TextEditingController(text: 'rental');
   bool _obscurePassword = true;
 
   @override
@@ -143,11 +144,10 @@ class _LoginPageState extends State<LoginPage> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
+                                child: AppLoadingIndicator(
+                                  width: 20,
+                                  height: 20,
+                                  // uses theme colors; button text stays readable
                                 ),
                               )
                             : const Text('Login'),

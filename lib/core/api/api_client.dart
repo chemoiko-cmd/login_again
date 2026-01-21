@@ -5,7 +5,7 @@ class ApiClient {
   final Dio dio;
   final String baseUrl;
 
-  ApiClient({this.baseUrl = 'http://rental.kolapro.com'})
+  ApiClient({this.baseUrl = 'https://rental.kolapro.com'})
     : dio = Dio(
         BaseOptions(
           baseUrl: baseUrl,

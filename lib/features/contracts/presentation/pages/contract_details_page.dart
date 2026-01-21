@@ -5,6 +5,7 @@ import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/features/contracts/presentation/widgets/widgets.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/contracts_repository.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 
 class ContractPage extends StatefulWidget {
   const ContractPage({super.key});
@@ -49,7 +50,7 @@ class _ContractPageState extends State<ContractPage> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: AppLoadingIndicator());
           }
           if (snapshot.hasError) {
             return Center(

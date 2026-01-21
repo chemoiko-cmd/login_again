@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/maintenance_repository.dart';
 import '../widgets/request_card.dart';
@@ -366,7 +367,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: AppLoadingIndicator());
           }
           if (snapshot.hasError) {
             return Center(

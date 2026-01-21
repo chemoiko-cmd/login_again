@@ -6,6 +6,7 @@ import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/features/landlord/presentation/inspection_screen.dart';
 import 'package:login_again/features/landlord/presentation/widgets/action_tile.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import 'cubit/metrics_cubit.dart';
 import 'cubit/metrics_state.dart';
 import 'widgets/rent_card.dart';
@@ -39,11 +40,11 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(title: Text('Hello ${capitalizeFirst(userName)}.')),
+      appBar: AppBar(title: Text('Hello ${capitalizeFirst(userName)}')),
       body: BlocBuilder<MetricsCubit, MetricsState>(
         builder: (context, state) {
           if (state is MetricsLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: AppLoadingIndicator());
           }
 
           if (state is MetricsError) {
@@ -71,12 +72,12 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 1.60,
                     children: [
                       MetricCard(
                         icon: Icons.apartment,
-                        label: 'Occupancy Rate',
+                        label: 'Occupancy',
                         value:
                             '${metrics.occupiedUnits}/${metrics.totalUnits} units',
                         iconColor: scheme.primary,

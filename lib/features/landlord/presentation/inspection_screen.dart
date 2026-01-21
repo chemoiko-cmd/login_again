@@ -7,6 +7,7 @@ import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/landlord/presentation/widgets/inspection_create_overlay.dart';
 import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 
 class InspectionScreen extends StatefulWidget {
   const InspectionScreen({super.key});
@@ -37,7 +38,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
           BlocBuilder<InspectionsCubit, InspectionsState>(
             builder: (context, state) {
               if (state is InspectionsLoading && !_isCreating) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: AppLoadingIndicator());
               }
 
               if (state is InspectionsError) {

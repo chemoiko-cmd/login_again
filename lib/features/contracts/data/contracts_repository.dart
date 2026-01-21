@@ -69,10 +69,12 @@ class ContractsRepository {
     }
   }
 
+  /// Get the current logged-in user's partner ID
   Future<int?> _currentPartnerId() async {
     final state = authCubit.state;
     if (state is! Authenticated) return null;
     final login = state.user.username;
+    print('Getting partner_id for user: $login');
     final users = await _searchRead(
       'res.users',
       domain: [
@@ -84,7 +86,11 @@ class ContractsRepository {
     if (users.isEmpty) return null;
     final u = (users.first as Map).cast<String, dynamic>();
     final p = u['partner_id'];
-    if (p is List && p.isNotEmpty && p.first is int) return p.first as int;
+    if (p is List && p.isNotEmpty && p.first is int) {
+      final partnerId = p.first as int;
+      print('Found partner_id: $partnerId');
+      return partnerId;
+    }
     return null;
   }
 
@@ -105,13 +111,19 @@ class ContractsRepository {
   }
 
   Future<ContractDetails?> getCurrentContract() async {
+    // Get the current user's partner_id
     final partnerId = await _currentPartnerId();
-    if (partnerId == null) return null;
+    if (partnerId == null) {
+      print('No partner_id found, cannot fetch contract');
+      return null;
+    }
+
+    // Query rental.contract where tenant_id = partner_id and state = active
+    print('Searching for active contract where tenant_id = $partnerId');
     final rows = await _searchRead(
       'rental.contract',
       domain: [
         ['tenant_id', '=', partnerId],
-        ['state', '=', 'active'],
       ],
       fields: const [
         'name',
@@ -126,7 +138,11 @@ class ContractsRepository {
       order: 'start_date desc, id desc',
       limit: 1,
     );
-    if (rows.isEmpty) return null;
+    if (rows.isEmpty) {
+      print('No active contract found for tenant_id = $partnerId');
+      return null;
+    }
+    print('Found contract: ${rows.length} result(s)');
     final m = (rows.first as Map).cast<String, dynamic>();
 
     String unitName = '';

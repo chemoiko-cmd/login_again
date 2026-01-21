@@ -3,6 +3,7 @@
 // ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:upgrader/upgrader.dart';
 
 import 'core/currency/currency_cubit.dart';
 
@@ -16,7 +17,8 @@ import 'features/auth/presentation/cubit/auth_state.dart';
 import 'theme/app_theme.dart';
 
 void main() {
-  final apiClient = ApiClient(baseUrl: 'http://192.168.1.4:8069');
+  final apiClient = ApiClient(baseUrl: 'https://rental.kolapro.com');
+  // http://192.168.1.7:8069  https://rental.kolapro.com
   final authRepository = AuthRepositoryImpl(AuthRemoteDataSource(apiClient));
 
   runApp(MyApp(authRepository: authRepository, apiClient: apiClient));
@@ -65,11 +67,18 @@ class MyApp extends StatelessWidget {
           currencyCubit.reset();
         }
       },
-      child: MaterialApp.router(
-        title: 'Odoo Property Management',
-        theme: AppTheme.theme,
-        routerConfig: router.router,
-        debugShowCheckedModeBanner: false,
+      child: UpgradeAlert(
+        upgrader: Upgrader(
+          durationUntilAlertAgain: Duration(hours: 1), // Check frequently
+        ),
+        showIgnore: false, // Hide the Ignore button
+        showLater: false,
+        child: MaterialApp.router(
+          title: 'Odoo Property Management',
+          theme: AppTheme.theme,
+          routerConfig: router.router,
+          debugShowCheckedModeBanner: false,
+        ),
       ),
     );
   }

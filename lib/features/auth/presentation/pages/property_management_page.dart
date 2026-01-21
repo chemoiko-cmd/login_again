@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 
 class PropertyManagementPage extends StatelessWidget {
   const PropertyManagementPage({super.key});
@@ -90,7 +91,7 @@ class PropertyManagementPage extends StatelessWidget {
               ),
             );
           }
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: AppLoadingIndicator());
         },
       ),
     );

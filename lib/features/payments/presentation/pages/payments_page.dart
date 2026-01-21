@@ -11,6 +11,7 @@ import '../cubit/payments_cubit.dart';
 import '../cubit/payments_state.dart';
 import '../widgets/payment_status_icon.dart';
 import 'invoice_checkout_screen.dart';
+import 'package:login_again/core/widgets/app_loading_indicator.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
@@ -33,7 +34,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
         child: BlocBuilder<PaymentsCubit, PaymentsState>(
           builder: (context, state) {
             if (state.loading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: AppLoadingIndicator());
             }
             if (state.error != null) {
               return Center(
