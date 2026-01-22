@@ -10,6 +10,154 @@ class PasswordResetService {
 
   PasswordResetService(this.apiClient);
 
+  Future<Map<String, dynamic>> requestPasswordResetOtp({
+    required String login,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '/api/delivery/password-reset/request-otp',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {'email': login},
+        },
+      );
+
+      final responseData = response.data;
+      final result = responseData['result'];
+
+      if (result is Map && result['success'] == true) {
+        return Map<String, dynamic>.from(result);
+      }
+      throw Exception(
+        (result is Map ? result['error'] : null) ?? 'Failed to request OTP',
+      );
+    } on DioException catch (e) {
+      if (e.response?.data != null) {
+        try {
+          final errorData = e.response!.data;
+          if (errorData is Map && errorData['message'] != null) {
+            throw Exception(errorData['message']);
+          } else if (errorData is Map && errorData['error'] != null) {
+            final errorMessage =
+                errorData['error']['data']?['message'] ??
+                errorData['error']['message'] ??
+                'Server error occurred';
+            throw Exception(errorMessage);
+          }
+        } catch (e) {
+          if (e is Exception) rethrow;
+        }
+      }
+
+      throw Exception('Could not request OTP');
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception(e.toString());
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyPasswordResetOtp({
+    required String login,
+    required String otp,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '/api/delivery/password-reset/verify-otp',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {'email': login, 'otp': otp},
+        },
+      );
+
+      final responseData = response.data;
+      final result = responseData['result'];
+
+      if (result is Map && result['success'] == true) {
+        return Map<String, dynamic>.from(result);
+      }
+      throw Exception(
+        (result is Map ? result['error'] : null) ?? 'Failed to verify OTP',
+      );
+    } on DioException catch (e) {
+      if (e.response?.data != null) {
+        try {
+          final errorData = e.response!.data;
+          if (errorData is Map && errorData['message'] != null) {
+            throw Exception(errorData['message']);
+          } else if (errorData is Map && errorData['error'] != null) {
+            final errorMessage =
+                errorData['error']['data']?['message'] ??
+                errorData['error']['message'] ??
+                'Server error occurred';
+            throw Exception(errorMessage);
+          }
+        } catch (e) {
+          if (e is Exception) rethrow;
+        }
+      }
+
+      throw Exception('Could not verify OTP');
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception(e.toString());
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPasswordWithToken({
+    required String login,
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '/api/delivery/password-reset/reset-password',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'email': login,
+            'reset_token': resetToken,
+            'new_password': newPassword,
+          },
+        },
+      );
+
+      final responseData = response.data;
+      final result = responseData['result'];
+
+      if (result is Map && result['success'] == true) {
+        return Map<String, dynamic>.from(result);
+      }
+      throw Exception(
+        (result is Map ? result['error'] : null) ?? 'Failed to reset password',
+      );
+    } on DioException catch (e) {
+      if (e.response?.data != null) {
+        try {
+          final errorData = e.response!.data;
+          if (errorData is Map && errorData['message'] != null) {
+            throw Exception(errorData['message']);
+          } else if (errorData is Map && errorData['error'] != null) {
+            final errorMessage =
+                errorData['error']['data']?['message'] ??
+                errorData['error']['message'] ??
+                'Server error occurred';
+            throw Exception(errorMessage);
+          }
+        } catch (e) {
+          if (e is Exception) rethrow;
+        }
+      }
+
+      throw Exception('Could not reset password');
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception(e.toString());
+    }
+  }
+
   /// Sends password reset request to backend
   /// Returns success message on success
   /// Throws exception with error message on failure

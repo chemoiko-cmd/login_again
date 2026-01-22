@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import '../../data/services/password_reset_service.dart';
+import 'verify_reset_otp_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -18,7 +19,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _emailController = TextEditingController();
   final _passwordResetService = PasswordResetService(ApiClient());
   bool _isLoading = false;
-  bool _emailSent = false;
+  bool _otpRequested = false;
 
   @override
   void dispose() {
@@ -26,18 +27,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
-  Future<void> _handleResetPassword() async {
+  Future<void> _handleRequestOtp() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
       final email = _emailController.text.trim();
-      await _passwordResetService.resetPassword(email);
+      await _passwordResetService.requestPasswordResetOtp(login: email);
 
       setState(() {
         _isLoading = false;
-        _emailSent = true;
+        _otpRequested = true;
       });
     } catch (e) {
       setState(() => _isLoading = false);
@@ -120,7 +121,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     child: Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 480),
-                        child: _emailSent
+                        child: _otpRequested
                             ? _buildSuccessView()
                             : _buildFormView(),
                       ),
@@ -155,7 +156,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter your email address and we\'ll send you instructions to reset your password.',
+            'Enter your email and we\'ll send a 6-digit OTP to your email address.',
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
@@ -183,7 +184,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
           const SizedBox(height: 24),
           GradientButton(
-            onPressed: _isLoading ? null : _handleResetPassword,
+            onPressed: _isLoading ? null : _handleRequestOtp,
             padding: const EdgeInsets.all(16),
             child: _isLoading
                 ? const SizedBox(
@@ -194,7 +195,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text('Send Reset Link'),
+                : const Text('Send OTP to Email'),
           ),
         ],
       ),
@@ -209,13 +210,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         Icon(Icons.check_circle, size: 80, color: Colors.green),
         const SizedBox(height: 24),
         Text(
-          'Email Sent!',
+          'OTP Sent!',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 8),
         Text(
-          'We\'ve sent password reset instructions to ${_emailController.text}',
+          'We\'ve sent a 6-digit OTP to your email for ${_emailController.text}.',
           textAlign: TextAlign.center,
           style: Theme.of(
             context,
@@ -223,9 +224,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         ),
         const SizedBox(height: 48),
         GradientButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    VerifyResetOtpPage(email: _emailController.text.trim()),
+              ),
+            );
+          },
           padding: const EdgeInsets.all(16),
-          child: const Text('Back to Login'),
+          child: const Text('Enter OTP'),
         ),
       ],
     );
