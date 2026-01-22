@@ -1,34 +1,34 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 
 class AuthLocalStorage {
-  static const _kSessionId = 'auth.session_id';
-  static const _kUserJson = 'auth.user_json';
+  static const String boxName = 'authBox';
+  static const String _kSessionId = 'session_id';
+  static const String _kUserJson = 'user_json';
+
+  Box<dynamic> get _box => Hive.box<dynamic>(boxName);
 
   Future<void> saveSession({required String sessionId}) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kSessionId, sessionId);
+    await _box.put(_kSessionId, sessionId);
   }
 
   Future<String?> getSessionId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_kSessionId);
+    final v = _box.get(_kSessionId);
+    return v is String ? v : null;
   }
 
   Future<void> clearSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_kSessionId);
+    await _box.delete(_kSessionId);
   }
 
   Future<void> saveUserJson(Map<String, dynamic> userJson) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kUserJson, jsonEncode(userJson));
+    await _box.put(_kUserJson, jsonEncode(userJson));
   }
 
   Future<Map<String, dynamic>?> getUserJson() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_kUserJson);
+    final rawAny = _box.get(_kUserJson);
+    final raw = rawAny is String ? rawAny : null;
     if (raw == null || raw.isEmpty) return null;
     try {
       final decoded = jsonDecode(raw);
@@ -39,13 +39,11 @@ class AuthLocalStorage {
   }
 
   Future<void> clearUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_kUserJson);
+    await _box.delete(_kUserJson);
   }
 
   Future<void> clearAll() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_kSessionId);
-    await prefs.remove(_kUserJson);
+    await _box.delete(_kSessionId);
+    await _box.delete(_kUserJson);
   }
 }

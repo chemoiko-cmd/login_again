@@ -36,21 +36,8 @@ class AuthCubit extends Cubit<AuthState> {
 
       _authInterceptor.setSession(sessionId);
 
-      // Validate session with Odoo. If invalid, Odoo returns uid=false or errors.
-      final resp = await apiClient.post(
-        '/web/session/get_session_info',
-        data: {'jsonrpc': '2.0', 'method': 'call', 'params': {}},
-      );
-      final result = (resp.data is Map) ? resp.data['result'] : null;
-      final uid = (result is Map) ? result['uid'] : null;
-      if (uid == null || uid == false) {
-        await _storage.clearAll();
-        _authInterceptor.clearSession();
-        emit(Unauthenticated());
-        return;
-      }
-
-      // Use cached user snapshot for routing roles and basic identity.
+      // Trust local snapshot (eBroker-style). If the session is actually expired,
+      // subsequent requests will fail with 401 and trigger logout via interceptor.
       final user = UserModel.fromJson(cachedUserJson);
 
       emit(
@@ -61,24 +48,6 @@ class AuthCubit extends Cubit<AuthState> {
           isMaintenance: user.isMaintenance,
         ),
       );
-    } on DioException catch (_) {
-      // Network failure: fall back to cached auth state to avoid locking user out.
-      final cachedUserJson = await _storage.getUserJson();
-      final sessionId = await _storage.getSessionId();
-      if (sessionId != null && sessionId.isNotEmpty && cachedUserJson != null) {
-        _authInterceptor.setSession(sessionId);
-        final user = UserModel.fromJson(cachedUserJson);
-        emit(
-          Authenticated(
-            user,
-            isTenant: user.isTenant,
-            isLandlord: user.isLandlord,
-            isMaintenance: user.isMaintenance,
-          ),
-        );
-        return;
-      }
-      emit(Unauthenticated());
     } catch (_) {
       emit(Unauthenticated());
     }
@@ -235,7 +204,7 @@ class AuthCubit extends Cubit<AuthState> {
         final toStore = UserModel.fromJson({
           'uid': data.user.id,
           'name': data.user.name,
-          'username': data.user.username,
+          'username': '',
           'partner_id': data.user.partnerId,
           'partner_display_name': data.user.partnerDisplayName,
           'is_internal_user': data.user.isInternalUser,
