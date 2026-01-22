@@ -7,6 +7,7 @@ import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,7 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _databaseController = TextEditingController(text: 'rental');
+  final _databaseController = TextEditingController(text: 'new3');
   bool _obscurePassword = true;
 
   @override
@@ -135,6 +136,27 @@ class _LoginPageState extends State<LoginPage> {
                           return null;
                         },
                         enabled: !isLoading,
+                      ),
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgotPasswordPage(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Forgot Password?',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 24),
                       GradientButton(

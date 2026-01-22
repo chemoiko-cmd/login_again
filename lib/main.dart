@@ -17,7 +17,7 @@ import 'features/auth/presentation/cubit/auth_state.dart';
 import 'theme/app_theme.dart';
 
 void main() {
-  final apiClient = ApiClient(baseUrl: 'https://rental.kolapro.com');
+  final apiClient = ApiClient(baseUrl: 'http://192.168.1.7:8069');
   // http://192.168.1.7:8069  https://rental.kolapro.com
   final authRepository = AuthRepositoryImpl(AuthRemoteDataSource(apiClient));
 
