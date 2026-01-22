@@ -277,7 +277,7 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                     ),
                     title: const Text('Profile'),
                     onTap: () {
-                      Navigator.of(context);
+                      Navigator.of(context).pop();
                       context.go('/profile');
                     },
                     selected: location == '/profile',

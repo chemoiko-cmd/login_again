@@ -89,6 +89,6 @@ flutter:
     - assets/splash.png
     - assets/android12splash.png
     - assets/app_icon.png
+    - assets/login-image.jpg
     - assets/privacy_policy.md
     - assets/lottie/loading.json
-    
