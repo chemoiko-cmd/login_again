@@ -5,17 +5,83 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_interceptor.dart';
+import '../../../../core/storage/auth_local_storage.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import 'auth_state.dart';
+import '../../data/models/user_model.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepositoryImpl authRepository;
   final ApiClient apiClient;
   late final AuthInterceptor _authInterceptor;
+  final AuthLocalStorage _storage = AuthLocalStorage();
 
   AuthCubit(this.authRepository, this.apiClient) : super(AuthInitial()) {
     _authInterceptor = AuthInterceptor(onSessionExpired: _handleSessionExpired);
     apiClient.setAuthInterceptor(_authInterceptor);
+  }
+
+  Future<void> restoreSession() async {
+    // Avoid running multiple times.
+    if (state is AuthChecking) return;
+    emit(AuthChecking());
+
+    try {
+      final sessionId = await _storage.getSessionId();
+      final cachedUserJson = await _storage.getUserJson();
+      if (sessionId == null || sessionId.isEmpty || cachedUserJson == null) {
+        emit(Unauthenticated());
+        return;
+      }
+
+      _authInterceptor.setSession(sessionId);
+
+      // Validate session with Odoo. If invalid, Odoo returns uid=false or errors.
+      final resp = await apiClient.post(
+        '/web/session/get_session_info',
+        data: {'jsonrpc': '2.0', 'method': 'call', 'params': {}},
+      );
+      final result = (resp.data is Map) ? resp.data['result'] : null;
+      final uid = (result is Map) ? result['uid'] : null;
+      if (uid == null || uid == false) {
+        await _storage.clearAll();
+        _authInterceptor.clearSession();
+        emit(Unauthenticated());
+        return;
+      }
+
+      // Use cached user snapshot for routing roles and basic identity.
+      final user = UserModel.fromJson(cachedUserJson);
+
+      emit(
+        Authenticated(
+          user,
+          isTenant: user.isTenant,
+          isLandlord: user.isLandlord,
+          isMaintenance: user.isMaintenance,
+        ),
+      );
+    } on DioException catch (_) {
+      // Network failure: fall back to cached auth state to avoid locking user out.
+      final cachedUserJson = await _storage.getUserJson();
+      final sessionId = await _storage.getSessionId();
+      if (sessionId != null && sessionId.isNotEmpty && cachedUserJson != null) {
+        _authInterceptor.setSession(sessionId);
+        final user = UserModel.fromJson(cachedUserJson);
+        emit(
+          Authenticated(
+            user,
+            isTenant: user.isTenant,
+            isLandlord: user.isLandlord,
+            isMaintenance: user.isMaintenance,
+          ),
+        );
+        return;
+      }
+      emit(Unauthenticated());
+    } catch (_) {
+      emit(Unauthenticated());
+    }
   }
 
   Future<void> login({
@@ -38,6 +104,7 @@ class AuthCubit extends Cubit<AuthState> {
       },
       (data) async {
         _authInterceptor.setSession(data.sessionId);
+        await _storage.saveSession(sessionId: data.sessionId);
         final sidPreview = data.sessionId.length > 10
             ? '${data.sessionId.substring(0, 10)}...'
             : data.sessionId;
@@ -162,6 +229,22 @@ class AuthCubit extends Cubit<AuthState> {
             isMaintenance: isMaintenance,
           ),
         );
+
+        // Persist an updated snapshot with computed routing role.
+        // Note: We store the minimal user json shape used by UserModel.
+        final toStore = UserModel.fromJson({
+          'uid': data.user.id,
+          'name': data.user.name,
+          'username': data.user.username,
+          'partner_id': data.user.partnerId,
+          'partner_display_name': data.user.partnerDisplayName,
+          'is_internal_user': data.user.isInternalUser,
+          'is_admin': data.user.isAdmin,
+          'db': data.user.database,
+          'group': data.user.primaryGroup,
+          'user_context': data.user.userContext,
+        }).toJson();
+        await _storage.saveUserJson(toStore);
       },
     );
   }
@@ -169,10 +252,12 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> logout() async {
     await authRepository.logout();
     _authInterceptor.clearSession();
+    await _storage.clearAll();
     emit(Unauthenticated());
   }
 
   void _handleSessionExpired() {
+    _storage.clearAll();
     emit(Unauthenticated());
   }
 }

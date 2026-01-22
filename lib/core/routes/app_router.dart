@@ -20,6 +20,7 @@ import 'package:login_again/features/profile/presentation/my_profile_screen.dart
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/landlord/presentation/landlord_dashboard_screen.dart';
 import '../../features/tenant/presentation/pages/tenant_dashboard_page.dart';
 import '../../features/maintenance/presentation/pages/maintenance_page.dart';
@@ -34,16 +35,23 @@ class AppRouter {
   AppRouter(this.authCubit);
 
   late final GoRouter router = GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/splash',
     refreshListenable: GoRouterRefreshStream(authCubit.stream),
 
     redirect: (context, state) {
       final authState = authCubit.state;
       final location = state.matchedLocation;
       final isLoginRoute = location == '/login';
+      final isSplashRoute = location == '/splash';
+
+      // While checking/restoring session, always remain on splash.
+      if ((authState is AuthInitial || authState is AuthChecking) &&
+          !isSplashRoute) {
+        return '/splash';
+      }
 
       // ───────── AUTHENTICATED ─────────
-      if (authState is Authenticated && isLoginRoute) {
+      if (authState is Authenticated && (isLoginRoute || isSplashRoute)) {
         if (authState.isTenant) return '/tenant-dashboard';
         if (authState.isLandlord) return '/landlord-dashboard';
         if (authState.isMaintenance) return '/maintainer-tasks';
@@ -54,12 +62,21 @@ class AppRouter {
       }
 
       // ───────── UNAUTHENTICATED ─────────
-      if (authState is! Authenticated && !isLoginRoute) return '/login';
+      if (authState is! Authenticated && (isSplashRoute)) {
+        return '/login';
+      }
+
+      if (authState is! Authenticated && !(isLoginRoute || isSplashRoute)) {
+        return '/login';
+      }
 
       return null;
     },
 
     routes: [
+      // Splash route (no drawer)
+      GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
+
       // Global drawer shell
       ShellRoute(
         builder: (context, state, child) {

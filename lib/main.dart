@@ -4,9 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:upgrader/upgrader.dart';
-
 import 'core/currency/currency_cubit.dart';
-
 import 'core/api/api_client.dart';
 import 'core/register_cubits.dart';
 import 'core/routes/app_router.dart';
