@@ -5,6 +5,7 @@ import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/maintainer/presentation/cubit/maintainer_tasks_cubit.dart';
 import 'package:login_again/features/landlord/presentation/cubit/maintenance_tasks_state.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
+import 'package:login_again/core/utils/formatters.dart';
 
 class MaintainerTasksScreen extends StatefulWidget {
   const MaintainerTasksScreen({super.key});
@@ -97,14 +98,14 @@ class _MaintainerTasksScreenState extends State<MaintainerTasksScreen> {
                           Expanded(child: Text(title)),
                           Chip(
                             label: Text(
-                              s,
+                              formatStateLabel(s),
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
-                            backgroundColor: _badgeColor(context, s),
+                            backgroundColor: stateBadgeColor(s),
                             side: BorderSide.none,
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             visualDensity: VisualDensity.compact,
@@ -163,21 +164,5 @@ class _MaintainerTasksScreenState extends State<MaintainerTasksScreen> {
         },
       ),
     );
-  }
-
-  Color _badgeColor(BuildContext context, String state) {
-    final scheme = Theme.of(context).colorScheme;
-    switch (state) {
-      case 'done':
-        return Colors.green;
-      case 'in_progress':
-        return const Color(0xFF007AFF);
-      case 'open':
-        return scheme.primary;
-      case 'cancelled':
-        return scheme.error;
-      default:
-        return scheme.outline;
-    }
   }
 }

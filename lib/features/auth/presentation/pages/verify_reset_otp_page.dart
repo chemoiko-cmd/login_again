@@ -2,6 +2,7 @@
 // FILE: lib/features/auth/presentation/pages/verify_reset_otp_page.dart
 // ============================================================================
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
@@ -9,9 +10,9 @@ import '../../data/services/password_reset_service.dart';
 import 'reset_password_with_token_page.dart';
 
 class VerifyResetOtpPage extends StatefulWidget {
-  final String email;
+  final String phoneNo;
 
-  const VerifyResetOtpPage({super.key, required this.email});
+  const VerifyResetOtpPage({super.key, required this.phoneNo});
 
   @override
   State<VerifyResetOtpPage> createState() => _VerifyResetOtpPageState();
@@ -19,13 +20,21 @@ class VerifyResetOtpPage extends StatefulWidget {
 
 class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
   final _formKey = GlobalKey<FormState>();
-  final _otpController = TextEditingController();
+  final _otpControllers = List.generate(6, (_) => TextEditingController());
+  final _otpFocusNodes = List.generate(6, (_) => FocusNode());
   final _passwordResetService = PasswordResetService(ApiClient());
   bool _isLoading = false;
 
+  String get _otp => _otpControllers.map((c) => c.text).join();
+
   @override
   void dispose() {
-    _otpController.dispose();
+    for (final c in _otpControllers) {
+      c.dispose();
+    }
+    for (final f in _otpFocusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -36,8 +45,8 @@ class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
 
     try {
       final result = await _passwordResetService.verifyPasswordResetOtp(
-        login: widget.email,
-        otp: _otpController.text.trim(),
+        phoneNo: widget.phoneNo,
+        otp: _otp,
       );
 
       final resetToken = (result['reset_token'] ?? '').toString();
@@ -50,7 +59,7 @@ class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ResetPasswordWithTokenPage(
-            login: widget.email,
+            phoneNo: widget.phoneNo,
             resetToken: resetToken,
           ),
         ),
@@ -154,29 +163,98 @@ class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'We sent a 6-digit code to your email for ${widget.email}.',
+                                'We sent a 6-digit code to ${widget.phoneNo}.',
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: Colors.grey,
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              TextFormField(
-                                controller: _otpController,
-                                decoration: const InputDecoration(
-                                  labelText: 'OTP',
-                                  prefixIcon: Icon(Icons.lock_outline),
-                                  border: OutlineInputBorder(),
-                                ),
-                                keyboardType: TextInputType.number,
-                                validator: (value) {
-                                  final v = (value ?? '').trim();
+                              FormField<String>(
+                                validator: (_) {
+                                  final v = _otp;
                                   if (v.isEmpty) return 'Please enter the OTP';
                                   if (v.length != 6)
                                     return 'OTP must be 6 digits';
+                                  if (!RegExp(r'^\d{6}$').hasMatch(v)) {
+                                    return 'OTP must be digits only';
+                                  }
                                   return null;
                                 },
-                                enabled: !_isLoading,
+                                builder: (field) {
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: List.generate(6, (i) {
+                                          return SizedBox(
+                                            width: 46,
+                                            child: TextField(
+                                              controller: _otpControllers[i],
+                                              focusNode: _otpFocusNodes[i],
+                                              enabled: !_isLoading,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              textAlign: TextAlign.center,
+                                              maxLength: 1,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter
+                                                    .digitsOnly,
+                                              ],
+                                              decoration: InputDecoration(
+                                                counterText: '',
+                                                border:
+                                                    const OutlineInputBorder(),
+                                                errorText: null,
+                                              ),
+                                              onChanged: (value) {
+                                                if (value.length > 1) {
+                                                  _otpControllers[i].text =
+                                                      value.substring(0, 1);
+                                                  _otpControllers[i].selection =
+                                                      const TextSelection.collapsed(
+                                                        offset: 1,
+                                                      );
+                                                }
+
+                                                if (value.isNotEmpty) {
+                                                  if (i < 5) {
+                                                    _otpFocusNodes[i + 1]
+                                                        .requestFocus();
+                                                  } else {
+                                                    FocusScope.of(
+                                                      context,
+                                                    ).unfocus();
+                                                  }
+                                                } else {
+                                                  if (i > 0) {
+                                                    _otpFocusNodes[i - 1]
+                                                        .requestFocus();
+                                                  }
+                                                }
+
+                                                field.validate();
+                                              },
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                      if (field.errorText != null) ...[
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          field.errorText!,
+                                          style: TextStyle(
+                                            color: theme.colorScheme.error,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  );
+                                },
                               ),
                               const SizedBox(height: 16),
                               GradientButton(

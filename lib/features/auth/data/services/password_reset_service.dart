@@ -11,7 +11,7 @@ class PasswordResetService {
   PasswordResetService(this.apiClient);
 
   Future<Map<String, dynamic>> requestPasswordResetOtp({
-    required String login,
+    required String phoneNo,
   }) async {
     try {
       final response = await apiClient.post(
@@ -19,7 +19,7 @@ class PasswordResetService {
         data: {
           'jsonrpc': '2.0',
           'method': 'call',
-          'params': {'email': login},
+          'params': {'phone': phoneNo},
         },
       );
 
@@ -58,7 +58,7 @@ class PasswordResetService {
   }
 
   Future<Map<String, dynamic>> verifyPasswordResetOtp({
-    required String login,
+    required String phoneNo,
     required String otp,
   }) async {
     try {
@@ -67,7 +67,7 @@ class PasswordResetService {
         data: {
           'jsonrpc': '2.0',
           'method': 'call',
-          'params': {'email': login, 'otp': otp},
+          'params': {'phone': phoneNo, 'otp': otp},
         },
       );
 
@@ -106,7 +106,7 @@ class PasswordResetService {
   }
 
   Future<Map<String, dynamic>> resetPasswordWithToken({
-    required String login,
+    required String phoneNo,
     required String resetToken,
     required String newPassword,
   }) async {
@@ -117,7 +117,7 @@ class PasswordResetService {
           'jsonrpc': '2.0',
           'method': 'call',
           'params': {
-            'email': login,
+            'phone': phoneNo,
             'reset_token': resetToken,
             'new_password': newPassword,
           },

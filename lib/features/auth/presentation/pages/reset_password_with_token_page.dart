@@ -8,12 +8,12 @@ import 'package:login_again/core/widgets/gradient_button.dart';
 import '../../data/services/password_reset_service.dart';
 
 class ResetPasswordWithTokenPage extends StatefulWidget {
-  final String login;
+  final String phoneNo;
   final String resetToken;
 
   const ResetPasswordWithTokenPage({
     super.key,
-    required this.login,
+    required this.phoneNo,
     required this.resetToken,
   });
 
@@ -48,7 +48,7 @@ class _ResetPasswordWithTokenPageState
 
     try {
       await _passwordResetService.resetPasswordWithToken(
-        login: widget.login,
+        phoneNo: widget.phoneNo,
         resetToken: widget.resetToken,
         newPassword: _passwordController.text,
       );
@@ -166,7 +166,7 @@ class _ResetPasswordWithTokenPageState
           ),
           const SizedBox(height: 8),
           Text(
-            'Create a new password for ${widget.login}.',
+            'Create a new password for ${widget.phoneNo}.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
           ),

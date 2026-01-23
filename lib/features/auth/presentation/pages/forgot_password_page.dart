@@ -2,6 +2,7 @@
 // FILE: lib/features/auth/presentation/pages/forgot_password_page.dart
 // ============================================================================
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import '../../data/services/password_reset_service.dart';
@@ -16,14 +17,14 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordResetService = PasswordResetService(ApiClient());
   bool _isLoading = false;
   bool _otpRequested = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -33,8 +34,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _isLoading = true);
 
     try {
-      final email = _emailController.text.trim();
-      await _passwordResetService.requestPasswordResetOtp(login: email);
+      final phone = _phoneController.text.trim();
+      await _passwordResetService.requestPasswordResetOtp(phoneNo: phone);
 
       setState(() {
         _isLoading = false;
@@ -156,7 +157,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Enter your email and we\'ll send a 6-digit OTP to your email address.',
+            'Enter your phone number and we\'ll send a 6-digit OTP.',
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
@@ -164,19 +165,21 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
           const SizedBox(height: 48),
           TextFormField(
-            controller: _emailController,
+            controller: _phoneController,
             decoration: const InputDecoration(
-              labelText: 'Email',
-              prefixIcon: Icon(Icons.email),
+              labelText: 'Phone Number',
+              prefixIcon: Icon(Icons.phone),
               border: OutlineInputBorder(),
             ),
-            keyboardType: TextInputType.emailAddress,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
+            ],
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              if (!value.contains('@')) {
-                return 'Please enter a valid email';
+              final v = (value ?? '').trim();
+              if (v.isEmpty) return 'Please enter your phone number';
+              if (!RegExp(r'^\+?\d{7,15}$').hasMatch(v)) {
+                return 'Please enter a valid phone number';
               }
               return null;
             },
@@ -195,7 +198,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text('Send OTP to Email'),
+                : const Text('Send OTP'),
           ),
         ],
       ),
@@ -216,7 +219,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         ),
         const SizedBox(height: 8),
         Text(
-          'We\'ve sent a 6-digit OTP to your email for ${_emailController.text}.',
+          'We\'ve sent a 6-digit OTP to ${_phoneController.text}.',
           textAlign: TextAlign.center,
           style: Theme.of(
             context,
@@ -228,7 +231,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) =>
-                    VerifyResetOtpPage(email: _emailController.text.trim()),
+                    VerifyResetOtpPage(phoneNo: _phoneController.text.trim()),
               ),
             );
           },

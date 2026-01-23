@@ -72,11 +72,13 @@ class MyApp extends StatelessWidget {
         }
       },
       child: UpgradeAlert(
+        barrierDismissible: false,
+        showIgnore: false, // Hide the Ignore button
+        showLater: false,
         upgrader: Upgrader(
           durationUntilAlertAgain: Duration(hours: 1), // Check frequently
         ),
-        showIgnore: false, // Hide the Ignore button
-        showLater: false,
+
         child: MaterialApp.router(
           title: 'Odoo Property Management',
           theme: AppTheme.theme,

@@ -11,6 +11,7 @@ import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'forgot_password_page.dart';
+import 'package:upgrader/upgrader.dart'; // ← ADD THIS IMPORT
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -136,182 +137,191 @@ class _LoginPageState extends State<LoginPage> {
       topRight: Radius.circular(24),
     );
 
-    return Scaffold(
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Image.asset('assets/login-image.jpg', fit: BoxFit.cover),
-            ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.15),
-                      Colors.black.withOpacity(0.55),
-                    ],
+    return UpgradeAlert(
+      barrierDismissible: false,
+      showLater: false,
+      showIgnore: false,
+      upgrader: Upgrader(messages: UpgraderMessages(code: 'en')),
+      child: Scaffold(
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset('assets/login-image.jpg', fit: BoxFit.cover),
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.15),
+                        Colors.black.withOpacity(0.55),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SafeArea(
-                top: false,
-                child: BlocConsumer<AuthCubit, AuthState>(
-                  listener: (context, state) {
-                    if (state is AuthError) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.message),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  builder: (context, state) {
-                    final isLoading = state is AuthLoading;
-
-                    return Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        borderRadius: bottomRadius,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
-                            blurRadius: 18,
-                            offset: const Offset(0, -8),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SafeArea(
+                  top: false,
+                  child: BlocConsumer<AuthCubit, AuthState>(
+                    listener: (context, state) {
+                      if (state is AuthError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.red,
                           ),
-                        ],
-                      ),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 480),
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: Image.asset(
-                                      'assets/app_icon.png',
-                                      width: 72,
-                                      height: 72,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Property Management',
-                                    textAlign: TextAlign.center,
-                                    style: theme.textTheme.headlineSmall,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  TextFormField(
-                                    controller: _usernameController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Username',
-                                      prefixIcon: Icon(Icons.person),
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter your username';
-                                      }
-                                      return null;
-                                    },
-                                    enabled: !isLoading,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  TextFormField(
-                                    controller: _passwordController,
-                                    decoration: InputDecoration(
-                                      labelText: 'Password',
-                                      prefixIcon: const Icon(Icons.lock),
-                                      border: const OutlineInputBorder(),
-                                      suffixIcon: IconButton(
-                                        icon: Icon(
-                                          _obscurePassword
-                                              ? Icons.visibility
-                                              : Icons.visibility_off,
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            _obscurePassword =
-                                                !_obscurePassword;
-                                          });
-                                        },
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      final isLoading = state is AuthLoading;
+
+                      return Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: bottomRadius,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.12),
+                              blurRadius: 18,
+                              offset: const Offset(0, -8),
+                            ),
+                          ],
+                        ),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 480),
+                              child: Form(
+                                key: _formKey,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: Image.asset(
+                                        'assets/app_icon.png',
+                                        width: 72,
+                                        height: 72,
+                                        fit: BoxFit.contain,
                                       ),
                                     ),
-                                    obscureText: _obscurePassword,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter your password';
-                                      }
-                                      return null;
-                                    },
-                                    enabled: !isLoading,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton(
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Property Management',
+                                      textAlign: TextAlign.center,
+                                      style: theme.textTheme.headlineSmall,
+                                    ),
+                                    const SizedBox(height: 24),
+                                    TextFormField(
+                                      controller: _usernameController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Username',
+                                        prefixIcon: Icon(Icons.person),
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter your username';
+                                        }
+                                        return null;
+                                      },
+                                      enabled: !isLoading,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    TextFormField(
+                                      controller: _passwordController,
+                                      decoration: InputDecoration(
+                                        labelText: 'Password',
+                                        prefixIcon: const Icon(Icons.lock),
+                                        border: const OutlineInputBorder(),
+                                        suffixIcon: IconButton(
+                                          icon: Icon(
+                                            _obscurePassword
+                                                ? Icons.visibility
+                                                : Icons.visibility_off,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _obscurePassword =
+                                                  !_obscurePassword;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      obscureText: _obscurePassword,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter your password';
+                                        }
+                                        return null;
+                                      },
+                                      enabled: !isLoading,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton(
+                                        onPressed: isLoading
+                                            ? null
+                                            : () {
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const ForgotPasswordPage(),
+                                                  ),
+                                                );
+                                              },
+                                        child: Text(
+                                          'Forgot Password?',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                color: theme.primaryColor,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    GradientButton(
                                       onPressed: isLoading
                                           ? null
-                                          : () {
-                                              Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const ForgotPasswordPage(),
-                                                ),
-                                              );
-                                            },
-                                      child: Text(
-                                        'Forgot Password?',
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color: theme.primaryColor,
-                                            ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  GradientButton(
-                                    onPressed: isLoading ? null : _handleLogin,
-                                    padding: const EdgeInsets.all(16),
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: AppLoadingIndicator(
-                                              width: 20,
+                                          : _handleLogin,
+                                      padding: const EdgeInsets.all(16),
+                                      child: isLoading
+                                          ? const SizedBox(
                                               height: 20,
-                                            ),
-                                          )
-                                        : const Text('Login'),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTermsAndPrivacy(enabled: !isLoading),
-                                ],
+                                              width: 20,
+                                              child: AppLoadingIndicator(
+                                                width: 20,
+                                                height: 20,
+                                              ),
+                                            )
+                                          : const Text('Login'),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildTermsAndPrivacy(enabled: !isLoading),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

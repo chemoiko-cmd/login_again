@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 String formatDate(DateTime? d) {
   if (d == null) return '—';
   return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -44,4 +46,34 @@ String formatCurrency(
 String capitalizeFirst(String text) {
   if (text.isEmpty) return text;
   return text[0].toUpperCase() + text.substring(1);
+}
+
+String formatStateLabel(String? raw) {
+  if (raw == null) return '';
+  var s = raw.trim();
+  if (s.isEmpty) return '';
+
+  s = s.replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (m) => '${m[1]} ${m[2]}');
+  s = s.replaceAll(RegExp(r'[_\-]+'), ' ');
+  s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+  final words = s.toLowerCase().split(' ');
+  return words
+      .where((w) => w.isNotEmpty)
+      .map((w) => w[0].toUpperCase() + w.substring(1))
+      .join(' ');
+}
+
+Color stateBadgeColor(String? raw) {
+  final s = (raw ?? '').trim().toLowerCase();
+  switch (s) {
+    case 'draft':
+      return const Color(0xFF007AFF);
+    case 'in_progress':
+      return const Color(0xFFFFA000);
+    case 'done':
+      return const Color(0xFF2E7D32);
+    default:
+      return const Color(0xFF9E9E9E);
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:login_again/theme/app_theme.dart';
+import 'package:login_again/core/utils/formatters.dart';
 
 class ActionTile extends StatelessWidget {
   final IconData icon;
@@ -17,30 +18,6 @@ class ActionTile extends StatelessWidget {
     this.onTap,
   });
 
-  /// Badge color based on state string
-  Color getBadgeColor(BuildContext context, String? state) {
-    final scheme = Theme.of(context).colorScheme;
-    switch (state) {
-      case 'paid':
-        return context.success;
-      case 'overdue':
-        return scheme.error;
-      case 'draft':
-      case 'pending':
-        return context.warning;
-      case 'scheduled':
-        return const Color.fromARGB(255, 255, 166, 0);
-      case 'in_progress':
-        return const Color.fromARGB(255, 0, 122, 255);
-      case 'done':
-        return Colors.green;
-      case 'cancel':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -57,14 +34,14 @@ class ActionTile extends StatelessWidget {
             if (state != null)
               Chip(
                 label: Text(
-                  state!, // show string as-is
+                  formatStateLabel(state),
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
                 ),
-                backgroundColor: getBadgeColor(context, state),
+                backgroundColor: stateBadgeColor(state),
                 side: BorderSide.none,
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 visualDensity: VisualDensity.compact,

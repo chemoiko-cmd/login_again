@@ -50,19 +50,18 @@ class TenantRepository {
 
   Future<Map<String, dynamic>> loadDashboard() async {
     final auth = authCubit.state;
-    String login = '';
-    if (auth is Authenticated) {
-      login = auth.user.username;
-    }
+    final int uid = auth is Authenticated ? auth.user.id : 0;
 
-    final users = await _searchRead(
-      'res.users',
-      domain: [
-        ['login', '=', login],
-      ],
-      fields: const ['name', 'partner_id', 'company_id'],
-      limit: 1,
-    );
+    final users = uid > 0
+        ? await _searchRead(
+            'res.users',
+            domain: [
+              ['id', '=', uid],
+            ],
+            fields: const ['name', 'partner_id', 'company_id'],
+            limit: 1,
+          )
+        : const <dynamic>[];
 
     int? partnerId;
     String unitName = '';

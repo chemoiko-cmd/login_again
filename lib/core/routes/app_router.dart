@@ -45,9 +45,8 @@ class AppRouter {
       final isSplashRoute = location == '/splash';
 
       // While checking/restoring session, always remain on splash.
-      if ((authState is AuthInitial || authState is AuthChecking) &&
-          !isSplashRoute) {
-        return '/splash';
+      if (authState is AuthInitial || authState is AuthChecking) {
+        return isSplashRoute ? null : '/splash';
       }
 
       // ───────── AUTHENTICATED ─────────
@@ -62,7 +61,7 @@ class AppRouter {
       }
 
       // ───────── UNAUTHENTICATED ─────────
-      if (authState is! Authenticated && (isSplashRoute)) {
+      if (authState is Unauthenticated && (isSplashRoute)) {
         return '/login';
       }
 

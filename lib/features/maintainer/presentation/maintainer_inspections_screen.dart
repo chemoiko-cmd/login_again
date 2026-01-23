@@ -6,6 +6,7 @@ import 'package:login_again/features/maintainer/presentation/cubit/maintainer_in
 import 'package:login_again/features/maintainer/presentation/maintainer_inspection_edit_sheet.dart';
 import 'package:login_again/features/landlord/presentation/cubit/maintenance_tasks_state.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
+import 'package:login_again/core/utils/formatters.dart';
 
 class MaintainerInspectionsScreen extends StatefulWidget {
   const MaintainerInspectionsScreen({super.key});
@@ -133,14 +134,14 @@ class _MaintainerInspectionsScreenState
                           Expanded(child: Text(title)),
                           Chip(
                             label: Text(
-                              s,
+                              formatStateLabel(s),
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
-                            backgroundColor: _badgeColor(context, s),
+                            backgroundColor: stateBadgeColor(s),
                             side: BorderSide.none,
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             visualDensity: VisualDensity.compact,
@@ -160,21 +161,5 @@ class _MaintainerInspectionsScreenState
         },
       ),
     );
-  }
-
-  Color _badgeColor(BuildContext context, String state) {
-    final scheme = Theme.of(context).colorScheme;
-    switch (state) {
-      case 'done':
-        return Colors.green;
-      case 'in_progress':
-        return const Color(0xFF007AFF);
-      case 'open':
-        return Colors.grey;
-      case 'cancelled':
-        return scheme.error;
-      default:
-        return scheme.outline;
-    }
   }
 }
