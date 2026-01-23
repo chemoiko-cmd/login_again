@@ -73,6 +73,10 @@ class _ResetPasswordWithTokenPageState
 
       if (!mounted) return;
       setState(() => _done = true);
+      Future.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -274,18 +278,12 @@ class _ResetPasswordWithTokenPageState
         ),
         const SizedBox(height: 8),
         Text(
-          'You can now login with your new password.',
+          'You will be redirected to login now.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
         ),
         const SizedBox(height: 24),
-        GradientButton(
-          onPressed: () {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          },
-          padding: const EdgeInsets.all(16),
-          child: const Text('Back to Login'),
-        ),
+        const Center(child: AppLoadingIndicator(width: 28, height: 28)),
       ],
     );
   }

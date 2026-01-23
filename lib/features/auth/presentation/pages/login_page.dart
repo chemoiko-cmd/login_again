@@ -24,7 +24,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _databaseController = TextEditingController(text: 'new3');
+  final _databaseController = TextEditingController(text: 'rental');
   bool _obscurePassword = true;
 
   Future<void> _showPolicySheet({required String title}) async {
@@ -148,7 +148,10 @@ class _LoginPageState extends State<LoginPage> {
           child: Stack(
             children: [
               Positioned.fill(
-                child: Image.asset('assets/login-image.jpg', fit: BoxFit.cover),
+                child: Image.asset(
+                  'assets/login-image.webp',
+                  fit: BoxFit.cover,
+                ),
               ),
               Positioned.fill(
                 child: DecoratedBox(
