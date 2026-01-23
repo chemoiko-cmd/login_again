@@ -225,13 +225,13 @@ class _LoginPageState extends State<LoginPage> {
                                     TextFormField(
                                       controller: _usernameController,
                                       decoration: const InputDecoration(
-                                        labelText: 'Username',
+                                        labelText: 'Username or Phone',
                                         prefixIcon: Icon(Icons.person),
                                         border: OutlineInputBorder(),
                                       ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
-                                          return 'Please enter your username';
+                                          return 'Please enter your username or phone';
                                         }
                                         return null;
                                       },

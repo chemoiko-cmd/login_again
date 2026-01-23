@@ -2,9 +2,13 @@
 // FILE: lib/features/auth/presentation/pages/reset_password_with_token_page.dart
 // ============================================================================
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
+import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import '../../data/services/password_reset_service.dart';
 
 class ResetPasswordWithTokenPage extends StatefulWidget {
@@ -52,6 +56,20 @@ class _ResetPasswordWithTokenPageState
         resetToken: widget.resetToken,
         newPassword: _passwordController.text,
       );
+
+      await context.read<AuthCubit>().login(
+        username: widget.phoneNo,
+        password: _passwordController.text,
+        database: 'rental',
+      );
+
+      if (!mounted) return;
+
+      final authState = context.read<AuthCubit>().state;
+      if (authState is Authenticated) {
+        context.go('/splash');
+        return;
+      }
 
       if (!mounted) return;
       setState(() => _done = true);
