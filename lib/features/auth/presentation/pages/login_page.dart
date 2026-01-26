@@ -11,6 +11,7 @@ import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'forgot_password_page.dart';
+import 'register_options_page.dart';
 import 'package:upgrader/upgrader.dart'; // ← ADD THIS IMPORT
 
 class LoginPage extends StatefulWidget {
@@ -24,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _databaseController = TextEditingController(text: 'rental');
+  final _databaseController = TextEditingController(text: 'new3');
   bool _obscurePassword = true;
 
   Future<void> _showPolicySheet({required String title}) async {
@@ -128,6 +129,12 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void _handleGoogleLogin() {
+    context.read<AuthCubit>().loginWithGoogle(
+      database: _databaseController.text.trim(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -220,7 +227,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
-                                      'Property Management',
+                                      'KRental',
                                       textAlign: TextAlign.center,
                                       style: theme.textTheme.headlineSmall,
                                     ),
@@ -293,6 +300,33 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                       ),
                                     ),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: TextButton(
+                                        onPressed: isLoading
+                                            ? null
+                                            : () {
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        RegisterOptionsPage(
+                                                          database:
+                                                              _databaseController
+                                                                  .text
+                                                                  .trim(),
+                                                        ),
+                                                  ),
+                                                );
+                                              },
+                                        child: Text(
+                                          'Create account',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                color: theme.primaryColor,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
                                     const SizedBox(height: 16),
                                     GradientButton(
                                       onPressed: isLoading
@@ -309,6 +343,34 @@ class _LoginPageState extends State<LoginPage> {
                                               ),
                                             )
                                           : const Text('Login'),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        const Expanded(child: Divider()),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                          ),
+                                          child: Text(
+                                            'OR',
+                                            style: theme.textTheme.labelMedium
+                                                ?.copyWith(color: Colors.grey),
+                                          ),
+                                        ),
+                                        const Expanded(child: Divider()),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    OutlinedButton.icon(
+                                      onPressed: isLoading
+                                          ? null
+                                          : _handleGoogleLogin,
+                                      icon: const Icon(Icons.g_mobiledata),
+                                      label: const Text('Sign in with Google'),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.all(16),
+                                      ),
                                     ),
                                     const SizedBox(height: 16),
                                     _buildTermsAndPrivacy(enabled: !isLoading),

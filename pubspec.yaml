@@ -36,6 +36,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  google_sign_in: ^6.3.0
   go_router: ^17.0.1
   image_picker: ^1.2.1
   nested: ^1.0.0

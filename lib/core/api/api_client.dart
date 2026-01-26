@@ -5,7 +5,7 @@ class ApiClient {
   final Dio dio;
   final String baseUrl;
 
-  ApiClient({this.baseUrl = 'https://rental.kolapro.com'})
+  ApiClient({this.baseUrl = 'http://192.168.1.5:8069'})
     // http://192.168.1.7:8069  https://rental.kolapro.com
     : dio = Dio(
         BaseOptions(
@@ -39,6 +39,11 @@ class ApiClient {
         (k, v) => MapEntry(k, v.join('; ')),
       );
       print('← POST headers: ' + _sanitizeHeaders(respHeaders).toString());
+      try {
+        final body = response.data.toString();
+        final preview = body.length > 400 ? body.substring(0, 400) + '…' : body;
+        print('← POST body: ' + preview);
+      } catch (_) {}
     } catch (_) {}
     return response;
   }
@@ -57,6 +62,11 @@ class ApiClient {
         (k, v) => MapEntry(k, v.join('; ')),
       );
       print('← GET  headers: ' + _sanitizeHeaders(respHeaders).toString());
+      try {
+        final body = response.data.toString();
+        final preview = body.length > 400 ? body.substring(0, 400) + '…' : body;
+        print('← GET  body: ' + preview);
+      } catch (_) {}
     } catch (_) {}
     return response;
   }

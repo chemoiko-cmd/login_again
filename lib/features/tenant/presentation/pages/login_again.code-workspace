@@ -16,9 +16,6 @@
 			"path": "../../../../../build/app/outputs/bundle/release"
 		},
 		{
-			"path": "../../../../../../Login_Flutter"
-		},
-		{
 			"path": "../../../../../../../odoo-18.0"
 		}
 	],
