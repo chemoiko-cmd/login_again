@@ -38,7 +38,6 @@ class _LandlordMaintenanceScreenState extends State<LandlordMaintenanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Maintenance Tasks')),
       body: Stack(
         children: [
           BlocBuilder<MaintenanceTasksCubit, MaintenanceTasksState>(

@@ -32,7 +32,6 @@ class _InspectionScreenState extends State<InspectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Inspections')),
       body: Stack(
         children: [
           BlocBuilder<InspectionsCubit, InspectionsState>(

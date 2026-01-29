@@ -47,7 +47,6 @@ class _MaintainerTasksScreenState extends State<MaintainerTasksScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('My Maintenance Tasks')),
       body: BlocBuilder<MaintainerTasksCubit, MaintenanceTasksState>(
         builder: (context, state) {
           if (state is MaintenanceTasksLoading) {

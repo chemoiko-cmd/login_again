@@ -134,12 +134,13 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                         } else if (isTenant) {
                           context.go('/tenant-dashboard');
                         } else if (isMaintenance) {
-                          context.go('/maintainer-tasks');
+                          context.go('/maintainer-dashboard');
                         }
                       },
                       selected:
                           location == '/tenant-dashboard' ||
                           location == '/landlord-dashboard' ||
+                          location == '/maintainer-dashboard' ||
                           location == '/maintainer-tasks',
                       selectedTileColor: scheme.primary.withOpacity(0.08),
                     ),

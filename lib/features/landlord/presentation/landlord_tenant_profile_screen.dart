@@ -42,7 +42,6 @@ class _LandlordTenantProfileScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tenant Profile')),
       body: FutureBuilder<PartnerProfile?>(
         future: _future,
         builder: (context, snap) {

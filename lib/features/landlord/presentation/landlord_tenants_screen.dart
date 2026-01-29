@@ -32,7 +32,6 @@ class _LandlordTenantsScreenState extends State<LandlordTenantsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tenants')),
       body: Stack(
         children: [
           BlocBuilder<TenantsCubit, TenantsState>(

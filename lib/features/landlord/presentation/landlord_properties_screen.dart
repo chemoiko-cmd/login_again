@@ -58,8 +58,6 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(title: const Text('My Properties')),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading

@@ -9,6 +9,37 @@ class TenantRepository {
 
   TenantRepository({required this.apiClient, required this.authCubit});
 
+  Future<List<Map<String, dynamic>>> loadAnnouncements({int limit = 3}) async {
+    try {
+      final Response resp = await apiClient.post(
+        '/api/mobile/announcements/list',
+        data: {'limit': limit},
+      );
+
+      final body = resp.data;
+      final dynamic payload = (body is Map && body['result'] != null)
+          ? body['result']
+          : body;
+
+      if (payload is Map &&
+          payload['success'] == true &&
+          payload['result'] is List) {
+        return (payload['result'] as List)
+            .whereType<Map>()
+            .map((m) => m.cast<String, dynamic>())
+            .toList();
+      }
+
+      return const <Map<String, dynamic>>[];
+    } on DioException catch (e, st) {
+      print(st.toString());
+      throw Exception('${e.message}');
+    } catch (e, st) {
+      print(st.toString());
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
   Future<List<dynamic>> _searchRead(
     String model, {
     required List<dynamic> domain,

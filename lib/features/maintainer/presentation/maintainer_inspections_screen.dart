@@ -84,7 +84,6 @@ class _MaintainerInspectionsScreenState
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('My Inspections')),
       body: BlocBuilder<MaintainerInspectionsCubit, MaintenanceTasksState>(
         builder: (context, state) {
           if (state is MaintenanceTasksLoading) {

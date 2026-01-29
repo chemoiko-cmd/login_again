@@ -5,8 +5,12 @@
 // - Performs role-based redirection using the `User` domain helpers.
 // - NO UI side-effects inside redirect (important).
 // ============================================================================
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:login_again/core/widgets/glass_background.dart';
 import 'package:login_again/features/landlord/presentation/landlord_maintenance_screen.dart';
 import 'package:login_again/features/landlord/presentation/inspection_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenant_profile_screen.dart';
@@ -14,6 +18,7 @@ import 'package:login_again/features/landlord/presentation/landlord_tenants_scre
 import 'package:login_again/features/landlord/presentation/landlord_properties_screen.dart';
 import 'package:login_again/features/maintainer/presentation/maintainer_tasks_screen.dart';
 import 'package:login_again/features/maintainer/presentation/maintainer_inspections_screen.dart';
+import 'package:login_again/features/maintainer/presentation/maintainer_dashboard_screen.dart';
 import 'package:login_again/features/payments/presentation/pages/payments_page.dart';
 import 'package:login_again/features/profile/presentation/my_profile_screen.dart';
 
@@ -28,6 +33,40 @@ import '../../features/contracts/presentation/pages/contract_details_page.dart';
 import '../../core/widgets/app_side_drawer.dart'; // Make sure this exists
 import '../../features/maintenance2/presentation/maintenance_screen.dart';
 import 'package:login_again/screens/privacy_policy_screen.dart';
+
+String _shellTitleForLocation(BuildContext context, String location) {
+  final authState = context.read<AuthCubit>().state;
+  final userName = authState is Authenticated ? authState.user.name : 'User';
+
+  switch (location) {
+    case '/tenant-dashboard':
+      return 'Hello $userName';
+    case '/landlord-dashboard':
+      return 'Hello $userName';
+    case '/maintainer-dashboard':
+      return 'Hello $userName';
+    case '/landlord-properties':
+      return 'Properties';
+    case '/landlord-tenants':
+      return 'Tenants';
+    case '/landlord-maintenance':
+      return 'Maintenance';
+    case '/inspections':
+      return 'Inspections';
+    case '/pay-rent':
+      return 'Payments';
+    case '/contracts':
+      return 'Contracts';
+    case '/profile':
+      return 'My Profile';
+    case '/maintainer-tasks':
+      return 'Tasks';
+    case '/maintainer-inspections':
+      return 'Inspections';
+    default:
+      return 'Odoo Property Management';
+  }
+}
 
 class AppRouter {
   final AuthCubit authCubit;
@@ -53,7 +92,7 @@ class AppRouter {
       if (authState is Authenticated && (isLoginRoute || isSplashRoute)) {
         if (authState.isTenant) return '/tenant-dashboard';
         if (authState.isLandlord) return '/landlord-dashboard';
-        if (authState.isMaintenance) return '/maintainer-tasks';
+        if (authState.isMaintenance) return '/maintainer-dashboard';
 
         // Unknown role → safe fallback
         authCubit.logout();
@@ -79,10 +118,29 @@ class AppRouter {
       // Global drawer shell
       ShellRoute(
         builder: (context, state, child) {
-          return Scaffold(
-            appBar: AppBar(),
-            drawer: const AppSideDrawer(),
-            body: child,
+          final title = _shellTitleForLocation(context, state.matchedLocation);
+          return Stack(
+            children: [
+              const Positioned.fill(
+                child: GlassBackground(child: SizedBox.expand()),
+              ),
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                appBar: AppBar(
+                  title: Text(title),
+                  toolbarHeight: 72,
+                  bottom: const PreferredSize(
+                    preferredSize: Size.fromHeight(8),
+                    child: SizedBox(height: 8),
+                  ),
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                ),
+                drawer: const AppSideDrawer(),
+                body: child,
+              ),
+            ],
           );
         },
         routes: [
@@ -157,6 +215,10 @@ class AppRouter {
 
           // Maintainer routes
           GoRoute(
+            path: '/maintainer-dashboard',
+            builder: (context, state) => const MaintainerDashboardScreen(),
+          ),
+          GoRoute(
             path: '/maintainer-tasks',
             builder: (context, state) => const MaintainerTasksScreen(),
           ),
@@ -181,7 +243,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
     });
   }
 
-  late final _subscription;
+  late final StreamSubscription<dynamic> _subscription;
 
   @override
   void dispose() {

@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
+import 'package:login_again/features/contracts/presentation/widgets/widgets.dart';
 import '../widgets/section.dart';
 import '../cubit/tenant_dashboard_cubit.dart';
 import '../cubit/tenant_dashboard_state.dart';
@@ -21,6 +22,22 @@ class TenantDashboardPage extends StatefulWidget {
 }
 
 class _TenantDashboardPageState extends State<TenantDashboardPage> {
+  String _stripHtml(String input) {
+    return input
+        .replaceAll(RegExp(r'<[^>]*>'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  String _formatShortDate(String iso) {
+    if (iso.isEmpty) return '';
+    final d = DateTime.tryParse(iso);
+    if (d == null) return iso;
+    final mm = d.month.toString().padLeft(2, '0');
+    final dd = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$mm-$dd';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -31,117 +48,138 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      body: BlocBuilder<TenantDashboardCubit, TenantDashboardState>(
-        builder: (context, state) {
-          if (state.loading) {
-            return const Center(child: AppLoadingIndicator());
-          }
-          if (state.error != null) {
-            return Center(
-              child: Text('Failed to load tenant data\n${state.error}'),
-            );
-          }
-          final data = state.data ?? const {};
-          final userName = (data['userName'] ?? '').toString();
-          final unitName = (data['unitName'] ?? '').toString();
-          final propertyName = (data['propertyName'] ?? '').toString();
+    return BlocBuilder<TenantDashboardCubit, TenantDashboardState>(
+      builder: (context, state) {
+        if (state.loading) {
+          return const Center(child: AppLoadingIndicator());
+        }
+        if (state.error != null) {
+          return Center(
+            child: Text('Failed to load tenant data\n${state.error}'),
+          );
+        }
+        final data = state.data ?? const {};
+        final userName = (data['userName'] ?? '').toString();
+        final unitName = (data['unitName'] ?? '').toString();
+        final propertyName = (data['propertyName'] ?? '').toString();
+        final announcements = state.announcements;
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, bottom: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome back,',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        userName.isEmpty ? 'Tenant' : capitalizeFirst(userName),
-                        style: textTheme.headlineSmall?.copyWith(
-                          color: scheme.onSurface,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${unitName.isEmpty ? 'Your unit' : unitName} • ${propertyName.isEmpty ? 'Your property' : propertyName}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Actions grid
-                Padding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 8),
-                  child: GridView.count(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _ActionCircle(
-                        icon: Icons.build_outlined,
-                        label: 'Maintenance Request',
-                        onTap: () => context.go('/maintenance'),
-                        color: Colors.orange,
-                      ),
-                      _ActionCircle(
-                        icon: Icons.description_outlined,
-                        label: 'Contract-info',
-                        onTap: () => context.go('/contracts'),
-                        color: Colors.teal,
-                      ),
-                      _ActionCircle(
-                        icon: Icons.receipt_long,
-                        label: 'Receipts',
-                        onTap: () => context.go('/pay-rent'),
-                        color: Colors.indigo,
-                      ),
-                      _ActionCircle(
-                        icon: Icons.credit_card,
-                        label: 'Pay Rent',
-                        onTap: () => context.go('/pay-rent'),
-                        color: scheme.primary,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Section(
-                  title: 'The smarter way to rent',
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '',
+                      'Welcome back,',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      userName.isEmpty ? 'Tenant' : capitalizeFirst(userName),
+                      style: textTheme.headlineSmall?.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${unitName.isEmpty ? 'Your unit' : unitName} • ${propertyName.isEmpty ? 'Your property' : propertyName}',
                       style: textTheme.bodySmall?.copyWith(
                         color: scheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                   ],
-                  trailing: GradientTextButton(
-                    onPressed: () => context.go('/pay-rent'),
-                    child: const Text('Pay your rent'),
-                  ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+
+              // Actions grid
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                child: GridView.count(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _ActionCircle(
+                      icon: Icons.build_outlined,
+                      label: 'Maintenance Request',
+                      onTap: () => context.go('/maintenance'),
+                      color: Colors.orange,
+                    ),
+                    _ActionCircle(
+                      icon: Icons.description_outlined,
+                      label: 'Contract-info',
+                      onTap: () => context.go('/contracts'),
+                      color: Colors.teal,
+                    ),
+                    _ActionCircle(
+                      icon: Icons.receipt_long,
+                      label: 'Receipts',
+                      onTap: () => context.go('/pay-rent'),
+                      color: Colors.indigo,
+                    ),
+                    _ActionCircle(
+                      icon: Icons.credit_card,
+                      label: 'Pay Rent',
+                      onTap: () => context.go('/pay-rent'),
+                      color: scheme.primary,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Section(
+                title: 'Property Announcements',
+                trailing: GradientTextButton(
+                  onPressed: () => context.go('/announcements'),
+                  child: const Text('View all'),
+                ),
+                children: [
+                  if (announcements.isEmpty)
+                    Text(
+                      'No announcements yet.',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    )
+                  else
+                    ...announcements.map((a) {
+                      final title = (a['title'] ?? '').toString();
+                      final property = (a['property_name'] ?? '').toString();
+                      final publishedAt = (a['published_at'] ?? '').toString();
+                      final message = _stripHtml((a['body'] ?? '').toString());
+                      final urgent =
+                          title.toLowerCase().contains('urgent') ||
+                          message.toLowerCase().contains('urgent');
+                      final subtitleParts = <String>[];
+                      if (property.isNotEmpty) subtitleParts.add(property);
+                      if (publishedAt.isNotEmpty)
+                        subtitleParts.add(publishedAt);
+                      final subtitle = subtitleParts.join(' • ');
+
+                      return ActionTile(
+                        title: title,
+                        subtitle: subtitle,
+                        icon: Icons.notifications,
+                      );
+                    }),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

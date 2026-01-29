@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'glass_theme.dart';
 
 /// App theme configuration
 class AppTheme {
@@ -40,6 +41,8 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: 'Inter',
+
+      extensions: <ThemeExtension<dynamic>>[GlassTheme.light()],
 
       // Color scheme
       colorScheme: const ColorScheme.light(

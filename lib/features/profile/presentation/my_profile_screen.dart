@@ -40,7 +40,6 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         : '';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Profile')),
       body: FutureBuilder<PartnerProfile?>(
         future: _future,
         builder: (context, snap) {

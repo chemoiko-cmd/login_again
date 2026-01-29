@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
@@ -108,10 +109,33 @@ class RegisterOptionsPage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 24),
                                 _OptionCard(
+                                  title: 'Sign up with Google',
+                                  subtitle:
+                                      'Create account with your Google account',
+                                  leading: SvgPicture.asset(
+                                    'assets/google_g.svg',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  onTap: isLoading
+                                      ? () {}
+                                      : () {
+                                          context
+                                              .read<AuthCubit>()
+                                              .registerWithGoogle(
+                                                database: database,
+                                              );
+                                        },
+                                ),
+                                const SizedBox(height: 12),
+                                _OptionCard(
                                   title: 'Sign up with Email',
                                   subtitle:
                                       'Use your email address to create account',
-                                  icon: Icons.email,
+                                  leading: Icon(
+                                    Icons.email,
+                                    color: colorScheme.primary,
+                                  ),
                                   onTap: isLoading
                                       ? () {}
                                       : () {
@@ -123,22 +147,6 @@ class RegisterOptionsPage extends StatelessWidget {
                                                   ),
                                             ),
                                           );
-                                        },
-                                ),
-                                const SizedBox(height: 12),
-                                _OptionCard(
-                                  title: 'Sign up with Google',
-                                  subtitle:
-                                      'Create account with your Google account',
-                                  icon: Icons.g_mobiledata,
-                                  onTap: isLoading
-                                      ? () {}
-                                      : () {
-                                          context
-                                              .read<AuthCubit>()
-                                              .registerWithGoogle(
-                                                database: database,
-                                              );
                                         },
                                 ),
                                 const SizedBox(height: 12),
@@ -170,13 +178,13 @@ class RegisterOptionsPage extends StatelessWidget {
 class _OptionCard extends StatelessWidget {
   final String title;
   final String subtitle;
-  final IconData icon;
+  final Widget leading;
   final VoidCallback onTap;
 
   const _OptionCard({
     required this.title,
     required this.subtitle,
-    required this.icon,
+    required this.leading,
     required this.onTap,
   });
 
@@ -204,7 +212,7 @@ class _OptionCard extends StatelessWidget {
                 color: color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color),
+              child: Center(child: leading),
             ),
             const SizedBox(width: 12),
             Expanded(

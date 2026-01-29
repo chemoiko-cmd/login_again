@@ -29,7 +29,6 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Maintenance Requests')),
       body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
         builder: (context, state) {
           if (state is MaintenanceLoading) {

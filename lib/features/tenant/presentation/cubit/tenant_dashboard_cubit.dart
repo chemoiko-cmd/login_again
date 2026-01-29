@@ -11,7 +11,15 @@ class TenantDashboardCubit extends Cubit<TenantDashboardState> {
     emit(state.copyWith(loading: true, error: null));
     try {
       final data = await repo.loadDashboard();
-      emit(state.copyWith(loading: false, data: data, error: null));
+      final anns = await repo.loadAnnouncements(limit: 3);
+      emit(
+        state.copyWith(
+          loading: false,
+          data: data,
+          announcements: anns,
+          error: null,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(loading: false, error: e.toString()));
     }

@@ -5,9 +5,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
+import 'package:login_again/core/widgets/glass_background.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'forgot_password_page.dart';
@@ -25,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _databaseController = TextEditingController(text: 'new3');
+  final _databaseController = TextEditingController(text: 'rental');
   bool _obscurePassword = true;
 
   Future<void> _showPolicySheet({required String title}) async {
@@ -138,7 +141,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final bottomRadius = BorderRadius.only(
       topLeft: Radius.circular(24),
       topRight: Radius.circular(24),
@@ -154,6 +156,9 @@ class _LoginPageState extends State<LoginPage> {
           onTap: () => FocusScope.of(context).unfocus(),
           child: Stack(
             children: [
+              const Positioned.fill(
+                child: GlassBackground(child: SizedBox.expand()),
+              ),
               Positioned.fill(
                 child: Image.asset(
                   'assets/login-image.webp',
@@ -167,8 +172,8 @@ class _LoginPageState extends State<LoginPage> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.15),
-                        Colors.black.withOpacity(0.55),
+                        Colors.white.withValues(alpha: 0.05),
+                        Colors.black.withValues(alpha: 0.35),
                       ],
                     ),
                   ),
@@ -192,19 +197,9 @@ class _LoginPageState extends State<LoginPage> {
                     builder: (context, state) {
                       final isLoading = state is AuthLoading;
 
-                      return Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: bottomRadius,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
-                              blurRadius: 18,
-                              offset: const Offset(0, -8),
-                            ),
-                          ],
-                        ),
+                      return GlassSurface(
+                        borderRadius: bottomRadius,
+                        padding: EdgeInsets.zero,
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                           child: Center(
@@ -366,7 +361,11 @@ class _LoginPageState extends State<LoginPage> {
                                       onPressed: isLoading
                                           ? null
                                           : _handleGoogleLogin,
-                                      icon: const Icon(Icons.g_mobiledata),
+                                      icon: SvgPicture.asset(
+                                        'assets/google_g.svg',
+                                        width: 20,
+                                        height: 20,
+                                      ),
                                       label: const Text('Sign in with Google'),
                                       style: OutlinedButton.styleFrom(
                                         padding: const EdgeInsets.all(16),
