@@ -38,6 +38,7 @@ class _LandlordMaintenanceScreenState extends State<LandlordMaintenanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           BlocBuilder<MaintenanceTasksCubit, MaintenanceTasksState>(

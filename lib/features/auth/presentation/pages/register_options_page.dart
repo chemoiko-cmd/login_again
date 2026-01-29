@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:login_again/core/widgets/glass_background.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
@@ -39,6 +41,9 @@ class RegisterOptionsPage extends StatelessWidget {
 
             return Stack(
               children: [
+                const Positioned.fill(
+                  child: GlassBackground(child: SizedBox.expand()),
+                ),
                 Positioned.fill(
                   child: Image.asset(
                     'assets/login-image.webp',
@@ -52,8 +57,8 @@ class RegisterOptionsPage extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withOpacity(0.15),
-                          Colors.black.withOpacity(0.55),
+                          Colors.white.withValues(alpha: 0.05),
+                          Colors.black.withValues(alpha: 0.35),
                         ],
                       ),
                     ),
@@ -63,19 +68,9 @@ class RegisterOptionsPage extends StatelessWidget {
                   alignment: Alignment.bottomCenter,
                   child: SafeArea(
                     top: false,
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        borderRadius: bottomRadius,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
-                            blurRadius: 18,
-                            offset: const Offset(0, -8),
-                          ),
-                        ],
-                      ),
+                    child: GlassSurface(
+                      borderRadius: bottomRadius,
+                      padding: EdgeInsets.zero,
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                         child: Center(
@@ -200,8 +195,8 @@ class _OptionCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.25)),
-          color: color.withOpacity(0.06),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
+          color: color.withValues(alpha: 0.06),
         ),
         child: Row(
           children: [
@@ -209,7 +204,7 @@ class _OptionCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(child: leading),

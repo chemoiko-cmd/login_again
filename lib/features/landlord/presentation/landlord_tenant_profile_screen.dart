@@ -42,6 +42,7 @@ class _LandlordTenantProfileScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: FutureBuilder<PartnerProfile?>(
         future: _future,
         builder: (context, snap) {

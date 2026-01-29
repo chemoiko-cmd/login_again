@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
+import 'package:login_again/core/widgets/glass_background.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import '../../data/services/password_reset_service.dart';
 import 'verify_reset_otp_page.dart';
 
@@ -57,7 +59,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final bottomRadius = BorderRadius.only(
       topLeft: Radius.circular(24),
       topRight: Radius.circular(24),
@@ -68,8 +69,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
+            const Positioned.fill(
+              child: GlassBackground(child: SizedBox.expand()),
+            ),
             Positioned.fill(
-              child: Image.asset('assets/login-image.jpg', fit: BoxFit.cover),
+              child: Image.asset('assets/login-image.webp', fit: BoxFit.cover),
             ),
             Positioned.fill(
               child: DecoratedBox(
@@ -78,8 +82,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.15),
-                      Colors.black.withOpacity(0.55),
+                      Colors.white.withValues(alpha: 0.05),
+                      Colors.black.withValues(alpha: 0.35),
                     ],
                   ),
                 ),
@@ -104,19 +108,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               alignment: Alignment.bottomCenter,
               child: SafeArea(
                 top: false,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: bottomRadius,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 18,
-                        offset: const Offset(0, -8),
-                      ),
-                    ],
-                  ),
+                child: GlassSurface(
+                  borderRadius: bottomRadius,
+                  padding: EdgeInsets.zero,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                     child: Center(

@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
+import 'package:login_again/core/widgets/glass_background.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import '../../data/services/password_reset_service.dart';
@@ -50,6 +52,8 @@ class _ResetPasswordWithTokenPageState
 
     setState(() => _isLoading = true);
 
+    final authCubit = context.read<AuthCubit>();
+
     try {
       await _passwordResetService.resetPasswordWithToken(
         phoneNo: widget.phoneNo,
@@ -57,7 +61,7 @@ class _ResetPasswordWithTokenPageState
         newPassword: _passwordController.text,
       );
 
-      await context.read<AuthCubit>().login(
+      await authCubit.login(
         username: widget.phoneNo,
         password: _passwordController.text,
         database: 'rental',
@@ -92,8 +96,6 @@ class _ResetPasswordWithTokenPageState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final bottomRadius = BorderRadius.only(
       topLeft: Radius.circular(24),
       topRight: Radius.circular(24),
@@ -104,8 +106,11 @@ class _ResetPasswordWithTokenPageState
         onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
+            const Positioned.fill(
+              child: GlassBackground(child: SizedBox.expand()),
+            ),
             Positioned.fill(
-              child: Image.asset('assets/login-image.jpg', fit: BoxFit.cover),
+              child: Image.asset('assets/login-image.webp', fit: BoxFit.cover),
             ),
             Positioned.fill(
               child: DecoratedBox(
@@ -114,8 +119,8 @@ class _ResetPasswordWithTokenPageState
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.15),
-                      Colors.black.withOpacity(0.55),
+                      Colors.white.withValues(alpha: 0.05),
+                      Colors.black.withValues(alpha: 0.35),
                     ],
                   ),
                 ),
@@ -140,19 +145,9 @@ class _ResetPasswordWithTokenPageState
               alignment: Alignment.bottomCenter,
               child: SafeArea(
                 top: false,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: bottomRadius,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 18,
-                        offset: const Offset(0, -8),
-                      ),
-                    ],
-                  ),
+                child: GlassSurface(
+                  borderRadius: bottomRadius,
+                  padding: EdgeInsets.zero,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                     child: Center(

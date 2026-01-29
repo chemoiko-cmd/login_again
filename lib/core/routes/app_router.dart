@@ -6,10 +6,12 @@
 // - NO UI side-effects inside redirect (important).
 // ============================================================================
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
 import 'package:login_again/features/landlord/presentation/landlord_maintenance_screen.dart';
 import 'package:login_again/features/landlord/presentation/inspection_screen.dart';
@@ -40,11 +42,11 @@ String _shellTitleForLocation(BuildContext context, String location) {
 
   switch (location) {
     case '/tenant-dashboard':
-      return 'Hello $userName';
+      return 'Hello ${capitalizeFirst(userName)}';
     case '/landlord-dashboard':
-      return 'Hello $userName';
+      return 'Hello ${capitalizeFirst(userName)}';
     case '/maintainer-dashboard':
-      return 'Hello $userName';
+      return 'Hello ${capitalizeFirst(userName)}';
     case '/landlord-properties':
       return 'Properties';
     case '/landlord-tenants':
@@ -128,12 +130,13 @@ class AppRouter {
                 backgroundColor: Colors.transparent,
                 appBar: AppBar(
                   title: Text(title),
+                  backgroundColor: Colors.white,
                   toolbarHeight: 72,
                   bottom: const PreferredSize(
                     preferredSize: Size.fromHeight(8),
                     child: SizedBox(height: 8),
                   ),
-                  backgroundColor: Colors.transparent,
+
                   elevation: 0,
                   scrolledUnderElevation: 0,
                 ),

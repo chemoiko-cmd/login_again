@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:login_again/core/api/api_client.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
+import 'package:login_again/core/widgets/glass_background.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import '../../data/services/password_reset_service.dart';
 import 'reset_password_with_token_page.dart';
 
@@ -80,7 +82,6 @@ class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final bottomRadius = BorderRadius.only(
       topLeft: Radius.circular(24),
       topRight: Radius.circular(24),
@@ -91,8 +92,11 @@ class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
+            const Positioned.fill(
+              child: GlassBackground(child: SizedBox.expand()),
+            ),
             Positioned.fill(
-              child: Image.asset('assets/login-image.jpg', fit: BoxFit.cover),
+              child: Image.asset('assets/login-image.webp', fit: BoxFit.cover),
             ),
             Positioned.fill(
               child: DecoratedBox(
@@ -101,8 +105,8 @@ class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.15),
-                      Colors.black.withOpacity(0.55),
+                      Colors.white.withValues(alpha: 0.05),
+                      Colors.black.withValues(alpha: 0.35),
                     ],
                   ),
                 ),
@@ -127,19 +131,9 @@ class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
               alignment: Alignment.bottomCenter,
               child: SafeArea(
                 top: false,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: bottomRadius,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 18,
-                        offset: const Offset(0, -8),
-                      ),
-                    ],
-                  ),
+                child: GlassSurface(
+                  borderRadius: bottomRadius,
+                  padding: EdgeInsets.zero,
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                     child: Center(
@@ -174,8 +168,9 @@ class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
                                 validator: (_) {
                                   final v = _otp;
                                   if (v.isEmpty) return 'Please enter the OTP';
-                                  if (v.length != 6)
+                                  if (v.length != 6) {
                                     return 'OTP must be 6 digits';
+                                  }
                                   if (!RegExp(r'^\d{6}$').hasMatch(v)) {
                                     return 'OTP must be digits only';
                                   }

@@ -32,6 +32,7 @@ class _InspectionScreenState extends State<InspectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           BlocBuilder<InspectionsCubit, InspectionsState>(
@@ -49,9 +50,11 @@ class _InspectionScreenState extends State<InspectionScreen> {
                   return const Center(child: Text('No inspections found'));
                 }
 
-                return ListView.builder(
+                return ListView.separated(
                   padding: const EdgeInsets.all(12),
                   itemCount: state.inspections.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final inspection = state.inspections[index];
 

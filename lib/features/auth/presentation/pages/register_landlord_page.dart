@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:login_again/core/widgets/glass_background.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
@@ -96,7 +98,6 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final bottomRadius = const BorderRadius.only(
       topLeft: Radius.circular(24),
       topRight: Radius.circular(24),
@@ -125,6 +126,9 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
 
             return Stack(
               children: [
+                const Positioned.fill(
+                  child: GlassBackground(child: SizedBox.expand()),
+                ),
                 Positioned.fill(
                   child: Image.asset(
                     'assets/login-image.webp',
@@ -138,8 +142,8 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withOpacity(0.15),
-                          Colors.black.withOpacity(0.55),
+                          Colors.white.withValues(alpha: 0.05),
+                          Colors.black.withValues(alpha: 0.35),
                         ],
                       ),
                     ),
@@ -159,19 +163,9 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                   alignment: Alignment.bottomCenter,
                   child: SafeArea(
                     top: false,
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        borderRadius: bottomRadius,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
-                            blurRadius: 18,
-                            offset: const Offset(0, -8),
-                          ),
-                        ],
-                      ),
+                    child: GlassSurface(
+                      borderRadius: bottomRadius,
+                      padding: EdgeInsets.zero,
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                         child: Center(

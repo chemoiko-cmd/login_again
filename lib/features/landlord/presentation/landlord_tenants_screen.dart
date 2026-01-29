@@ -32,6 +32,7 @@ class _LandlordTenantsScreenState extends State<LandlordTenantsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           BlocBuilder<TenantsCubit, TenantsState>(
@@ -49,9 +50,11 @@ class _LandlordTenantsScreenState extends State<LandlordTenantsScreen> {
                   return const Center(child: Text('No tenants found'));
                 }
 
-                return ListView.builder(
+                return ListView.separated(
                   padding: const EdgeInsets.all(12),
                   itemCount: state.tenants.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final row = state.tenants[index];
                     return ActionTile(

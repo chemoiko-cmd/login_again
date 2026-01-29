@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/landlord/data/repositories/landlord_repository.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/theme/app_theme.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import 'dart:typed_data';
@@ -58,6 +59,7 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading
@@ -80,12 +82,11 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
                       .where((e) => (e ?? '').toString().trim().isNotEmpty)
                       .map((e) => e.toString())
                       .join(', ');
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                  return GlassSurface(
+                    padding: EdgeInsets.zero,
+                    borderRadius: BorderRadius.circular(12),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       onTap: () {},
                       child: Padding(
                         padding: const EdgeInsets.all(14),
@@ -99,7 +100,7 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
                                   height: 54,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    color: scheme.surfaceContainerHighest,
+                                    color: Colors.white.withValues(alpha: 0.22),
                                   ),
                                   clipBehavior: Clip.antiAlias,
                                   child: imageBytes != null
@@ -209,7 +210,8 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
                     ),
                   );
                 },
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
                 itemCount: _properties.length,
               ),
       ),
@@ -237,7 +239,11 @@ class _InfoPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: baseColor.withValues(alpha: 0.10),
+        color: Colors.white.withValues(alpha: 0.20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.30),
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
