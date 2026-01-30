@@ -67,115 +67,137 @@ class _MaintainerDashboardScreenState extends State<MaintainerDashboardScreen> {
         .toList();
     final firstName = parts.isEmpty ? 'User' : parts.first;
 
-    return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () async {
-          final auth = context.read<AuthCubit>().state;
-          if (auth is Authenticated) {
-            await context.read<MaintainerTasksCubit>().load(
-              partnerId: auth.user.partnerId,
-            );
-            await context.read<MaintainerInspectionsCubit>().load(
-              userId: auth.user.id,
-            );
-          }
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 24, top: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome back,',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurface.withOpacity(0.7),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<MaintainerTasksCubit, MaintenanceTasksState>(
+          listener: (context, state) {
+            if (state is MaintenanceTasksLoading) {
+              loading.Widgets.showLoader(context);
+            } else {
+              loading.Widgets.hideLoader(context);
+            }
+          },
+        ),
+        BlocListener<MaintainerInspectionsCubit, MaintenanceTasksState>(
+          listener: (context, state) {
+            if (state is MaintenanceTasksLoading) {
+              loading.Widgets.showLoader(context);
+            } else {
+              loading.Widgets.hideLoader(context);
+            }
+          },
+        ),
+      ],
+      child: Scaffold(
+        body: RefreshIndicator(
+          onRefresh: () async {
+            final auth = context.read<AuthCubit>().state;
+            if (auth is Authenticated) {
+              await context.read<MaintainerTasksCubit>().load(
+                partnerId: auth.user.partnerId,
+              );
+              await context.read<MaintainerInspectionsCubit>().load(
+                userId: auth.user.id,
+              );
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 24, top: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome back,',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurface.withOpacity(0.7),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${capitalizeFirst(firstName)}',
-                      style: textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 4),
+                      Text(
+                        '${capitalizeFirst(firstName)}',
+                        style: textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Stats Overview
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _StatsRow(),
-              ),
-              const SizedBox(height: 24),
-
-              // Today's Tasks
-              _SectionHeader(
-                title: "Today's Tasks",
-                onViewAll: () => context.go('/maintainer-tasks'),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _TodayTasksList(
-                  tupleName: _tupleName,
-                  iconForStatus: _taskIcon,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Upcoming Inspections
-              _SectionHeader(
-                title: 'Pending Inspections',
-                onViewAll: () => context.go('/maintainer-inspections'),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _UpcomingInspectionsList(tupleName: _tupleName),
-              ),
-              const SizedBox(height: 24),
-
-              // Quick Actions
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Quick Actions',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _QuickActionCard(
-                        icon: Icons.build_outlined,
-                        label: 'My Tasks',
-                        onTap: () => context.go('/maintainer-tasks'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _QuickActionCard(
-                        icon: Icons.search_outlined,
-                        label: 'Inspections',
-                        onTap: () => context.go('/maintainer-inspections'),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 16),
+
+                // Stats Overview
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _StatsRow(),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+
+                // Today's Tasks
+                _SectionHeader(
+                  title: "Today's Tasks",
+                  onViewAll: () => context.go('/maintainer-tasks'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _TodayTasksList(
+                    tupleName: _tupleName,
+                    iconForStatus: _taskIcon,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Upcoming Inspections
+                _SectionHeader(
+                  title: 'Pending Inspections',
+                  onViewAll: () => context.go('/maintainer-inspections'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _UpcomingInspectionsList(tupleName: _tupleName),
+                ),
+                const SizedBox(height: 24),
+
+                // Quick Actions
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'Quick Actions',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _QuickActionCard(
+                          icon: Icons.build_outlined,
+                          label: 'My Tasks',
+                          onTap: () => context.go('/maintainer-tasks'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _QuickActionCard(
+                          icon: Icons.search_outlined,
+                          label: 'Inspections',
+                          onTap: () => context.go('/maintainer-inspections'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -323,18 +345,8 @@ class _TodayTasksList extends StatelessWidget {
     return BlocBuilder<MaintainerTasksCubit, MaintenanceTasksState>(
       builder: (context, state) {
         if (state is MaintenanceTasksLoading) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!context.mounted) return;
-            loading.Widgets.showLoader(context);
-          });
           return const SizedBox.shrink();
         }
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) return;
-          loading.Widgets.hideLoader(context);
-        });
-
         if (state is MaintenanceTasksError) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -382,18 +394,8 @@ class _UpcomingInspectionsList extends StatelessWidget {
     return BlocBuilder<MaintainerInspectionsCubit, MaintenanceTasksState>(
       builder: (context, state) {
         if (state is MaintenanceTasksLoading) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!context.mounted) return;
-            loading.Widgets.showLoader(context);
-          });
           return const SizedBox.shrink();
         }
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) return;
-          loading.Widgets.hideLoader(context);
-        });
-
         if (state is MaintenanceTasksError) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),

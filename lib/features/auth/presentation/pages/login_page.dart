@@ -115,6 +115,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    loading.Widgets.hideLoader(context);
     _usernameController.dispose();
     _passwordController.dispose();
     _databaseController.dispose();
