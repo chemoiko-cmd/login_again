@@ -10,7 +10,6 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
-import 'package:login_again/core/widgets/glass_surface.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'forgot_password_page.dart';
@@ -141,10 +140,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bottomRadius = BorderRadius.only(
-      topLeft: Radius.circular(24),
-      topRight: Radius.circular(24),
-    );
 
     return UpgradeAlert(
       barrierDismissible: false,
@@ -197,9 +192,7 @@ class _LoginPageState extends State<LoginPage> {
                     builder: (context, state) {
                       final isLoading = state is AuthLoading;
 
-                      return GlassSurface(
-                        borderRadius: bottomRadius,
-                        padding: EdgeInsets.zero,
+                      return GlassBackground(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                           child: Center(

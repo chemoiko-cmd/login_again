@@ -14,6 +14,7 @@ import 'cubit/metrics_state.dart';
 import 'widgets/rent_card.dart';
 import 'widgets/metric_card.dart';
 import 'widgets/action_tile.dart';
+import 'package:login_again/core/utils/formatters.dart';
 
 class LandlordDashboardScreen extends StatefulWidget {
   const LandlordDashboardScreen({super.key});
@@ -40,7 +41,10 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-
+    final textTheme = Theme.of(context).textTheme;
+    final auth = context.read<AuthCubit>();
+    final authState = auth.state;
+    final userName = authState is Authenticated ? authState.user.name : 'User';
     return BlocBuilder<MetricsCubit, MetricsState>(
       builder: (context, state) {
         if (state is MetricsLoading) {
@@ -60,6 +64,21 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 10),
+                Text(
+                  'Welcome back,',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  userName.isEmpty ? 'Landlord' : capitalizeFirst(userName),
+                  style: textTheme.headlineSmall?.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 7),
 
                 RentCard(
                   totalCollected: metrics.totalRentCollected.toDouble(),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
-import 'package:login_again/core/widgets/glass_surface.dart';
 
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
@@ -98,10 +97,6 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bottomRadius = const BorderRadius.only(
-      topLeft: Radius.circular(24),
-      topRight: Radius.circular(24),
-    );
 
     return Scaffold(
       body: GestureDetector(
@@ -163,9 +158,7 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                   alignment: Alignment.bottomCenter,
                   child: SafeArea(
                     top: false,
-                    child: GlassSurface(
-                      borderRadius: bottomRadius,
-                      padding: EdgeInsets.zero,
+                    child: GlassBackground(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                         child: Center(

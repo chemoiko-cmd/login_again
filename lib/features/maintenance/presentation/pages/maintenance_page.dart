@@ -399,38 +399,38 @@ class _MaintenancePageState extends State<MaintenancePage> {
                     const SizedBox(height: 12),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          MaintenanceFilterChip(
-                            id: 'all',
-                            label: 'All',
-                            isActive: _filter == 'all',
-                            onSelected: (_) => setState(() => _filter = 'all'),
-                          ),
-                          const SizedBox(width: 8),
-                          MaintenanceFilterChip(
-                            id: 'open',
-                            label: 'Open',
-                            isActive: _filter == 'open',
-                            onSelected: (_) => setState(() => _filter = 'open'),
-                          ),
-                          const SizedBox(width: 8),
-                          MaintenanceFilterChip(
-                            id: 'in_progress',
-                            label: 'In Progress',
-                            isActive: _filter == 'in_progress',
-                            onSelected: (_) =>
-                                setState(() => _filter = 'in_progress'),
-                          ),
-                          const SizedBox(width: 8),
-                          MaintenanceFilterChip(
-                            id: 'done',
-                            label: 'Completed',
-                            isActive: _filter == 'done',
-                            onSelected: (_) => setState(() => _filter = 'done'),
-                          ),
-                        ],
-                      ),
+                      //   child: Row(
+                      //     children: [
+                      //       MaintenanceFilterChip(
+                      //         id: 'all',
+                      //         label: 'All',
+                      //         isActive: _filter == 'all',
+                      //         onSelected: (_) => setState(() => _filter = 'all'),
+                      //       ),
+                      //       const SizedBox(width: 8),
+                      //       MaintenanceFilterChip(
+                      //         id: 'open',
+                      //         label: 'Open',
+                      //         isActive: _filter == 'open',
+                      //         onSelected: (_) => setState(() => _filter = 'open'),
+                      //       ),
+                      //       const SizedBox(width: 8),
+                      //       MaintenanceFilterChip(
+                      //         id: 'in_progress',
+                      //         label: 'In Progress',
+                      //         isActive: _filter == 'in_progress',
+                      //         onSelected: (_) =>
+                      //             setState(() => _filter = 'in_progress'),
+                      //       ),
+                      //       const SizedBox(width: 8),
+                      //       MaintenanceFilterChip(
+                      //         id: 'done',
+                      //         label: 'Completed',
+                      //         isActive: _filter == 'done',
+                      //         onSelected: (_) => setState(() => _filter = 'done'),
+                      //       ),
+                      //     ],
+                      //   ),
                     ),
                     const SizedBox(height: 12),
                     Expanded(

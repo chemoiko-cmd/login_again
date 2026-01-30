@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'glass_theme.dart';
 
 /// App theme configuration
@@ -37,10 +38,15 @@ class AppTheme {
 
   /// Main theme configuration
   static ThemeData get theme {
+    final baseTextTheme = GoogleFonts.plusJakartaSansTextTheme().apply(
+      bodyColor: foreground,
+      displayColor: foreground,
+    );
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: 'Inter',
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
 
       extensions: <ThemeExtension<dynamic>>[GlassTheme.light()],
 
@@ -61,17 +67,16 @@ class AppTheme {
       scaffoldBackgroundColor: background,
 
       // App bar theme
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: background,
         foregroundColor: foreground,
         elevation: 0,
         centerTitle: false,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.plusJakartaSans(
           fontSize: 24,
           fontWeight: FontWeight.w700,
           color: foreground,
-          fontFamily: 'Inter',
         ),
       ),
 
@@ -95,10 +100,9 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadiusMd),
           ),
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            fontFamily: 'Inter',
           ),
         ),
       ),
@@ -157,66 +161,56 @@ class AppTheme {
       ),
 
       // Text theme
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
+      textTheme: baseTextTheme.copyWith(
+        displayLarge: baseTextTheme.displayLarge?.copyWith(
           fontSize: 32,
           fontWeight: FontWeight.w800,
           color: foreground,
-          fontFamily: 'Inter',
         ),
-        displayMedium: TextStyle(
+        displayMedium: baseTextTheme.displayMedium?.copyWith(
           fontSize: 28,
           fontWeight: FontWeight.w700,
           color: foreground,
-          fontFamily: 'Inter',
         ),
-        displaySmall: TextStyle(
+        displaySmall: baseTextTheme.displaySmall?.copyWith(
           fontSize: 24,
           fontWeight: FontWeight.w700,
           color: foreground,
-          fontFamily: 'Inter',
         ),
-        headlineLarge: TextStyle(
+        headlineLarge: baseTextTheme.headlineLarge?.copyWith(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: foreground,
-          fontFamily: 'Inter',
         ),
-        headlineMedium: TextStyle(
+        headlineMedium: baseTextTheme.headlineMedium?.copyWith(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: foreground,
-          fontFamily: 'Inter',
         ),
-        titleLarge: TextStyle(
+        titleLarge: baseTextTheme.titleLarge?.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: foreground,
-          fontFamily: 'Inter',
         ),
-        titleMedium: TextStyle(
+        titleMedium: baseTextTheme.titleMedium?.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: foreground,
-          fontFamily: 'Inter',
         ),
-        bodyLarge: TextStyle(
+        bodyLarge: baseTextTheme.bodyLarge?.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: foreground,
-          fontFamily: 'Inter',
         ),
-        bodyMedium: TextStyle(
+        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: foreground,
-          fontFamily: 'Inter',
         ),
-        bodySmall: TextStyle(
+        bodySmall: baseTextTheme.bodySmall?.copyWith(
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: mutedForeground,
-          fontFamily: 'Inter',
         ),
       ),
 
@@ -294,7 +288,7 @@ class AppShadows {
 
   static List<BoxShadow> sm = [
     BoxShadow(
-      color: const Color(0xFF1A2332).withOpacity(0.03),
+      color: const Color(0xFF1A2332).withValues(alpha: 0.03),
       blurRadius: 2,
       offset: const Offset(0, 1),
     ),
@@ -302,7 +296,7 @@ class AppShadows {
 
   static List<BoxShadow> md = [
     BoxShadow(
-      color: const Color(0xFF1A2332).withOpacity(0.08),
+      color: const Color(0xFF1A2332).withValues(alpha: 0.08),
       blurRadius: 12,
       offset: const Offset(0, 4),
     ),
@@ -310,7 +304,7 @@ class AppShadows {
 
   static List<BoxShadow> lg = [
     BoxShadow(
-      color: const Color(0xFF1A2332).withOpacity(0.12),
+      color: const Color(0xFF1A2332).withValues(alpha: 0.12),
       blurRadius: 32,
       offset: const Offset(0, 12),
     ),
@@ -318,7 +312,7 @@ class AppShadows {
 
   static List<BoxShadow> glow = [
     BoxShadow(
-      color: const Color(0xFF4C66EE).withOpacity(0.25),
+      color: const Color(0xFF4C66EE).withValues(alpha: 0.25),
       blurRadius: 24,
       offset: Offset.zero,
     ),

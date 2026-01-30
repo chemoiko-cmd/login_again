@@ -1,8 +1,9 @@
 // ============================================================================
 // FILE: lib/features/auth/presentation/cubit/auth_cubit.dart
 // ============================================================================
+import 'dart:convert';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dio/dio.dart';
 import 'package:login_again/features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_interceptor.dart';
@@ -14,6 +15,7 @@ import '../../data/services/google_sign_in_service.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import 'auth_state.dart';
 import '../../data/models/user_model.dart';
+import '../../../profile/data/profile_repository.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepositoryImpl authRepository;
@@ -235,6 +237,26 @@ class AuthCubit extends Cubit<AuthState> {
       'user_context': user.userContext,
     }).toJson();
     await _storage.saveUserJson(toStore);
+
+    // Cache avatar once (eBroker-style) so we don't re-query the API on each build.
+    // Best-effort: failures should not affect login flow.
+    try {
+      final pid = user.partnerId as int?;
+      if (pid != null && pid > 0) {
+        final existing = await _storage.getPartnerAvatarBase64(pid);
+        if (existing == null || existing.isEmpty) {
+          final repo = ProfileRepository(apiClient: apiClient);
+          final profile = await repo.fetchPartnerProfile(partnerId: pid);
+          final bytes = profile?.imageBytes;
+          if (bytes != null && bytes.isNotEmpty) {
+            await _storage.savePartnerAvatarBase64(
+              partnerId: pid,
+              base64: base64Encode(bytes),
+            );
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> restoreSession() async {
