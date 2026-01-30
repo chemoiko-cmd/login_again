@@ -63,90 +63,93 @@ class RegisterOptionsPage extends StatelessWidget {
                   alignment: Alignment.bottomCenter,
                   child: SafeArea(
                     top: false,
-                    child: GlassBackground(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 480),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Align(
-                                  alignment: Alignment.center,
-                                  child: Image.asset(
-                                    'assets/app_icon.png',
-                                    width: 72,
-                                    height: 72,
-                                    fit: BoxFit.contain,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: GlassBackground(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 480),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: Image.asset(
+                                      'assets/app_icon.png',
+                                      width: 72,
+                                      height: 72,
+                                      fit: BoxFit.contain,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'KRental',
-                                  textAlign: TextAlign.center,
-                                  style: theme.textTheme.headlineSmall,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Choose a sign up method',
-                                  textAlign: TextAlign.center,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey,
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'KRental',
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.headlineSmall,
                                   ),
-                                ),
-                                const SizedBox(height: 24),
-                                _OptionCard(
-                                  title: 'Sign up with Google',
-                                  subtitle:
-                                      'Create account with your Google account',
-                                  leading: SvgPicture.asset(
-                                    'assets/google_g.svg',
-                                    width: 24,
-                                    height: 24,
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Choose a sign up method',
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.grey,
+                                    ),
                                   ),
-                                  onTap: isLoading
-                                      ? () {}
-                                      : () {
-                                          context
-                                              .read<AuthCubit>()
-                                              .registerWithGoogle(
-                                                database: database,
-                                              );
-                                        },
-                                ),
-                                const SizedBox(height: 12),
-                                _OptionCard(
-                                  title: 'Sign up with Email',
-                                  subtitle:
-                                      'Use your email address to create account',
-                                  leading: Icon(
-                                    Icons.email,
-                                    color: colorScheme.primary,
+                                  const SizedBox(height: 24),
+                                  _OptionCard(
+                                    title: 'Sign up with Google',
+                                    subtitle:
+                                        'Create account with your Google account',
+                                    leading: SvgPicture.asset(
+                                      'assets/google_g.svg',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                    onTap: isLoading
+                                        ? () {}
+                                        : () {
+                                            context
+                                                .read<AuthCubit>()
+                                                .registerWithGoogle(
+                                                  database: database,
+                                                );
+                                          },
                                   ),
-                                  onTap: isLoading
-                                      ? () {}
-                                      : () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  RegisterLandlordPage(
-                                                    database: database,
-                                                  ),
-                                            ),
-                                          );
-                                        },
-                                ),
-                                const SizedBox(height: 12),
-                                TextButton(
-                                  onPressed: isLoading
-                                      ? null
-                                      : () => Navigator.of(context).pop(),
-                                  child: const Text(
-                                    'Already have an account? Login',
+                                  const SizedBox(height: 12),
+                                  _OptionCard(
+                                    title: 'Sign up with Email',
+                                    subtitle:
+                                        'Use your email address to create account',
+                                    leading: Icon(
+                                      Icons.email,
+                                      color: colorScheme.primary,
+                                    ),
+                                    onTap: isLoading
+                                        ? () {}
+                                        : () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    RegisterLandlordPage(
+                                                      database: database,
+                                                    ),
+                                              ),
+                                            );
+                                          },
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 12),
+                                  TextButton(
+                                    onPressed: isLoading
+                                        ? null
+                                        : () => Navigator.of(context).pop(),
+                                    child: const Text(
+                                      'Already have an account? Login',
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

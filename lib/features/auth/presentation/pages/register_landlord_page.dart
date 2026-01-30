@@ -158,17 +158,19 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                   alignment: Alignment.bottomCenter,
                   child: SafeArea(
                     top: false,
-                    child: GlassBackground(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 480),
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: GlassBackground(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 480),
+                              child: Form(
+                                key: _formKey,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
                                   Align(
                                     alignment: Alignment.center,
                                     child: Image.asset(
@@ -338,6 +340,7 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                               ),
                             ),
                           ),
+                        ),
                         ),
                       ),
                     ),

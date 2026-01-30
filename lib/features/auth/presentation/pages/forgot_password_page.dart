@@ -102,15 +102,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               alignment: Alignment.bottomCenter,
               child: SafeArea(
                 top: false,
-                child: GlassBackground(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 480),
-                        child: _otpRequested
-                            ? _buildSuccessView()
-                            : _buildFormView(),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: GlassBackground(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: _otpRequested
+                              ? _buildSuccessView()
+                              : _buildFormView(),
+                        ),
                       ),
                     ),
                   ),

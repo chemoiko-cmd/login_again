@@ -126,140 +126,146 @@ class _VerifyResetOtpPageState extends State<VerifyResetOtpPage> {
               alignment: Alignment.bottomCenter,
               child: SafeArea(
                 top: false,
-                child: GlassBackground(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 480),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Icon(
-                                Icons.verified,
-                                size: 72,
-                                color: theme.primaryColor,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Enter OTP',
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.headlineSmall,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'We sent a 6-digit code to ${widget.phoneNo}.',
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.grey,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: GlassBackground(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Icon(
+                                  Icons.verified,
+                                  size: 72,
+                                  color: theme.primaryColor,
                                 ),
-                              ),
-                              const SizedBox(height: 24),
-                              FormField<String>(
-                                validator: (_) {
-                                  final v = _otp;
-                                  if (v.isEmpty) return 'Please enter the OTP';
-                                  if (v.length != 6) {
-                                    return 'OTP must be 6 digits';
-                                  }
-                                  if (!RegExp(r'^\d{6}$').hasMatch(v)) {
-                                    return 'OTP must be digits only';
-                                  }
-                                  return null;
-                                },
-                                builder: (field) {
-                                  return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: List.generate(6, (i) {
-                                          return SizedBox(
-                                            width: 46,
-                                            child: TextField(
-                                              controller: _otpControllers[i],
-                                              focusNode: _otpFocusNodes[i],
-                                              enabled: !_isLoading,
-                                              keyboardType:
-                                                  TextInputType.number,
-                                              textAlign: TextAlign.center,
-                                              maxLength: 1,
-                                              inputFormatters: [
-                                                FilteringTextInputFormatter
-                                                    .digitsOnly,
-                                              ],
-                                              decoration: InputDecoration(
-                                                counterText: '',
-                                                border:
-                                                    const OutlineInputBorder(),
-                                                errorText: null,
-                                              ),
-                                              onChanged: (value) {
-                                                if (value.length > 1) {
-                                                  _otpControllers[i].text =
-                                                      value.substring(0, 1);
-                                                  _otpControllers[i].selection =
-                                                      const TextSelection.collapsed(
-                                                        offset: 1,
-                                                      );
-                                                }
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Enter OTP',
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.headlineSmall,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'We sent a 6-digit code to ${widget.phoneNo}.',
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                FormField<String>(
+                                  validator: (_) {
+                                    final v = _otp;
+                                    if (v.isEmpty) {
+                                      return 'Please enter the OTP';
+                                    }
+                                    if (v.length != 6) {
+                                      return 'OTP must be 6 digits';
+                                    }
+                                    if (!RegExp(r'^\d{6}$').hasMatch(v)) {
+                                      return 'OTP must be digits only';
+                                    }
+                                    return null;
+                                  },
+                                  builder: (field) {
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: List.generate(6, (i) {
+                                            return SizedBox(
+                                              width: 46,
+                                              child: TextField(
+                                                controller: _otpControllers[i],
+                                                focusNode: _otpFocusNodes[i],
+                                                enabled: !_isLoading,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                textAlign: TextAlign.center,
+                                                maxLength: 1,
+                                                inputFormatters: [
+                                                  FilteringTextInputFormatter
+                                                      .digitsOnly,
+                                                ],
+                                                decoration: InputDecoration(
+                                                  counterText: '',
+                                                  border:
+                                                      const OutlineInputBorder(),
+                                                  errorText: null,
+                                                ),
+                                                onChanged: (value) {
+                                                  if (value.length > 1) {
+                                                    _otpControllers[i].text =
+                                                        value.substring(0, 1);
+                                                    _otpControllers[i]
+                                                            .selection =
+                                                        const TextSelection.collapsed(
+                                                          offset: 1,
+                                                        );
+                                                  }
 
-                                                if (value.isNotEmpty) {
-                                                  if (i < 5) {
-                                                    _otpFocusNodes[i + 1]
-                                                        .requestFocus();
+                                                  if (value.isNotEmpty) {
+                                                    if (i < 5) {
+                                                      _otpFocusNodes[i + 1]
+                                                          .requestFocus();
+                                                    } else {
+                                                      FocusScope.of(
+                                                        context,
+                                                      ).unfocus();
+                                                    }
                                                   } else {
-                                                    FocusScope.of(
-                                                      context,
-                                                    ).unfocus();
+                                                    if (i > 0) {
+                                                      _otpFocusNodes[i - 1]
+                                                          .requestFocus();
+                                                    }
                                                   }
-                                                } else {
-                                                  if (i > 0) {
-                                                    _otpFocusNodes[i - 1]
-                                                        .requestFocus();
-                                                  }
-                                                }
 
-                                                field.validate();
-                                              },
+                                                  field.validate();
+                                                },
+                                              ),
+                                            );
+                                          }),
+                                        ),
+                                        if (field.errorText != null) ...[
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            field.errorText!,
+                                            style: TextStyle(
+                                              color: theme.colorScheme.error,
+                                              fontSize: 12,
                                             ),
-                                          );
-                                        }),
-                                      ),
-                                      if (field.errorText != null) ...[
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          field.errorText!,
-                                          style: TextStyle(
-                                            color: theme.colorScheme.error,
-                                            fontSize: 12,
                                           ),
-                                        ),
+                                        ],
                                       ],
-                                    ],
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              GradientButton(
-                                onPressed: _isLoading ? null : _handleVerify,
-                                padding: const EdgeInsets.all(16),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: AppLoadingIndicator(
-                                          width: 20,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                GradientButton(
+                                  onPressed: _isLoading ? null : _handleVerify,
+                                  padding: const EdgeInsets.all(16),
+                                  child: _isLoading
+                                      ? const SizedBox(
                                           height: 20,
-                                        ),
-                                      )
-                                    : const Text('Verify'),
-                              ),
-                            ],
+                                          width: 20,
+                                          child: AppLoadingIndicator(
+                                            width: 20,
+                                            height: 20,
+                                          ),
+                                        )
+                                      : const Text('Verify'),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
