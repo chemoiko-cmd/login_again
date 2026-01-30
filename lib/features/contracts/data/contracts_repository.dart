@@ -73,12 +73,18 @@ class ContractsRepository {
   Future<int?> _currentPartnerId() async {
     final state = authCubit.state;
     if (state is! Authenticated) return null;
-    final login = state.user.username;
-    print('Getting partner_id for user: $login');
+
+    final existingPartnerId = state.user.partnerId;
+    if (existingPartnerId > 0) {
+      return existingPartnerId;
+    }
+
+    final uid = state.user.id;
+    print('Getting partner_id for uid: $uid');
     final users = await _searchRead(
       'res.users',
       domain: [
-        ['login', '=', login],
+        ['id', '=', uid],
       ],
       fields: const ['partner_id', 'company_id'],
       limit: 1,
@@ -151,8 +157,9 @@ class ContractsRepository {
 
     String propertyName = '';
     final ppty = m['property_id'];
-    if (ppty is List && ppty.length >= 2)
+    if (ppty is List && ppty.length >= 2) {
       propertyName = (ppty[1] ?? '').toString();
+    }
 
     DateTime? start;
     final s = (m['start_date'] ?? '').toString();

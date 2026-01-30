@@ -30,6 +30,32 @@ class PaymentsRepository {
     await Future<void>.delayed(const Duration(milliseconds: 600));
   }
 
+  Future<int?> _currentPartnerId() async {
+    final auth = authCubit.state;
+    if (auth is! Authenticated) return null;
+
+    final existingPartnerId = auth.user.partnerId;
+    if (existingPartnerId > 0) {
+      return existingPartnerId;
+    }
+
+    final uid = auth.user.id;
+    final users = await searchRead(
+      'res.users',
+      domain: [
+        ['id', '=', uid],
+      ],
+      fields: const ['partner_id'],
+      limit: 1,
+    );
+
+    final partner = (users.isNotEmpty
+        ? (users.first as Map)['partner_id'] as List?
+        : null);
+    final id = partner?.isNotEmpty == true ? partner!.first : null;
+    return id is int ? id : null;
+  }
+
   Future<List<dynamic>> searchRead(
     String model, {
     required List<dynamic> domain,
@@ -68,26 +94,7 @@ class PaymentsRepository {
 
   Future<List<PaymentItem>> fetchPayments() async {
     try {
-      // Get partner ID
-      int? partnerId;
-      final auth = authCubit.state;
-      if (auth is Authenticated) {
-        final users = await searchRead(
-          'res.users',
-          domain: [
-            ['login', '=', auth.user.username],
-          ],
-          fields: const ['partner_id'],
-          limit: 1,
-        );
-
-        partnerId =
-            (users.isNotEmpty
-                        ? (users.first as Map)['partner_id'] as List?
-                        : null)
-                    ?.first
-                as int?;
-      }
+      final partnerId = await _currentPartnerId();
 
       if (partnerId == null) return const [];
 
@@ -191,26 +198,7 @@ class PaymentsRepository {
 
   Future<List<PaymentItem>> fetchPaymentHistory() async {
     try {
-      // Get partner ID
-      int? partnerId;
-      final auth = authCubit.state;
-      if (auth is Authenticated) {
-        final users = await searchRead(
-          'res.users',
-          domain: [
-            ['login', '=', auth.user.username],
-          ],
-          fields: const ['partner_id'],
-          limit: 1,
-        );
-
-        partnerId =
-            (users.isNotEmpty
-                        ? (users.first as Map)['partner_id'] as List?
-                        : null)
-                    ?.first
-                as int?;
-      }
+      final partnerId = await _currentPartnerId();
 
       if (partnerId == null) return const [];
 

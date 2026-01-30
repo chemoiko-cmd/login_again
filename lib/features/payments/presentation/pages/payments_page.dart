@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:login_again/core/currency/currency_cubit.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/theme/app_theme.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/file_utils.dart';
 import '../../domain/payment.dart';
-import '../../domain/payment_provider.dart';
 import '../cubit/payments_cubit.dart';
 import '../cubit/payments_state.dart';
 import '../widgets/payment_status_icon.dart';
@@ -30,6 +30,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: BlocBuilder<PaymentsCubit, PaymentsState>(
           builder: (context, state) {
@@ -80,22 +81,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
   Widget _totalDueCard(BuildContext context, double amount, bool processing) {
     final scheme = Theme.of(context).colorScheme;
     final c = context.watch<CurrencyCubit>().state;
-    final pendingItems = context.select<PaymentsCubit, List<PaymentItem>>(
-      (cubit) => cubit.state.items
-          .where((p) => p.status == 'pending' || p.status == 'overdue')
-          .toList(),
-    );
-
-    Future<void> _handlePayAll() async {
-      // Navigate to checkout with all pending invoices
-      final invoiceNames = pendingItems.map((p) => p.id).toList();
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) =>
-              InvoiceCheckoutScreen(invoiceNames: invoiceNames),
-        ),
-      );
-    }
 
     return Container(
       decoration: BoxDecoration(
@@ -103,7 +88,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: scheme.primary.withOpacity(0.35),
+            color: scheme.primary.withValues(alpha: 0.35),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -178,84 +163,75 @@ class _PaymentsPageState extends State<PaymentsPage> {
       duration: Duration(milliseconds: 200 + (index * 60)),
       curve: Curves.easeOut,
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: scheme.surface,
+      child: GlassSurface(
+        padding: const EdgeInsets.all(12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outline),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: context.warning.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.credit_card, color: context.warning),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  p.description,
-                  style: textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Due ${formatDate(p.dueDate)}',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                formatMoney(p.amount),
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: context.warning.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Icon(Icons.credit_card, color: context.warning),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  GradientTextButton(
-                    onPressed: () {
-                      // Navigate to new checkout flow
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              InvoiceCheckoutScreen(invoiceNames: [p.id]),
-                        ),
-                      );
-                    },
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                  Text(
+                    p.description,
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
-                    child: const Text('Pay Now'),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Due ${formatDate(p.dueDate)}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.7),
+                    ),
                   ),
                 ],
               ),
-            ],
-          ),
-        ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  formatMoney(p.amount),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GradientTextButton(
+                      onPressed: () {
+                        // Navigate to new checkout flow
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                InvoiceCheckoutScreen(invoiceNames: [p.id]),
+                          ),
+                        );
+                      },
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: const Text('Pay Now'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -275,7 +251,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
           Text(
             'No payments yet',
             style: textTheme.bodySmall?.copyWith(
-              color: scheme.onSurface.withOpacity(0.7),
+              color: scheme.onSurface.withValues(alpha: 0.7),
             ),
           )
         else
@@ -296,92 +272,85 @@ class _PaymentsPageState extends State<PaymentsPage> {
       duration: Duration(milliseconds: 200 + (index * 60)),
       curve: Curves.easeOut,
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: scheme.surface,
+      child: GlassSurface(
+        padding: const EdgeInsets.all(12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outline),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          PaymentStatusIcon(status: p.status),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          children: [
+            PaymentStatusIcon(status: p.status),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.description,
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    p.paidDate != null
+                        ? 'Paid ${formatDate(p.paidDate!)}'
+                        : '—',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
               children: [
                 Text(
-                  p.description,
+                  formatMoney(p.amount),
                   style: textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  p.paidDate != null ? 'Paid ${formatDate(p.paidDate!)}' : '—',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurface.withOpacity(0.7),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () async {
+                    try {
+                      // Show loading
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('⬇️  Downloading...')),
+                      );
+
+                      final bytes = await context
+                          .read<PaymentsCubit>()
+                          .repo
+                          .downloadPaymentReceiptByInvoiceName(p.id);
+
+                      final path = await savePdfToDocuments(
+                        bytes,
+                        'receipt_${p.id.replaceAll('/', '_')}.pdf',
+                      );
+
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('✅ Receipt ready')),
+                      );
+
+                      await openFile(path);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('❌ Failed: $e')),
+                      );
+                    }
+                  },
+                  icon: Icon(
+                    Icons.download,
+                    color: scheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
             ),
-          ),
-          Row(
-            children: [
-              Text(
-                formatMoney(p.amount),
-                style: textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: () async {
-                  try {
-                    // Show loading
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('⬇️  Downloading...')),
-                    );
-
-                    final bytes = await context
-                        .read<PaymentsCubit>()
-                        .repo
-                        .downloadPaymentReceiptByInvoiceName(p.id);
-
-                    final path = await savePdfToDocuments(
-                      bytes,
-                      'receipt_${p.id.replaceAll('/', '_')}.pdf',
-                    );
-
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('✅ Receipt ready')),
-                    );
-
-                    await openFile(path);
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('❌ Failed: $e')));
-                  }
-                },
-                icon: Icon(
-                  Icons.download,
-                  color: scheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

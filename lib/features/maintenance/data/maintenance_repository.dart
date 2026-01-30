@@ -101,11 +101,18 @@ class MaintenanceRepository {
     if (_currentPartnerIdCache != null) return _currentPartnerIdCache;
     final state = authCubit.state;
     if (state is! Authenticated) return null;
-    final login = state.user.username;
+
+    final existingPartnerId = state.user.partnerId;
+    if (existingPartnerId > 0) {
+      _currentPartnerIdCache = existingPartnerId;
+      return _currentPartnerIdCache;
+    }
+
+    final uid = state.user.id;
     final users = await _searchRead(
       'res.users',
       domain: [
-        ['login', '=', login],
+        ['id', '=', uid],
       ],
       fields: const ['partner_id'],
       limit: 1,
@@ -162,6 +169,35 @@ class MaintenanceRepository {
     final partnerId = await _currentPartnerId();
     final vals = <String, dynamic>{'name': name};
     if (partnerId != null) vals['requested_by'] = partnerId;
+
+    // If the caller didn't provide a unit, try infer from the tenant's latest
+    // active contract so tasks are linked to the correct unit/property.
+    if (unitId == null && partnerId != null) {
+      try {
+        final contracts = await _searchRead(
+          'rental.contract',
+          domain: [
+            ['tenant_id', '=', partnerId],
+            ['state', '=', 'active'],
+          ],
+          fields: const ['unit_id', 'property_id'],
+          order: 'start_date desc, id desc',
+          limit: 1,
+        );
+        if (contracts.isNotEmpty) {
+          final c = (contracts.first as Map).cast<String, dynamic>();
+          final unit = c['unit_id'];
+          if (unit is List && unit.isNotEmpty && unit.first is int) {
+            unitId = unit.first as int;
+          }
+          final prop = c['property_id'];
+          if (prop is List && prop.isNotEmpty && prop.first is int) {
+            vals['property_id'] = prop.first as int;
+          }
+        }
+      } catch (_) {}
+    }
+
     if (unitId != null) {
       vals['unit_id'] = unitId;
       try {

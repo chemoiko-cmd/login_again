@@ -152,6 +152,19 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                           Icons.credit_card,
                           color: scheme.onSurface.withOpacity(0.7),
                         ),
+                        title: const Text('My Maintenance Requests'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          context.go('/maintenance');
+                        },
+                        selected: location == '/maintenance',
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
+                      ),
+                      ListTile(
+                        leading: Icon(
+                          Icons.credit_card,
+                          color: scheme.onSurface.withOpacity(0.7),
+                        ),
                         title: const Text('Pay Rent'),
                         onTap: () {
                           Navigator.of(context).pop();

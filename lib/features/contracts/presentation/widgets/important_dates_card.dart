@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 
 class ImportantDatesCard extends StatelessWidget {
   final String dateText;
@@ -14,8 +15,8 @@ class ImportantDatesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return GlassSurface(
+      borderRadius: BorderRadius.circular(16),
       child: Column(
         children: [
           ListTile(

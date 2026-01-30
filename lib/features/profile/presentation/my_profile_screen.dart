@@ -40,6 +40,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         : '';
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: FutureBuilder<PartnerProfile?>(
         future: _future,
         builder: (context, snap) {

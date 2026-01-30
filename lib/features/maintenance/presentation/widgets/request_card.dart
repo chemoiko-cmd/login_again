@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:login_again/theme/app_theme.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import '../../data/maintenance_repository.dart';
 
 class MaintenanceRequestCard extends StatelessWidget {
@@ -34,11 +35,11 @@ class MaintenanceRequestCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     switch (status) {
       case 'open':
-        return context.warning.withOpacity(0.15);
+        return context.warning.withValues(alpha: 0.15);
       case 'in_progress':
-        return scheme.secondary.withOpacity(0.15);
+        return scheme.secondary.withValues(alpha: 0.15);
       case 'done':
-        return context.success.withOpacity(0.15);
+        return context.success.withValues(alpha: 0.15);
       default:
         return scheme.outline;
     }
@@ -54,7 +55,7 @@ class MaintenanceRequestCard extends StatelessWidget {
       case 'done':
         return context.success;
       default:
-        return scheme.onSurface.withOpacity(0.7);
+        return scheme.onSurface.withValues(alpha: 0.7);
     }
   }
 
@@ -63,34 +64,34 @@ class MaintenanceRequestCard extends StatelessWidget {
     return <String, Map<String, dynamic>>{
           'plumbing': {
             'icon': Icons.build,
-            'bg': Colors.blueAccent.withOpacity(0.12),
+            'bg': Colors.blueAccent.withValues(alpha: 0.12),
             'fg': Colors.blue,
           },
           'electrical': {
             'icon': Icons.bolt,
-            'bg': Colors.amber.withOpacity(0.12),
+            'bg': Colors.amber.withValues(alpha: 0.12),
             'fg': Colors.amber,
           },
           'hvac': {
             'icon': Icons.thermostat,
-            'bg': Colors.cyan.withOpacity(0.12),
+            'bg': Colors.cyan.withValues(alpha: 0.12),
             'fg': Colors.cyan,
           },
           'appliance': {
             'icon': Icons.settings,
-            'bg': Colors.purple.withOpacity(0.12),
+            'bg': Colors.purple.withValues(alpha: 0.12),
             'fg': Colors.purple,
           },
           'other': {
             'icon': Icons.build,
             'bg': scheme.surface,
-            'fg': scheme.onSurface.withOpacity(0.7),
+            'fg': scheme.onSurface.withValues(alpha: 0.7),
           },
         }[category] ??
         {
           'icon': Icons.build,
           'bg': scheme.surface,
-          'fg': scheme.onSurface.withOpacity(0.7),
+          'fg': scheme.onSurface.withValues(alpha: 0.7),
         };
   }
 
@@ -102,98 +103,89 @@ class MaintenanceRequestCard extends StatelessWidget {
     return AnimatedContainer(
       duration: Duration(milliseconds: 200 + (index * 30)),
       curve: Curves.easeOut,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: scheme.surface,
+      child: GlassSurface(
+        padding: const EdgeInsets.all(12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outline),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: c['bg'] as Color,
-              borderRadius: BorderRadius.circular(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: c['bg'] as Color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                c['icon'] as IconData,
+                color: c['fg'] as Color,
+                size: 20,
+              ),
             ),
-            child: Icon(
-              c['icon'] as IconData,
-              color: c['fg'] as Color,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _statusBg(context, item.state),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        item.state == 'open'
-                            ? 'Open'
-                            : item.state == 'in_progress'
-                            ? 'In Progress'
-                            : item.state == 'done'
-                            ? 'Done'
-                            : item.state,
-                        style: TextStyle(
-                          color: _statusFg(context, item.state),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _statusBg(context, item.state),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          item.state == 'open'
+                              ? 'Open'
+                              : item.state == 'in_progress'
+                              ? 'In Progress'
+                              : item.state == 'done'
+                              ? 'Done'
+                              : item.state,
+                          style: TextStyle(
+                            color: _statusFg(context, item.state),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                if ((item.unitName ?? '').isNotEmpty)
-                  Text(
-                    item.unitName!,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurface.withOpacity(0.7),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    ],
                   ),
-                const SizedBox(height: 6),
-                if (item.createdAt != null)
-                  Text(
-                    'Submitted ${_fmtShort(item.createdAt!)}',
-                    style: textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurface.withOpacity(0.7),
+                  const SizedBox(height: 4),
+                  if ((item.unitName ?? '').isNotEmpty)
+                    Text(
+                      item.unitName!,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-              ],
+                  const SizedBox(height: 6),
+                  if (item.createdAt != null)
+                    Text(
+                      'Submitted ${_fmtShort(item.createdAt!)}',
+                      style: textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

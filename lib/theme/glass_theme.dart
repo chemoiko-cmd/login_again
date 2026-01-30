@@ -21,7 +21,7 @@ class GlassTheme extends ThemeExtension<GlassTheme> {
   static GlassTheme light() {
     return GlassTheme(
       blurSigma: 18,
-      tint: const Color(0xFFFFFFFF).withValues(alpha: 0.68),
+      tint: const Color(0xFFFFFFFF).withValues(alpha: 0.70),
       borderColor: const Color(0xFFFFFFFF).withValues(alpha: 0.45),
       borderWidth: 1,
       borderRadius: BorderRadius.circular(24),

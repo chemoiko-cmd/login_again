@@ -26,6 +26,27 @@ class AuthRemoteDataSource {
 
   AuthRemoteDataSource(this.apiClient);
 
+  String? _extractOdooErrorMessage(dynamic body) {
+    if (body is! Map) return null;
+    final error = body['error'];
+    if (error is! Map) return null;
+
+    final data = error['data'];
+    if (data is Map) {
+      final name = data['name']?.toString();
+      final message = data['message']?.toString();
+      if ((message ?? '').isNotEmpty && (name ?? '').isNotEmpty) {
+        return '$name: $message';
+      }
+      if ((message ?? '').isNotEmpty) return message;
+      if ((name ?? '').isNotEmpty) return name;
+    }
+
+    final msg = error['message']?.toString();
+    if ((msg ?? '').isNotEmpty) return msg;
+    return null;
+  }
+
   /// Perform login with credentials and database.
   ///
   /// Returns a tuple containing:
@@ -50,7 +71,13 @@ class AuthRemoteDataSource {
       );
 
       if (response.statusCode == 200) {
-        final result = response.data['result'];
+        final body = response.data;
+        final odooErr = _extractOdooErrorMessage(body);
+        if (odooErr != null) {
+          throw ServerException(odooErr);
+        }
+
+        final result = (body is Map) ? body['result'] : null;
 
         if (result == null || result['uid'] == false || result['uid'] == null) {
           throw ServerException('Invalid credentials');
@@ -95,6 +122,10 @@ class AuthRemoteDataSource {
         throw NetworkException('Connection timeout');
       } else if (e.type == DioExceptionType.connectionError) {
         throw NetworkException('No internet connection $e');
+      }
+      final odooErr = _extractOdooErrorMessage(e.response?.data);
+      if (odooErr != null) {
+        throw ServerException(odooErr);
       }
       throw ServerException(e.message ?? 'Unknown error');
     } catch (e, st) {

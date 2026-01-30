@@ -6,8 +6,6 @@
 // - NO UI side-effects inside redirect (important).
 // ============================================================================
 import 'dart:async';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -55,12 +53,16 @@ String _shellTitleForLocation(BuildContext context, String location) {
       return 'Maintenance';
     case '/inspections':
       return 'Inspections';
+    case '/maintenance':
+      return 'My Requests';
     case '/pay-rent':
       return 'Payments';
     case '/contracts':
       return 'Contracts';
     case '/profile':
       return 'My Profile';
+    case '/privacy-policy':
+      return 'Privacy Policy';
     case '/maintainer-tasks':
       return 'Tasks';
     case '/maintainer-inspections':

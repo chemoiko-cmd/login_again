@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 
 class ActionTile extends StatelessWidget {
   final IconData icon;
@@ -17,11 +18,11 @@ class ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return GlassSurface(
+      borderRadius: BorderRadius.circular(12),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Colors.teal.shade50,
+          backgroundColor: scheme.primary.withValues(alpha: 0.10),
           child: Icon(icon, color: scheme.primary),
         ),
         title: Text(title),

@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/core/widgets/app_loading_indicator.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/features/contracts/presentation/widgets/widgets.dart';
 import '../widgets/section.dart';
 import '../cubit/tenant_dashboard_cubit.dart';
@@ -22,13 +23,6 @@ class TenantDashboardPage extends StatefulWidget {
 }
 
 class _TenantDashboardPageState extends State<TenantDashboardPage> {
-  String _stripHtml(String input) {
-    return input
-        .replaceAll(RegExp(r'<[^>]*>'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-  }
-
   String _formatShortDate(String iso) {
     if (iso.isEmpty) return '';
     final d = DateTime.tryParse(iso);
@@ -69,15 +63,16 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 4, bottom: 12),
+              GlassSurface(
+                padding: const EdgeInsets.all(14),
+                borderRadius: BorderRadius.circular(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Welcome back,',
                       style: textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurface.withOpacity(0.7),
+                        color: scheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -92,7 +87,7 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                     Text(
                       '${unitName.isEmpty ? 'Your unit' : unitName} • ${propertyName.isEmpty ? 'Your property' : propertyName}',
                       style: textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurface.withOpacity(0.7),
+                        color: scheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -100,8 +95,10 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
               ),
 
               // Actions grid
-              Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 8),
+              const SizedBox(height: 12),
+              GlassSurface(
+                padding: const EdgeInsets.all(12),
+                borderRadius: BorderRadius.circular(16),
                 child: GridView.count(
                   crossAxisCount: 3,
                   crossAxisSpacing: 12,
@@ -111,7 +108,7 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                   children: [
                     _ActionCircle(
                       icon: Icons.build_outlined,
-                      label: 'Maintenance Request',
+                      label: 'Maintenance ',
                       onTap: () => context.go('/maintenance'),
                       color: Colors.orange,
                     ),
@@ -137,7 +134,7 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
               Section(
                 title: 'Property Announcements',
@@ -158,14 +155,11 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
                       final title = (a['title'] ?? '').toString();
                       final property = (a['property_name'] ?? '').toString();
                       final publishedAt = (a['published_at'] ?? '').toString();
-                      final message = _stripHtml((a['body'] ?? '').toString());
-                      final urgent =
-                          title.toLowerCase().contains('urgent') ||
-                          message.toLowerCase().contains('urgent');
                       final subtitleParts = <String>[];
                       if (property.isNotEmpty) subtitleParts.add(property);
-                      if (publishedAt.isNotEmpty)
-                        subtitleParts.add(publishedAt);
+                      if (publishedAt.isNotEmpty) {
+                        subtitleParts.add(_formatShortDate(publishedAt));
+                      }
                       final subtitle = subtitleParts.join(' • ');
 
                       return ActionTile(
@@ -211,9 +205,9 @@ class _ActionCircle extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               shape: BoxShape.circle,
-              border: Border.all(color: color.withOpacity(0.35)),
+              border: Border.all(color: color.withValues(alpha: 0.35)),
             ),
             child: Icon(icon, color: color, size: 28),
           ),

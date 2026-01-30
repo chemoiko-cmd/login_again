@@ -42,12 +42,12 @@ class _MaintenancePageState extends State<MaintenancePage> {
     final config = <String, Map<String, dynamic>>{
       'plumbing': {
         'icon': Icons.build,
-        'bg': Colors.blueAccent.withOpacity(0.12),
+        'bg': Colors.blueAccent.withValues(alpha: 0.12),
         'fg': Colors.blue,
       },
       'electrical': {
         'icon': Icons.bolt,
-        'bg': Colors.amber.withOpacity(0.12),
+        'bg': Colors.amber.withValues(alpha: 0.12),
         'fg': Colors.amber,
       },
       'hvac': {
@@ -63,7 +63,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
       'other': {
         'icon': Icons.build,
         'bg': scheme.surface,
-        'fg': scheme.onSurface.withOpacity(0.7),
+        'fg': scheme.onSurface.withValues(alpha: 0.7),
       },
     };
     final c = config[category] ?? config['other']!;
@@ -81,167 +81,171 @@ class _MaintenancePageState extends State<MaintenancePage> {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     return Positioned.fill(
-      child: AnimatedOpacity(
-        opacity: _isCreating ? 1 : 0,
-        duration: const Duration(milliseconds: 200),
-        child: Container(
-          color: Colors.black.withValues(alpha: 0.4),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: Material(
-              color: Theme.of(context).cardColor,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'New Request',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
+      child: IgnorePointer(
+        ignoring: !_isCreating,
+        child: AnimatedOpacity(
+          opacity: _isCreating ? 1 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.4),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Material(
+                color: Theme.of(context).cardColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'New Request',
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () =>
-                                setState(() => _isCreating = false),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Category',
-                          style: textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      GridView(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
-                              childAspectRatio: 3.2,
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () =>
+                                  setState(() => _isCreating = false),
                             ),
-                        children: [
-                          _categoryChip('plumbing', 'Plumbing'),
-                          _categoryChip('electrical', 'Electrical'),
-                          _categoryChip('hvac', 'HVAC'),
-                          _categoryChip('appliance', 'Appliance'),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "What's the issue?",
-                          style: textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _titleCtrl,
-                        decoration: InputDecoration(
-                          hintText: 'e.g., Leaky faucet in bathroom',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Description',
-                          style: textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _descCtrl,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          hintText: 'Provide more details about the problem...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: scheme.outline),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: scheme.primary),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Add Photos (optional)',
-                          style: textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      GradientOutlinedButton(
-                        onPressed: _handleAddPhotos,
-                        minHeight: 48,
-                        borderRadius: BorderRadius.circular(12),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.photo_camera_outlined),
-                            SizedBox(width: 8),
-                            Text('Tap to add photos'),
                           ],
                         ),
-                      ),
-                      if (_photos.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            '${_photos.length} photo(s) selected',
-                            style: textTheme.labelMedium,
+                            'Category',
+                            style: textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        GridView(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                                childAspectRatio: 3.2,
+                              ),
+                          children: [
+                            _categoryChip('plumbing', 'Plumbing'),
+                            _categoryChip('electrical', 'Electrical'),
+                            _categoryChip('hvac', 'HVAC'),
+                            _categoryChip('appliance', 'Appliance'),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "What's the issue?",
+                            style: textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _titleCtrl,
+                          decoration: InputDecoration(
+                            hintText: 'e.g., Leaky faucet in bathroom',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Description',
+                            style: textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _descCtrl,
+                          maxLines: 4,
+                          decoration: InputDecoration(
+                            hintText:
+                                'Provide more details about the problem...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: scheme.outline),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: scheme.primary),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Add Photos (optional)',
+                            style: textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        GradientOutlinedButton(
+                          onPressed: _handleAddPhotos,
+                          minHeight: 48,
+                          borderRadius: BorderRadius.circular(12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.photo_camera_outlined),
+                              SizedBox(width: 8),
+                              Text('Tap to add photos'),
+                            ],
+                          ),
+                        ),
+                        if (_photos.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${_photos.length} photo(s) selected',
+                              style: textTheme.labelMedium,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: GradientButton(
+                            onPressed: _submit,
+                            minHeight: 48,
+                            borderRadius: BorderRadius.circular(24),
+                            child: const Text('Submit Request'),
                           ),
                         ),
                       ],
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: GradientButton(
-                          onPressed: _submit,
-                          minHeight: 48,
-                          borderRadius: BorderRadius.circular(24),
-                          child: const Text('Submit Request'),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -266,7 +270,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
             color: isActive ? scheme.primary : scheme.outline,
             width: 2,
           ),
-          color: isActive ? scheme.primary.withOpacity(0.08) : null,
+          color: isActive ? scheme.primary.withValues(alpha: 0.08) : null,
         ),
         child: Row(
           children: [
@@ -363,6 +367,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: FutureBuilder<List<MaintenanceRequestItem>>(
         future: _future,
         builder: (context, snapshot) {
@@ -388,7 +393,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                     Text(
                       'Track and submit repair requests',
                       style: textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurface.withOpacity(0.7),
+                        color: scheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -451,7 +456,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                               onRefresh: _refresh,
                               child: ListView.separated(
                                 itemCount: items.length,
-                                separatorBuilder: (_, __) =>
+                                separatorBuilder: (context, index) =>
                                     const SizedBox(height: 10),
                                 itemBuilder: (context, index) =>
                                     MaintenanceRequestCard(
@@ -464,7 +469,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
                   ],
                 ),
               ),
-              if (_isCreating) _buildCreateOverlay(context),
+              _buildCreateOverlay(context),
             ],
           );
         },
@@ -475,7 +480,6 @@ class _MaintenancePageState extends State<MaintenancePage> {
               onPressed: () => setState(() => _isCreating = true),
               child: const Icon(Icons.add),
             ),
-      // overlay handled via Stack
     );
   }
 }

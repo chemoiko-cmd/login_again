@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 
 class Section extends StatelessWidget {
   final String title;
@@ -14,14 +15,9 @@ class Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.outline),
-      ),
+    return GlassSurface(
       padding: const EdgeInsets.all(12),
+      borderRadius: BorderRadius.circular(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

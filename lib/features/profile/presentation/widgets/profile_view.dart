@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:login_again/features/landlord/data/models/partner_profile.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/theme/app_theme.dart';
 
 /// Reusable profile display widget for both landlord and tenant profiles
@@ -95,119 +96,111 @@ class ProfileView extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         // Profile Header Card
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 36,
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.primary.withOpacity(0.12),
-                  backgroundImage: (imageBytes != null && imageBytes.isNotEmpty)
-                      ? MemoryImage(imageBytes)
-                      : null,
-                  child: (imageBytes != null && imageBytes.isNotEmpty)
-                      ? null
-                      : Text(
-                          _initials(name),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: Theme.of(context).colorScheme.primary,
-                            fontSize: 18,
-                          ),
+        GlassSurface(
+          padding: const EdgeInsets.all(16),
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 36,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.12),
+                backgroundImage: (imageBytes != null && imageBytes.isNotEmpty)
+                    ? MemoryImage(imageBytes)
+                    : null,
+                child: (imageBytes != null && imageBytes.isNotEmpty)
+                    ? null
+                    : Text(
+                        _initials(name),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 18,
                         ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  name,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (userRole != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    userRole!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-                if (statusBadge != null) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _statusColor(
-                        context,
-                        statusBadge,
-                      ).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      statusBadge!.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: _statusColor(context, statusBadge),
                       ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                name,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                textAlign: TextAlign.center,
+              ),
+              if (userRole != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  userRole!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+              if (statusBadge != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _statusColor(
+                      context,
+                      statusBadge,
+                    ).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    statusBadge!.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: _statusColor(context, statusBadge),
                     ),
                   ),
-                ],
-                if (propertyContext != null || unitContext != null) ...[
-                  const SizedBox(height: 12),
-                  const Divider(),
-                  const SizedBox(height: 8),
-                  if (propertyContext != null)
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.apartment,
-                          size: 16,
-                          color: Colors.grey,
+                ),
+              ],
+              if (propertyContext != null || unitContext != null) ...[
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 8),
+                if (propertyContext != null)
+                  Row(
+                    children: [
+                      const Icon(Icons.apartment, size: 16, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          propertyContext!,
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            propertyContext!,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
+                      ),
+                    ],
+                  ),
+                if (unitContext != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.door_front_door,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          unitContext!,
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                      ],
-                    ),
-                  if (unitContext != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.door_front_door,
-                          size: 16,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            unitContext!,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ],
               ],
-            ),
+            ],
           ),
         ),
 
@@ -240,10 +233,8 @@ class ProfileView extends StatelessWidget {
 
         // Contact Information Card
         const SizedBox(height: 12),
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+        GlassSurface(
+          borderRadius: BorderRadius.circular(16),
           child: Column(
             children: [
               _infoTile(

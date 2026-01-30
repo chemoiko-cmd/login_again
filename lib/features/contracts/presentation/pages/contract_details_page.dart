@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:login_again/core/utils/file_utils.dart';
 import 'package:login_again/core/utils/formatters.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/features/contracts/presentation/widgets/widgets.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/contracts_repository.dart';
@@ -45,7 +46,7 @@ class _ContractPageState extends State<ContractPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F9),
+      backgroundColor: Colors.transparent,
       body: FutureBuilder<ContractDetails?>(
         future: _future,
         builder: (context, snapshot) {
@@ -73,13 +74,11 @@ class _ContractPageState extends State<ContractPage> {
                 const SizedBox(height: 16),
 
                 if (details == null)
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(child: Text('No active contract found')),
+                  GlassSurface(
+                    padding: const EdgeInsets.all(24),
+                    borderRadius: BorderRadius.circular(16),
+                    child: const Center(
+                      child: Text('No active contract found'),
                     ),
                   )
                 else

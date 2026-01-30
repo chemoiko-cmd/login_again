@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/tenant_repository.dart';
 import 'tenant_dashboard_state.dart';
 
@@ -11,7 +11,12 @@ class TenantDashboardCubit extends Cubit<TenantDashboardState> {
     emit(state.copyWith(loading: true, error: null));
     try {
       final data = await repo.loadDashboard();
-      final anns = await repo.loadAnnouncements(limit: 3);
+      List<Map<String, dynamic>> anns = const <Map<String, dynamic>>[];
+      try {
+        anns = await repo.loadAnnouncements(limit: 3);
+      } catch (_) {
+        anns = const <Map<String, dynamic>>[];
+      }
       emit(
         state.copyWith(
           loading: false,

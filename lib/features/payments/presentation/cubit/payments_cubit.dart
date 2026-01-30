@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/payments_repository.dart';
 import '../../domain/payment.dart';
 import 'payments_state.dart';
