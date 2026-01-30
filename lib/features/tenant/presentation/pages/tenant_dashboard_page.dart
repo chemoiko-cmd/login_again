@@ -8,8 +8,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
-import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
+import 'package:login_again/styles/loading/widgets.dart' as loading;
 import 'package:login_again/features/contracts/presentation/widgets/widgets.dart';
 import '../widgets/section.dart';
 import '../cubit/tenant_dashboard_cubit.dart';
@@ -35,17 +35,26 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
   @override
   void initState() {
     super.initState();
-    context.read<TenantDashboardCubit>().load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      loading.Widgets.showLoader(context);
+      context.read<TenantDashboardCubit>().load();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    return BlocBuilder<TenantDashboardCubit, TenantDashboardState>(
+    return BlocConsumer<TenantDashboardCubit, TenantDashboardState>(
+      listener: (context, state) {
+        if (!state.loading) {
+          loading.Widgets.hideLoader(context);
+        }
+      },
       builder: (context, state) {
         if (state.loading) {
-          return const Center(child: AppLoadingIndicator());
+          return const SizedBox.shrink();
         }
         if (state.error != null) {
           return Center(

@@ -4,6 +4,7 @@ import 'package:login_again/core/currency/currency_cubit.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/theme/app_theme.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
+import 'package:login_again/styles/loading/widgets.dart' as loading;
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/file_utils.dart';
 import '../../domain/payment.dart';
@@ -11,7 +12,6 @@ import '../cubit/payments_cubit.dart';
 import '../cubit/payments_state.dart';
 import '../widgets/payment_status_icon.dart';
 import 'invoice_checkout_screen.dart';
-import 'package:login_again/core/widgets/app_loading_indicator.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
@@ -24,7 +24,17 @@ class _PaymentsPageState extends State<PaymentsPage> {
   @override
   void initState() {
     super.initState();
-    context.read<PaymentsCubit>().load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      loading.Widgets.showLoader(context);
+      context.read<PaymentsCubit>().load();
+    });
+  }
+
+  @override
+  void dispose() {
+    loading.Widgets.hideLoader(context);
+    super.dispose();
   }
 
   @override
@@ -32,10 +42,15 @@ class _PaymentsPageState extends State<PaymentsPage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
-        child: BlocBuilder<PaymentsCubit, PaymentsState>(
+        child: BlocConsumer<PaymentsCubit, PaymentsState>(
+          listener: (context, state) {
+            if (!state.loading) {
+              loading.Widgets.hideLoader(context);
+            }
+          },
           builder: (context, state) {
             if (state.loading) {
-              return const Center(child: AppLoadingIndicator());
+              return const SizedBox.shrink();
             }
             if (state.error != null) {
               return Center(
@@ -337,9 +352,9 @@ class _PaymentsPageState extends State<PaymentsPage> {
                       await openFile(path);
                     } catch (e) {
                       if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('❌ Failed: $e')),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('❌ Failed: $e')));
                     }
                   },
                   icon: Icon(

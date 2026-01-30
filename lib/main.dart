@@ -15,6 +15,7 @@ import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/presentation/cubit/auth_cubit.dart';
 import 'features/auth/presentation/cubit/auth_state.dart';
 import 'theme/app_theme.dart';
+import 'styles/loading/ui_utils.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,11 +80,16 @@ class MyApp extends StatelessWidget {
           durationUntilAlertAgain: Duration(hours: 1), // Check frequently
         ),
 
-        child: MaterialApp.router(
-          title: 'Odoo Property Management',
-          theme: AppTheme.theme,
-          routerConfig: router.router,
-          debugShowCheckedModeBanner: false,
+        child: Builder(
+          builder: (context) {
+            UiUtils.setContext(context);
+            return MaterialApp.router(
+              title: 'Odoo Property Management',
+              theme: AppTheme.theme,
+              routerConfig: router.router,
+              debugShowCheckedModeBanner: false,
+            );
+          },
         ),
       ),
     );

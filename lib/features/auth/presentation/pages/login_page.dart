@@ -8,8 +8,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
-import 'package:login_again/core/widgets/app_loading_indicator.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
+import 'package:login_again/styles/loading/widgets.dart' as loading;
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'forgot_password_page.dart';
@@ -180,6 +180,12 @@ class _LoginPageState extends State<LoginPage> {
                   top: false,
                   child: BlocConsumer<AuthCubit, AuthState>(
                     listener: (context, state) {
+                      if (state is AuthLoading) {
+                        loading.Widgets.showLoader(context);
+                      } else {
+                        loading.Widgets.hideLoader(context);
+                      }
+
                       if (state is AuthError) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -325,16 +331,7 @@ class _LoginPageState extends State<LoginPage> {
                                             ? null
                                             : _handleLogin,
                                         padding: const EdgeInsets.all(16),
-                                        child: isLoading
-                                            ? const SizedBox(
-                                                height: 20,
-                                                width: 20,
-                                                child: AppLoadingIndicator(
-                                                  width: 20,
-                                                  height: 20,
-                                                ),
-                                              )
-                                            : const Text('Login'),
+                                        child: const Text('Login'),
                                       ),
                                       const SizedBox(height: 16),
                                       Row(

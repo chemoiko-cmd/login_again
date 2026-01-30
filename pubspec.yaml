@@ -98,3 +98,4 @@ flutter:
     - assets/login-image.webp
     - assets/privacy_policy.md
     - assets/lottie/loading.json
+    - assets/lottie/loading_white.json

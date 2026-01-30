@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:login_again/core/utils/formatters.dart';
-import 'package:login_again/core/widgets/app_loading_indicator.dart';
+import 'package:login_again/styles/loading/widgets.dart' as loading;
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/landlord/presentation/cubit/maintenance_tasks_state.dart';
@@ -45,6 +45,12 @@ class _MaintainerDashboardScreenState extends State<MaintainerDashboardScreen> {
       default:
         return Icons.task_alt;
     }
+  }
+
+  @override
+  void dispose() {
+    loading.Widgets.hideLoader(context);
+    super.dispose();
   }
 
   @override
@@ -317,11 +323,18 @@ class _TodayTasksList extends StatelessWidget {
     return BlocBuilder<MaintainerTasksCubit, MaintenanceTasksState>(
       builder: (context, state) {
         if (state is MaintenanceTasksLoading) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(child: AppLoadingIndicator()),
-          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!context.mounted) return;
+            loading.Widgets.showLoader(context);
+          });
+          return const SizedBox.shrink();
         }
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          loading.Widgets.hideLoader(context);
+        });
+
         if (state is MaintenanceTasksError) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -369,11 +382,18 @@ class _UpcomingInspectionsList extends StatelessWidget {
     return BlocBuilder<MaintainerInspectionsCubit, MaintenanceTasksState>(
       builder: (context, state) {
         if (state is MaintenanceTasksLoading) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(child: AppLoadingIndicator()),
-          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!context.mounted) return;
+            loading.Widgets.showLoader(context);
+          });
+          return const SizedBox.shrink();
         }
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          loading.Widgets.hideLoader(context);
+        });
+
         if (state is MaintenanceTasksError) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),

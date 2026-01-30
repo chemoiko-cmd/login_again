@@ -4,9 +4,9 @@ import 'package:login_again/core/utils/file_utils.dart';
 import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/features/contracts/presentation/widgets/widgets.dart';
+import 'package:login_again/styles/loading/widgets.dart' as loading;
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/contracts_repository.dart';
-import 'package:login_again/core/widgets/app_loading_indicator.dart';
 
 class ContractPage extends StatefulWidget {
   const ContractPage({super.key});
@@ -25,6 +25,12 @@ class _ContractPageState extends State<ContractPage> {
     final auth = context.read<AuthCubit>();
     _repo = ContractsRepository(apiClient: auth.apiClient, authCubit: auth);
     _future = _repo.getCurrentContract();
+  }
+
+  @override
+  void dispose() {
+    loading.Widgets.hideLoader(context);
+    super.dispose();
   }
 
   Future<void> _downloadAndShare(ContractDetails details) async {
@@ -51,8 +57,18 @@ class _ContractPageState extends State<ContractPage> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: AppLoadingIndicator());
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              loading.Widgets.showLoader(context);
+            });
+            return const SizedBox.shrink();
           }
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            loading.Widgets.hideLoader(context);
+          });
+
           if (snapshot.hasError) {
             return Center(
               child: Padding(

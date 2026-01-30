@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
-import 'package:login_again/core/widgets/app_loading_indicator.dart';
+import 'package:login_again/styles/loading/widgets.dart' as loading;
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/maintenance_repository.dart';
 import '../widgets/request_card.dart';
@@ -291,6 +291,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
 
   @override
   void dispose() {
+    loading.Widgets.hideLoader(context);
     _titleCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
@@ -372,8 +373,18 @@ class _MaintenancePageState extends State<MaintenancePage> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: AppLoadingIndicator());
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              loading.Widgets.showLoader(context);
+            });
+            return const SizedBox.shrink();
           }
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            loading.Widgets.hideLoader(context);
+          });
+
           if (snapshot.hasError) {
             return Center(
               child: Text('Failed to load requests\n${snapshot.error}'),
