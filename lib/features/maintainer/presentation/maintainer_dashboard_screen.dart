@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:login_again/core/utils/formatters.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
@@ -22,11 +23,17 @@ class _MaintainerDashboardScreenState extends State<MaintainerDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    final auth = context.read<AuthCubit>().state;
-    if (auth is Authenticated) {
-      context.read<MaintainerTasksCubit>().load(partnerId: auth.user.partnerId);
-      context.read<MaintainerInspectionsCubit>().load(userId: auth.user.id);
-    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = context.read<AuthCubit>().state;
+      if (auth is Authenticated) {
+        context.read<MaintainerTasksCubit>().load(
+          partnerId: auth.user.partnerId,
+        );
+        context.read<MaintainerInspectionsCubit>().load(userId: auth.user.id);
+      }
+    });
   }
 
   String _tupleName(dynamic value) {
@@ -89,6 +96,7 @@ class _MaintainerDashboardScreenState extends State<MaintainerDashboardScreen> {
         ),
       ],
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         body: RefreshIndicator(
           onRefresh: () async {
             final auth = context.read<AuthCubit>().state;
@@ -274,36 +282,32 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: color.withOpacity(0.12),
-              child: Icon(icon, color: color, size: 18),
+    return GlassSurface(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: color.withOpacity(0.12),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: textTheme.bodySmall?.copyWith(
+              color: Colors.grey,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: textTheme.bodySmall?.copyWith(
-                color: Colors.grey,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -412,20 +416,29 @@ class _UpcomingInspectionsList extends StatelessWidget {
           }
 
           return Column(
-            children: inspections.map((item) {
-              final title = (item['name'] ?? 'Inspection').toString();
-              final unitName = tupleName(item['unit_id']);
-              final dateStr = (item['date'] ?? '').toString();
-              final s = (item['state'] ?? '').toString();
+            children: [
+              for (var i = 0; i < inspections.length; i++) ...[
+                if (i > 0) const SizedBox(height: 12),
+                Builder(
+                  builder: (context) {
+                    final item = inspections[i];
+                    final title = (item['name'] ?? 'Inspection').toString();
+                    final unitName = tupleName(item['unit_id']);
+                    final dateStr = (item['date'] ?? '').toString();
+                    final s = (item['state'] ?? '').toString();
 
-              return ActionTile(
-                icon: Icons.search_outlined,
-                title: title,
-                subtitle: '${unitName == '-' ? 'Unit' : unitName} • $dateStr',
-                state: s,
-                onTap: () => context.go('/maintainer-inspections'),
-              );
-            }).toList(),
+                    return ActionTile(
+                      icon: Icons.search_outlined,
+                      title: title,
+                      subtitle:
+                          '${unitName == '-' ? 'Unit' : unitName} • $dateStr',
+                      state: s,
+                      onTap: () => context.go('/maintainer-inspections'),
+                    );
+                  },
+                ),
+              ],
+            ],
           );
         }
         return const SizedBox.shrink();
@@ -443,22 +456,20 @@ class _EmptyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: scheme.primary.withOpacity(0.10),
-              child: Icon(icon, color: scheme.primary),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
-            ),
-          ],
-        ),
+    return GlassSurface(
+      padding: const EdgeInsets.all(16),
+      borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: scheme.primary.withOpacity(0.10),
+            child: Icon(icon, color: scheme.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
+          ),
+        ],
       ),
     );
   }
@@ -480,8 +491,9 @@ class _QuickActionCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return GlassSurface(
+      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,

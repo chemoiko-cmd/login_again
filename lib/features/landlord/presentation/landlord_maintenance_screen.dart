@@ -79,9 +79,11 @@ class _LandlordMaintenanceScreenState extends State<LandlordMaintenanceScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(12),
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
                   itemCount: state.tasks.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final task = state.tasks[index];
                     final unitName = _tupleName(task['unit_id']);

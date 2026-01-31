@@ -16,6 +16,7 @@ import 'package:login_again/core/widgets/glass_background.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/core/storage/auth_local_storage.dart';
 import 'package:login_again/features/profile/data/profile_repository.dart';
+import 'package:login_again/features/landlord/data/models/partner_profile.dart';
 import 'package:login_again/features/landlord/presentation/landlord_maintenance_screen.dart';
 import 'package:login_again/features/landlord/presentation/inspection_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenant_profile_screen.dart';
@@ -26,6 +27,7 @@ import 'package:login_again/features/maintainer/presentation/maintainer_inspecti
 import 'package:login_again/features/maintainer/presentation/maintainer_dashboard_screen.dart';
 import 'package:login_again/features/payments/presentation/pages/payments_page.dart';
 import 'package:login_again/features/profile/presentation/my_profile_screen.dart';
+import 'package:login_again/features/profile/presentation/edit_profile_screen.dart';
 
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
@@ -63,6 +65,8 @@ String _shellTitleForLocation(BuildContext context, String location) {
       return 'Contracts';
     case '/profile':
       return 'My Profile';
+    case '/profile/edit':
+      return 'Edit Profile';
     case '/privacy-policy':
       return 'Privacy Policy';
     case '/maintainer-tasks':
@@ -292,6 +296,14 @@ class AppRouter {
           GoRoute(
             path: '/profile',
             builder: (context, state) => const MyProfileScreen(),
+          ),
+          GoRoute(
+            path: '/profile/edit',
+            builder: (context, state) {
+              final extra = state.extra;
+              final profile = extra is PartnerProfile ? extra : null;
+              return EditProfileScreen(initialProfile: profile);
+            },
           ),
           GoRoute(
             path: '/landlord-dashboard',

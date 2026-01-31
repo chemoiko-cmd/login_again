@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/maintainer/presentation/cubit/maintainer_inspections_cubit.dart';
@@ -94,6 +95,7 @@ class _MaintainerInspectionsScreenState
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: BlocConsumer<MaintainerInspectionsCubit, MaintenanceTasksState>(
         listener: (context, state) {
           if (state is MaintenanceTasksLoading) {
@@ -121,9 +123,11 @@ class _MaintainerInspectionsScreenState
                   userId: userId,
                 );
               },
-              child: ListView.builder(
-                padding: const EdgeInsets.all(12),
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
                 itemCount: state.tasks.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final item = state.tasks[index];
                   final title = (item['name'] ?? 'Inspection').toString();
@@ -132,10 +136,9 @@ class _MaintainerInspectionsScreenState
                   final s = (item['state'] ?? '').toString();
                   final id = (item['id'] as num?)?.toInt() ?? 0;
 
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  return GlassSurface(
+                    padding: EdgeInsets.zero,
+                    borderRadius: BorderRadius.circular(12),
                     child: ListTile(
                       onTap: () => _openInspectionOverlay(item),
                       leading: CircleAvatar(

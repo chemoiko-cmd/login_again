@@ -7,6 +7,37 @@ class ProfileRepository {
 
   ProfileRepository({required this.apiClient});
 
+  Future<bool> updatePartnerProfile({
+    required int partnerId,
+    required Map<String, dynamic> values,
+  }) async {
+    try {
+      final payload = {
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {
+          'model': 'res.partner',
+          'method': 'write',
+          'args': [
+            [partnerId],
+            values,
+          ],
+          'kwargs': {},
+        },
+        'id': 1,
+      };
+
+      final resp = await apiClient.post('/web/dataset/call_kw', data: payload);
+      return resp.data['result'] == true;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      throw Exception('${e.message}');
+    } catch (e, st) {
+      print(st.toString());
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
   Future<PartnerProfile?> fetchPartnerProfile({required int partnerId}) async {
     try {
       final payload = {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
 import 'package:login_again/features/maintainer/presentation/cubit/maintainer_inspections_cubit.dart';
 
@@ -111,77 +112,80 @@ class _MaintainerInspectionEditSheetState
           top: 8,
           bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Inspection Notes',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: _selectedState,
-              items: const [
-                DropdownMenuItem(value: 'draft', child: Text('Draft')),
-                DropdownMenuItem(
-                  value: 'in_progress',
-                  child: Text('In Progress'),
-                ),
-                DropdownMenuItem(value: 'done', child: Text('Done')),
-              ],
-              onChanged: _saving
-                  ? null
-                  : (v) {
-                      if (v == null) return;
-                      setState(() => _selectedState = v);
-                    },
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
+        child: GlassSurface(
+          padding: const EdgeInsets.all(16),
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Inspection Notes',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: scheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: scheme.outline),
-              ),
-              child: SwitchListTile(
-                value: _maintenanceRequired,
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedState,
+                items: const [
+                  DropdownMenuItem(value: 'draft', child: Text('Draft')),
+                  DropdownMenuItem(
+                    value: 'in_progress',
+                    child: Text('In Progress'),
+                  ),
+                  DropdownMenuItem(value: 'done', child: Text('Done')),
+                ],
                 onChanged: _saving
                     ? null
                     : (v) {
-                        setState(() => _maintenanceRequired = v);
+                        if (v == null) return;
+                        setState(() => _selectedState = v);
                       },
-                title: const Text('Maintenance required'),
+                decoration: const InputDecoration(
+                  labelText: 'Status',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _notesController,
-              enabled: !_saving,
-              minLines: 3,
-              maxLines: 6,
-              decoration: const InputDecoration(
-                labelText: 'Condition notes',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 12),
+              GlassSurface(
+                padding: EdgeInsets.zero,
+                borderRadius: BorderRadius.circular(12),
+                enableBlur: false,
+                tint: scheme.surface.withValues(alpha: 0.6),
+                child: SwitchListTile(
+                  value: _maintenanceRequired,
+                  onChanged: _saving
+                      ? null
+                      : (v) {
+                          setState(() => _maintenanceRequired = v);
+                        },
+                  title: const Text('Maintenance required'),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _notesController,
+                enabled: !_saving,
+                minLines: 3,
+                maxLines: 6,
+                decoration: const InputDecoration(
+                  labelText: 'Condition notes',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
 
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _saving ? null : _save,
-                child: const Text('Save'),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _saving ? null : _save,
+                  child: const Text('Save'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

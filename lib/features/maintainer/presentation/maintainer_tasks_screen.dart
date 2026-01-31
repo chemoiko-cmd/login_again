@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/maintainer/presentation/cubit/maintainer_tasks_cubit.dart';
@@ -18,10 +19,16 @@ class _MaintainerTasksScreenState extends State<MaintainerTasksScreen> {
   @override
   void initState() {
     super.initState();
-    final auth = context.read<AuthCubit>().state;
-    if (auth is Authenticated) {
-      context.read<MaintainerTasksCubit>().load(partnerId: auth.user.partnerId);
-    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = context.read<AuthCubit>().state;
+      if (auth is Authenticated) {
+        context.read<MaintainerTasksCubit>().load(
+          partnerId: auth.user.partnerId,
+        );
+      }
+    });
   }
 
   String _tupleName(dynamic value) {
@@ -53,6 +60,7 @@ class _MaintainerTasksScreenState extends State<MaintainerTasksScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: BlocConsumer<MaintainerTasksCubit, MaintenanceTasksState>(
         listener: (context, state) {
           if (state is MaintenanceTasksLoading) {
@@ -93,10 +101,9 @@ class _MaintainerTasksScreenState extends State<MaintainerTasksScreen> {
                   final taskId = (task['id'] as num?)?.toInt() ?? 0;
                   final s = (task['state'] ?? '').toString();
 
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  return GlassSurface(
+                    padding: EdgeInsets.zero,
+                    borderRadius: BorderRadius.circular(12),
                     child: ListTile(
                       leading: CircleAvatar(
                         backgroundColor: Colors.teal.shade50,
