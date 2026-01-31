@@ -21,10 +21,14 @@ class _MaintainerInspectionsScreenState
   @override
   void initState() {
     super.initState();
-    final auth = context.read<AuthCubit>().state;
-    if (auth is Authenticated) {
-      context.read<MaintainerInspectionsCubit>().load(userId: auth.user.id);
-    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = context.read<AuthCubit>().state;
+      if (auth is Authenticated) {
+        context.read<MaintainerInspectionsCubit>().load(userId: auth.user.id);
+      }
+    });
   }
 
   String _tupleName(dynamic value) {

@@ -29,13 +29,18 @@ class _LandlordDashboardScreenState extends State<LandlordDashboardScreen> {
   void initState() {
     super.initState();
 
-    final auth = context.read<AuthCubit>();
-    final authState = auth.state;
-    final partnerId = authState is Authenticated ? authState.user.partnerId : 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = context.read<AuthCubit>();
+      final authState = auth.state;
+      final partnerId = authState is Authenticated
+          ? authState.user.partnerId
+          : 0;
 
-    if (partnerId > 0) {
-      context.read<MetricsCubit>().load(partnerId: partnerId);
-    }
+      if (partnerId > 0) {
+        context.read<MetricsCubit>().load(partnerId: partnerId);
+      }
+    });
   }
 
   @override

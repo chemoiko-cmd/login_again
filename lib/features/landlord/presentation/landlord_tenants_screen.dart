@@ -22,11 +22,17 @@ class _LandlordTenantsScreenState extends State<LandlordTenantsScreen> {
   @override
   void initState() {
     super.initState();
-    final authState = context.read<AuthCubit>().state;
-    final partnerId = authState is Authenticated ? authState.user.partnerId : 0;
-    if (partnerId > 0) {
-      context.read<TenantsCubit>().load(partnerId: partnerId);
-    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final authState = context.read<AuthCubit>().state;
+      final partnerId = authState is Authenticated
+          ? authState.user.partnerId
+          : 0;
+      if (partnerId > 0) {
+        context.read<TenantsCubit>().load(partnerId: partnerId);
+      }
+    });
   }
 
   @override
