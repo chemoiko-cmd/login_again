@@ -10,6 +10,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
+import 'package:upgrader/upgrader.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'forgot_password_page.dart';
@@ -140,236 +141,252 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Source - https://stackoverflow.com/a/77826074
+    // Posted by Filip Wajs, modified by community. See post 'Timeline' for change history
+    // Retrieved 2026-02-03, License - CC BY-SA 4.0
 
-    return Scaffold(
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Stack(
-          children: [
-            const Positioned.fill(
-              child: GlassBackground(child: SizedBox.expand()),
-            ),
-            Positioned.fill(
-              child: Image.asset('assets/login-image.webp', fit: BoxFit.cover),
-            ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.05),
-                      Colors.black.withValues(alpha: 0.35),
-                    ],
+    return UpgradeAlert(
+      child: Scaffold(
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Stack(
+            children: [
+              const Positioned.fill(
+                child: GlassBackground(child: SizedBox.expand()),
+              ),
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/login-image.webp',
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.05),
+                        Colors.black.withValues(alpha: 0.35),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SafeArea(
-                top: false,
-                child: BlocConsumer<AuthCubit, AuthState>(
-                  listener: (context, state) {
-                    if (state is AuthLoading) {
-                      loading.Widgets.showLoader(context);
-                    } else {
-                      loading.Widgets.hideLoader(context);
-                    }
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SafeArea(
+                  top: false,
+                  child: BlocConsumer<AuthCubit, AuthState>(
+                    listener: (context, state) {
+                      if (state is AuthLoading) {
+                        loading.Widgets.showLoader(context);
+                      } else {
+                        loading.Widgets.hideLoader(context);
+                      }
 
-                    if (state is AuthError) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.message),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  builder: (context, state) {
-                    final isLoading = state is AuthLoading;
+                      if (state is AuthError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(state.message),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      final isLoading = state is AuthLoading;
 
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: GlassBackground(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 480),
-                              child: Form(
-                                key: _formKey,
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Align(
-                                      alignment: Alignment.center,
-                                      child: Image.asset(
-                                        'assets/app_icon.png',
-                                        width: 72,
-                                        height: 72,
-                                        fit: BoxFit.contain,
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: GlassBackground(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 480,
+                                ),
+                                child: Form(
+                                  key: _formKey,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Align(
+                                        alignment: Alignment.center,
+                                        child: Image.asset(
+                                          'assets/app_icon.png',
+                                          width: 72,
+                                          height: 72,
+                                          fit: BoxFit.contain,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'KRental',
-                                      textAlign: TextAlign.center,
-                                      style: theme.textTheme.headlineSmall,
-                                    ),
-                                    const SizedBox(height: 24),
-                                    TextFormField(
-                                      controller: _usernameController,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Username or Phone',
-                                        prefixIcon: Icon(Icons.person),
-                                        border: OutlineInputBorder(),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'KRental',
+                                        textAlign: TextAlign.center,
+                                        style: theme.textTheme.headlineSmall,
                                       ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your username or phone';
-                                        }
-                                        return null;
-                                      },
-                                      enabled: !isLoading,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    TextFormField(
-                                      controller: _passwordController,
-                                      decoration: InputDecoration(
-                                        labelText: 'Password',
-                                        prefixIcon: const Icon(Icons.lock),
-                                        border: const OutlineInputBorder(),
-                                        suffixIcon: IconButton(
-                                          icon: Icon(
-                                            _obscurePassword
-                                                ? Icons.visibility
-                                                : Icons.visibility_off,
+                                      const SizedBox(height: 24),
+                                      TextFormField(
+                                        controller: _usernameController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Username or Phone',
+                                          prefixIcon: Icon(Icons.person),
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Please enter your username or phone';
+                                          }
+                                          return null;
+                                        },
+                                        enabled: !isLoading,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      TextFormField(
+                                        controller: _passwordController,
+                                        decoration: InputDecoration(
+                                          labelText: 'Password',
+                                          prefixIcon: const Icon(Icons.lock),
+                                          border: const OutlineInputBorder(),
+                                          suffixIcon: IconButton(
+                                            icon: Icon(
+                                              _obscurePassword
+                                                  ? Icons.visibility
+                                                  : Icons.visibility_off,
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                _obscurePassword =
+                                                    !_obscurePassword;
+                                              });
+                                            },
                                           ),
-                                          onPressed: () {
-                                            setState(() {
-                                              _obscurePassword =
-                                                  !_obscurePassword;
-                                            });
-                                          },
                                         ),
+                                        obscureText: _obscurePassword,
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Please enter your password';
+                                          }
+                                          return null;
+                                        },
+                                        enabled: !isLoading,
                                       ),
-                                      obscureText: _obscurePassword,
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your password';
-                                        }
-                                        return null;
-                                      },
-                                      enabled: !isLoading,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: TextButton(
-                                        onPressed: isLoading
-                                            ? null
-                                            : () {
-                                                Navigator.of(context).push(
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        const ForgotPasswordPage(),
-                                                  ),
-                                                );
-                                              },
-                                        child: Text(
-                                          'Forgot Password?',
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                                color: theme.primaryColor,
-                                              ),
-                                        ),
-                                      ),
-                                    ),
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: TextButton(
-                                        onPressed: isLoading
-                                            ? null
-                                            : () {
-                                                Navigator.of(context).push(
-                                                  MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        RegisterOptionsPage(
-                                                          database:
-                                                              _databaseController
-                                                                  .text
-                                                                  .trim(),
-                                                        ),
-                                                  ),
-                                                );
-                                              },
-                                        child: Text(
-                                          'Create account',
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                                color: theme.primaryColor,
-                                              ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    GradientButton(
-                                      onPressed: isLoading
-                                          ? null
-                                          : _handleLogin,
-                                      padding: const EdgeInsets.all(16),
-                                      child: const Text('Login'),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Row(
-                                      children: [
-                                        const Expanded(child: Divider()),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                          ),
+                                      const SizedBox(height: 12),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: TextButton(
+                                          onPressed: isLoading
+                                              ? null
+                                              : () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const ForgotPasswordPage(),
+                                                    ),
+                                                  );
+                                                },
                                           child: Text(
-                                            'OR',
-                                            style: theme.textTheme.labelMedium
-                                                ?.copyWith(color: Colors.grey),
+                                            'Forgot Password?',
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  color: theme.primaryColor,
+                                                ),
                                           ),
                                         ),
-                                        const Expanded(child: Divider()),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    OutlinedButton.icon(
-                                      onPressed: isLoading
-                                          ? null
-                                          : _handleGoogleLogin,
-                                      icon: SvgPicture.asset(
-                                        'assets/google_g.svg',
-                                        width: 20,
-                                        height: 20,
                                       ),
-                                      label: const Text('Sign in with Google'),
-                                      style: OutlinedButton.styleFrom(
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: TextButton(
+                                          onPressed: isLoading
+                                              ? null
+                                              : () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          RegisterOptionsPage(
+                                                            database:
+                                                                _databaseController
+                                                                    .text
+                                                                    .trim(),
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                          child: Text(
+                                            'Create account',
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  color: theme.primaryColor,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      GradientButton(
+                                        onPressed: isLoading
+                                            ? null
+                                            : _handleLogin,
                                         padding: const EdgeInsets.all(16),
+                                        child: const Text('Login'),
                                       ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    _buildTermsAndPrivacy(enabled: !isLoading),
-                                  ],
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          const Expanded(child: Divider()),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                            ),
+                                            child: Text(
+                                              'OR',
+                                              style: theme.textTheme.labelMedium
+                                                  ?.copyWith(
+                                                    color: Colors.grey,
+                                                  ),
+                                            ),
+                                          ),
+                                          const Expanded(child: Divider()),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      OutlinedButton.icon(
+                                        onPressed: isLoading
+                                            ? null
+                                            : _handleGoogleLogin,
+                                        icon: SvgPicture.asset(
+                                          'assets/google_g.svg',
+                                          width: 20,
+                                          height: 20,
+                                        ),
+                                        label: const Text(
+                                          'Sign in with Google',
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.all(16),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildTermsAndPrivacy(
+                                        enabled: !isLoading,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

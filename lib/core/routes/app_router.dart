@@ -186,10 +186,12 @@ class _AppBarAvatar extends StatelessWidget {
 
 class AppRouter {
   final AuthCubit authCubit;
+  final GlobalKey<NavigatorState>? navigatorKey;
 
-  AppRouter(this.authCubit);
+  AppRouter(this.authCubit, {this.navigatorKey});
 
   late final GoRouter router = GoRouter(
+    navigatorKey: navigatorKey,
     initialLocation: '/splash',
     refreshListenable: GoRouterRefreshStream(authCubit.stream),
 
