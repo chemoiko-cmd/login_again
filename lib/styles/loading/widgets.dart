@@ -5,6 +5,7 @@ import 'ui_utils.dart';
 
 class Widgets {
   static bool isLoaderShowing = false;
+  static OverlayEntry? _loaderOverlay;
 
   static Future<void> showLoader(BuildContext? context) async {
     if (context == null || !context.mounted || isLoaderShowing) return;
@@ -12,43 +13,43 @@ class Widgets {
     try {
       isLoaderShowing = true;
 
-      await showDialog<dynamic>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext dialogContext) {
+      final overlayState = Overlay.of(context, rootOverlay: true);
+      if (overlayState == null) {
+        isLoaderShowing = false;
+        return;
+      }
+
+      _loaderOverlay = OverlayEntry(
+        builder: (overlayContext) {
           return SafeArea(
-            child: PopScope(
-              canPop: false,
-              onPopInvokedWithResult: (didPop, _) async {
-                if (didPop) return;
-                if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext);
-                }
-              },
-              child: Center(
-                child: UiUtils.progress(
-                  normalProgressColor: Theme.of(
-                    context,
-                  ).colorScheme.tertiaryColor,
+            child: Stack(
+              children: [
+                const ModalBarrier(dismissible: false, color: Colors.black54),
+                Center(
+                  child: UiUtils.progress(
+                    normalProgressColor: Theme.of(
+                      context,
+                    ).colorScheme.tertiaryColor,
+                  ),
                 ),
-              ),
+              ],
             ),
           );
         },
       );
+
+      overlayState.insert(_loaderOverlay!);
     } on Exception {
       isLoaderShowing = false;
     }
   }
 
   static void hideLoader(BuildContext? context) {
-    if (context == null || !context.mounted || !isLoaderShowing) return;
+    if (!isLoaderShowing) return;
 
     try {
-      final navigator = Navigator.of(context, rootNavigator: true);
-      if (navigator.canPop()) {
-        navigator.pop();
-      }
+      _loaderOverlay?.remove();
+      _loaderOverlay = null;
       isLoaderShowing = false;
     } on Exception {
       isLoaderShowing = false;
