@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.82+82
+version: 1.0.83+83
 
 environment:
   sdk: ^3.10.4
@@ -28,13 +28,13 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  app_updater: ^2.0.0
   cupertino_icons: ^1.0.8
   dartz: ^0.10.1
   dio: ^5.9.0
   equatable: ^2.0.7
   flutter:
     sdk: flutter
+  flutter_animate: ^4.5.2
   flutter_bloc: ^9.1.1
   flutter_markdown: ^0.7.7+1
   flutter_svg: ^2.2.0
@@ -48,6 +48,7 @@ dependencies:
   nested: ^1.0.0
   odoo_rpc: ^0.7.1
   open_filex: ^4.5.0
+  package_info_plus: ^9.0.0
   path_provider: ^2.1.5
   share_plus: ^10.1.2
   upgrader: ^12.5.0
@@ -92,6 +93,7 @@ flutter:
     - assets/android12splash.png
     - assets/app_icon.png
     - assets/google_g.svg
+    - assets/google_play.svg
     - assets/login-image.webp
     - assets/privacy_policy.md
     - assets/lottie/loading.json

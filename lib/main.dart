@@ -6,7 +6,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:app_updater/app_updater.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'core/currency/currency_cubit.dart';
@@ -20,6 +19,7 @@ import 'features/auth/presentation/cubit/auth_cubit.dart';
 import 'features/auth/presentation/cubit/auth_state.dart';
 import 'theme/app_theme.dart';
 import 'styles/loading/ui_utils.dart';
+import 'core/widgets/update_modal.dart';
 
 final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
@@ -215,28 +215,21 @@ class _AppRootState extends State<_AppRoot> {
       final navigatorContext = _rootNavigatorKey.currentContext;
       if (navigatorContext == null) return;
 
-      await showDialog<void>(
+      await showGeneralDialog<void>(
         context: navigatorContext,
         barrierDismissible: true,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Update available'),
-            content: Text(
-              'A newer version is available.\n\nCurrent: $current\nLatest: $githubLabel',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Later'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _openPlayStore();
-                },
-                child: const Text('Update'),
-              ),
-            ],
+        barrierLabel: 'update',
+        barrierColor: Colors.transparent,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return UpdateModal(
+            isOpen: true,
+            currentVersion: current,
+            latestVersion: githubLabel,
+            onDismiss: () => Navigator.of(context).pop(),
+            onUpdate: () {
+              Navigator.of(context).pop();
+              _openPlayStore();
+            },
           );
         },
       );
