@@ -11,7 +11,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/core/storage/auth_local_storage.dart';
@@ -28,6 +27,7 @@ import 'package:login_again/features/maintainer/presentation/maintainer_dashboar
 import 'package:login_again/features/payments/presentation/pages/payments_page.dart';
 import 'package:login_again/features/profile/presentation/my_profile_screen.dart';
 import 'package:login_again/features/profile/presentation/edit_profile_screen.dart';
+import 'package:login_again/features/subscription/presentation/subscription_screen.dart';
 
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/cubit/auth_state.dart';
@@ -67,6 +67,8 @@ String _shellTitleForLocation(BuildContext context, String location) {
       return 'My Profile';
     case '/profile/edit':
       return 'Edit Profile';
+    case '/subscription':
+      return 'Subscription';
     case '/privacy-policy':
       return 'Privacy Policy';
     case '/maintainer-tasks':
@@ -306,6 +308,10 @@ class AppRouter {
               final profile = extra is PartnerProfile ? extra : null;
               return EditProfileScreen(initialProfile: profile);
             },
+          ),
+          GoRoute(
+            path: '/subscription',
+            builder: (context, state) => const SubscriptionScreen(),
           ),
           GoRoute(
             path: '/landlord-dashboard',
