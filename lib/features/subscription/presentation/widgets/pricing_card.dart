@@ -254,7 +254,7 @@ class _PricingCardState extends State<PricingCard> {
         Text(
           widget.plan.price,
           style: TextStyle(
-            fontSize: 32,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.5,
             color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -592,10 +592,10 @@ class PricingSection extends StatelessWidget {
                       color: Theme.of(context).colorScheme.secondary,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'All plans include 14-day free trial. No credit card required.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    // Text(
+                    //   'All plans include 14-day free trial. No credit card required.',
+                    //   style: Theme.of(context).textTheme.bodySmall,
+                    // ),
                   ],
                 ),
               ],

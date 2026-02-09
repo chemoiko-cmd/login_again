@@ -4,6 +4,8 @@ import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/landlord/data/repositories/landlord_repository.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
+import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
+import 'package:login_again/features/landlord/presentation/widgets/property_create_overlay.dart';
 import 'package:login_again/theme/app_theme.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
 import 'dart:typed_data';
@@ -20,6 +22,7 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
   bool _loading = false;
   String? _error;
   List<Map<String, dynamic>> _properties = const [];
+  bool _isCreating = false;
 
   @override
   void initState() {
@@ -64,175 +67,216 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final authState = context.read<AuthCubit>().state;
+    final isLandlord = authState is Authenticated && authState.isLandlord;
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: Builder(
-          builder: (context) {
-            if (_loading) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!mounted) return;
-                loading.Widgets.showLoader(context);
-              });
-              return const SizedBox.shrink();
-            }
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: _load,
+            child: Builder(
+              builder: (context) {
+                if (_loading) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    loading.Widgets.showLoader(context);
+                  });
+                  return const SizedBox.shrink();
+                }
 
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!mounted) return;
-              loading.Widgets.hideLoader(context);
-            });
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  loading.Widgets.hideLoader(context);
+                });
 
-            if (_error != null) {
-              return Center(child: Text(_error!));
-            }
-            if (_properties.isEmpty) {
-              return const Center(child: Text('No properties found'));
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemBuilder: (context, index) {
-                final p = _properties[index];
-                final name = (p['name'] ?? '').toString();
-                final code = (p['code'] ?? '').toString();
-                final units = (p['units_count'] as int?) ?? 0;
-                final vacant = (p['vacant_count'] as int?) ?? 0;
-                final occ = (p['occupancy_rate'] as double?) ?? 0.0;
-                final Uint8List? imageBytes = p['image_bytes'] as Uint8List?;
-                final addr = [p['street'], p['city']]
-                    .where((e) => (e ?? '').toString().trim().isNotEmpty)
-                    .map((e) => e.toString())
-                    .join(', ');
-                return GlassSurface(
-                  padding: EdgeInsets.zero,
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {},
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                if (_error != null) {
+                  return Center(child: Text(_error!));
+                }
+                if (_properties.isEmpty) {
+                  return const Center(child: Text('No properties found'));
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemBuilder: (context, index) {
+                    final p = _properties[index];
+                    final name = (p['name'] ?? '').toString();
+                    final code = (p['code'] ?? '').toString();
+                    final units = (p['units_count'] as int?) ?? 0;
+                    final vacant = (p['vacant_count'] as int?) ?? 0;
+                    final occ = (p['occupancy_rate'] as double?) ?? 0.0;
+                    final Uint8List? imageBytes =
+                        p['image_bytes'] as Uint8List?;
+                    final addr = [p['street'], p['city']]
+                        .where((e) => (e ?? '').toString().trim().isNotEmpty)
+                        .map((e) => e.toString())
+                        .join(', ');
+                    return GlassSurface(
+                      padding: EdgeInsets.zero,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {},
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 54,
-                                height: 54,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  color: Colors.white.withValues(alpha: 0.22),
-                                ),
-                                clipBehavior: Clip.antiAlias,
-                                child: imageBytes != null
-                                    ? Image.memory(
-                                        imageBytes,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Icon(
-                                        Icons.apartment,
-                                        color: scheme.outline,
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 54,
+                                    height: 54,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.22,
                                       ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  name,
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w600),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (code.isNotEmpty)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: scheme.primary.withValues(
-                                      alpha: 0.12,
                                     ),
-                                    borderRadius: BorderRadius.circular(999),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: imageBytes != null
+                                        ? Image.memory(
+                                            imageBytes,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Icon(
+                                            Icons.apartment,
+                                            color: scheme.outline,
+                                          ),
                                   ),
-                                  child: Text(
-                                    code,
-                                    style: TextStyle(
-                                      color: scheme.primary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
-                          if (addr.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  size: 16,
-                                  color: scheme.outline,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    addr,
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: scheme.onSurfaceVariant,
+                                  if (code.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: scheme.primary.withValues(
+                                          alpha: 0.12,
                                         ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        code,
+                                        style: TextStyle(
+                                          color: scheme.primary,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (addr.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.location_on_outlined,
+                                      size: 16,
+                                      color: scheme.outline,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        addr,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: scheme.onSurfaceVariant,
+                                            ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _InfoPill(
-                                  icon: Icons.home_work_outlined,
-                                  label: 'Units',
-                                  value: '$units',
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _InfoPill(
-                                  icon: Icons.meeting_room_outlined,
-                                  label: 'Vacant',
-                                  value: '$vacant',
-                                  color: context.success,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _InfoPill(
-                                  icon: Icons.pie_chart_outline,
-                                  label: 'Occupancy',
-                                  value: '${occ.toStringAsFixed(0)}%',
-                                  color: Colors.amber.shade700,
-                                ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _InfoPill(
+                                      icon: Icons.home_work_outlined,
+                                      label: 'Units',
+                                      value: '$units',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _InfoPill(
+                                      icon: Icons.meeting_room_outlined,
+                                      label: 'Vacant',
+                                      value: '$vacant',
+                                      color: context.success,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _InfoPill(
+                                      icon: Icons.pie_chart_outline,
+                                      label: 'Occupancy',
+                                      value: '${occ.toStringAsFixed(0)}%',
+                                      color: Colors.amber.shade700,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemCount: _properties.length,
                 );
               },
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemCount: _properties.length,
-            );
-          },
-        ),
+            ),
+          ),
+          if (_isCreating)
+            Builder(
+              builder: (context) {
+                final a = context.read<AuthCubit>().state;
+                final ownerPartnerId = a is Authenticated
+                    ? a.user.partnerId
+                    : 0;
+                return PropertyCreateOverlay(
+                  ownerPartnerId: ownerPartnerId,
+                  onClose: () async {
+                    setState(() => _isCreating = false);
+                    await _load();
+                  },
+                );
+              },
+            ),
+        ],
       ),
+      floatingActionButton: (isLandlord && !_isCreating)
+          ? GradientFloatingActionButton(
+              tooltip: 'Add Property',
+              onPressed: () => setState(() => _isCreating = true),
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

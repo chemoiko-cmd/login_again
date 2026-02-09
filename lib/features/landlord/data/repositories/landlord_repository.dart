@@ -49,6 +49,227 @@ class LandlordRepository {
     }
   }
 
+  String _extractOdooErrorMessage(dynamic body) {
+    try {
+      if (body is Map) {
+        final error = body['error'];
+        if (error is Map) {
+          final data = error['data'];
+          final name = data is Map ? data['name']?.toString() : null;
+          final message = error['message']?.toString();
+          final detailMessage = data is Map
+              ? data['message']?.toString()
+              : null;
+          return [name, detailMessage, message]
+              .where((e) => (e ?? '').toString().trim().isNotEmpty)
+              .map((e) => e.toString())
+              .join(': ');
+        }
+      }
+    } catch (_) {}
+    return 'Odoo Server Error';
+  }
+
+  Future<bool> createProperty({
+    required int ownerPartnerId,
+    required String name,
+    String? code,
+    String? street,
+    String? city,
+  }) async {
+    try {
+      final vals = <String, dynamic>{
+        'owner_id': ownerPartnerId,
+        'name': name,
+        if (code != null && code.isNotEmpty) 'code': code,
+        if (street != null && street.isNotEmpty) 'street': street,
+        if (city != null && city.isNotEmpty) 'city': city,
+      };
+
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.property',
+            'method': 'create',
+            'args': [vals],
+            'kwargs': {},
+          },
+          'id': 1,
+        },
+      );
+
+      return resp.data['result'] != null;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return false;
+    } catch (e, st) {
+      print(st.toString());
+      return false;
+    }
+  }
+
+  Future<int?> createPropertyReturningId({
+    required int ownerPartnerId,
+    required String name,
+    required double defaultRentAmount,
+    required double defaultDepositAmount,
+    Uint8List? imageBytes,
+    String? code,
+    String? street,
+    String? city,
+  }) async {
+    try {
+      final vals = <String, dynamic>{
+        'owner_id': ownerPartnerId,
+        'name': name,
+        'default_rent_amount': defaultRentAmount,
+        'default_deposit_amount': defaultDepositAmount,
+        if (imageBytes != null && imageBytes.isNotEmpty)
+          'image_1920': base64Encode(imageBytes),
+        if (code != null && code.isNotEmpty) 'code': code,
+        if (street != null && street.isNotEmpty) 'street': street,
+        if (city != null && city.isNotEmpty) 'city': city,
+      };
+
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.property',
+            'method': 'create',
+            'args': [vals],
+            'kwargs': {},
+          },
+          'id': 1,
+        },
+      );
+
+      final body = resp.data;
+      if (body is Map && body['error'] != null) {
+        throw Exception(_extractOdooErrorMessage(body));
+      }
+
+      final result = body is Map ? body['result'] : null;
+      return result is num ? result.toInt() : null;
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return null;
+    } catch (e, st) {
+      print(st.toString());
+      return null;
+    }
+  }
+
+  Future<int?> _createFloor({
+    required int propertyId,
+    required int floorNumber,
+  }) async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.floor',
+            'method': 'create',
+            'args': [
+              {
+                'name': 'Floor $floorNumber',
+                'building_id': propertyId,
+                'sequence': floorNumber * 10,
+              },
+            ],
+            'kwargs': {},
+          },
+          'id': 1,
+        },
+      );
+      final result = resp.data['result'];
+      return result is num ? result.toInt() : null;
+    } catch (e, st) {
+      print(st.toString());
+      return null;
+    }
+  }
+
+  String _unitNameLikeBackend({
+    required String propertyName,
+    required int floorNumber,
+    required int unitNumber,
+    String baseName = 'Unit',
+  }) {
+    final prefixSource = propertyName.trim();
+    final prefix = prefixSource.isNotEmpty
+        ? prefixSource.substring(0, 1).toUpperCase()
+        : '';
+    final f = floorNumber.toString().padLeft(2, '0');
+    final u = unitNumber.toString().padLeft(2, '0');
+    return prefix.isNotEmpty ? '$baseName-$prefix$f$u' : '$baseName-$f$u';
+  }
+
+  Future<bool> generateUnitsForProperty({
+    required int propertyId,
+    required String propertyName,
+    required int totalUnits,
+  }) async {
+    if (totalUnits <= 0) return true;
+
+    try {
+      const floorNumber = 1;
+      final floorId = await _createFloor(
+        propertyId: propertyId,
+        floorNumber: floorNumber,
+      );
+      if (floorId == null) return false;
+
+      final unitsVals = <Map<String, dynamic>>[];
+      for (var unitNumber = 1; unitNumber <= totalUnits; unitNumber++) {
+        unitsVals.add({
+          'name': _unitNameLikeBackend(
+            propertyName: propertyName,
+            floorNumber: floorNumber,
+            unitNumber: unitNumber,
+          ),
+          'property_id': propertyId,
+          'floor_id': floorId,
+          'created_from_template': true,
+        });
+      }
+
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.unit',
+            'method': 'create',
+            'args': [unitsVals],
+            'kwargs': {},
+          },
+          'id': 1,
+        },
+      );
+
+      final body = resp.data;
+      if (body is Map && body['error'] != null) {
+        throw Exception(_extractOdooErrorMessage(body));
+      }
+
+      final result = body is Map ? body['result'] : null;
+      return result != null;
+    } catch (e, st) {
+      print(st.toString());
+      return false;
+    }
+  }
+
   Future<Map<String, int?>> _fetchUnitContext(int unitId) async {
     try {
       final resp = await apiClient.post(

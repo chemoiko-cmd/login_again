@@ -21,6 +21,12 @@ class MyProfileScreen extends StatefulWidget {
 class _MyProfileScreenState extends State<MyProfileScreen> {
   Future<PartnerProfile?>? _future;
 
+  void _comingSoon() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Coming soon')));
+  }
+
   void _reload() {
     final auth = context.read<AuthCubit>();
     final authState = auth.state;
@@ -152,7 +158,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                 icon: Icons.workspace_premium_outlined,
                 title: 'Subscription',
                 subtitle: 'Manage your subscription',
-                onTap: () => context.push('/subscription'),
+                onTap: _comingSoon,
               ),
 
               const SizedBox(height: 12),
