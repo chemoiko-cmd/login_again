@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -28,11 +30,16 @@ class UpdateModal extends StatelessWidget {
 
     return Stack(
       children: [
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          child: Container(
-            color: Colors.black.withOpacity(0.2),
-          ).animate().fade(duration: 200.ms),
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                child: Container(color: Colors.black.withOpacity(0.2)),
+              ),
+            ).animate().fade(duration: 200.ms),
+          ),
         ),
         Center(
           child: Animate(
