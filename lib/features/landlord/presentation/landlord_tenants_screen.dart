@@ -79,6 +79,7 @@ class _LandlordTenantsScreenState extends State<LandlordTenantsScreen> {
                     final row = state.tenants[index];
                     return ActionTile(
                       icon: Icons.person_outline,
+                      avatarBytes: row.avatarBytes,
                       title: row.tenantName,
                       subtitle: '${row.propertyName} • ${row.unitName}',
                       state: row.status,

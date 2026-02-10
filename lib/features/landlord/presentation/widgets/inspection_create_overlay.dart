@@ -20,13 +20,14 @@ class InspectionCreateOverlay extends StatefulWidget {
 }
 
 class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
+  final _formKey = GlobalKey<FormState>();
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+
   final _nameCtrl = TextEditingController();
-  final _notesCtrl = TextEditingController();
-  final _maintenanceDescCtrl = TextEditingController();
+  final _dateCtrl = TextEditingController();
 
   DateTime? _date;
   int _cleanliness = 3;
-  bool _maintenanceRequired = false;
 
   int? _selectedUnitId;
   int? _selectedInspectorId;
@@ -39,15 +40,19 @@ class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
   @override
   void initState() {
     super.initState();
+    final today = DateTime.now();
+    _date = DateTime(today.year, today.month, today.day);
+    _dateCtrl.text = _formatDate(_date!);
     _loadDropdowns();
   }
+
+  String _formatDate(DateTime date) => date.toIso8601String().split('T').first;
 
   @override
   void dispose() {
     loading.Widgets.hideLoader(context);
     _nameCtrl.dispose();
-    _notesCtrl.dispose();
-    _maintenanceDescCtrl.dispose();
+    _dateCtrl.dispose();
     super.dispose();
   }
 
@@ -71,20 +76,21 @@ class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 2),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null) {
+      setState(() {
+        _date = picked;
+        _dateCtrl.text = _formatDate(picked);
+      });
+      if (_autoValidateMode != AutovalidateMode.disabled) {
+        _formKey.currentState?.validate();
+      }
+    }
   }
 
   Future<void> _submit() async {
-    if (_selectedUnitId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a unit')));
-      return;
-    }
-    if (_date == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please pick a date')));
+    final valid = _formKey.currentState?.validate() ?? false;
+    if (!valid) {
+      setState(() => _autoValidateMode = AutovalidateMode.onUserInteraction);
       return;
     }
 
@@ -92,15 +98,8 @@ class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
       partnerId: widget.partnerId,
       unitId: _selectedUnitId!,
       date: _date!.toIso8601String().split('T').first,
-      name: _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
-      conditionNotes: _notesCtrl.text.trim().isEmpty
-          ? null
-          : _notesCtrl.text.trim(),
+      name: _nameCtrl.text.trim(),
       cleanliness: _cleanliness,
-      maintenanceRequired: _maintenanceRequired,
-      maintenanceDescription: _maintenanceDescCtrl.text.trim().isEmpty
-          ? null
-          : _maintenanceDescCtrl.text.trim(),
       inspectorId: _selectedInspectorId,
     );
 
@@ -143,156 +142,130 @@ class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'New Inspection',
-                              style: t.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: widget.onClose,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        if (_loadingLists)
-                          Builder(
-                            builder: (context) {
-                              return const SizedBox.shrink();
-                            },
-                          )
-                        else ...[
-                          DropdownButtonFormField<int>(
-                            value: _selectedUnitId,
-                            onChanged: (v) =>
-                                setState(() => _selectedUnitId = v),
-                            items: _units
-                                .map(
-                                  (u) => DropdownMenuItem<int>(
-                                    value: u['id'] as int,
-                                    child: Text(u['name'] as String),
-                                  ),
-                                )
-                                .toList(),
-                            decoration: InputDecoration(
-                              labelText: 'Unit',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<int>(
-                            value: _selectedInspectorId,
-                            onChanged: (v) =>
-                                setState(() => _selectedInspectorId = v),
-                            items: _inspectorPartners.map((p) {
-                              final int? userId = p['user_id'] as int?;
-                              return DropdownMenuItem<int>(
-                                value: userId,
-                                enabled: userId != null,
-                                child: Text(p['name'] as String),
-                              );
-                            }).toList(),
-                            decoration: InputDecoration(
-                              labelText: 'Inspector (optional)',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _nameCtrl,
-                            decoration: InputDecoration(
-                              labelText: 'Title (optional)',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: _autoValidateMode,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Row(
                             children: [
-                              Expanded(
-                                child: GradientOutlinedButton(
-                                  onPressed: _pickDate,
-                                  minHeight: 48,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.event),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _date == null
-                                            ? 'Pick Date'
-                                            : _date!
-                                                  .toIso8601String()
-                                                  .split('T')
-                                                  .first,
-                                      ),
-                                    ],
-                                  ),
+                              Text(
+                                'New Inspection',
+                                style: t.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: widget.onClose,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          TextField(
-                            controller: _notesCtrl,
-                            maxLines: 3,
-                            decoration: InputDecoration(
-                              labelText: 'Condition notes',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          CheckboxListTile(
-                            value: _maintenanceRequired,
-                            onChanged: (v) => setState(
-                              () => _maintenanceRequired = v ?? false,
-                            ),
-                            title: const Text('Maintenance required?'),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          if (_maintenanceRequired) ...[
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _maintenanceDescCtrl,
-                              maxLines: 2,
+                          if (_loadingLists)
+                            Builder(
+                              builder: (context) {
+                                return const SizedBox.shrink();
+                              },
+                            )
+                          else ...[
+                            DropdownButtonFormField<int>(
+                              value: _selectedUnitId,
+                              onChanged: (v) =>
+                                  setState(() => _selectedUnitId = v),
+                              validator: (v) {
+                                if (v == null) return 'Please select a unit';
+                                return null;
+                              },
+                              items: _units
+                                  .map(
+                                    (u) => DropdownMenuItem<int>(
+                                      value: u['id'] as int,
+                                      child: Text(u['name'] as String),
+                                    ),
+                                  )
+                                  .toList(),
                               decoration: InputDecoration(
-                                labelText: 'Maintenance description',
+                                labelText: 'Unit',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
-                          ],
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: GradientButton(
-                              onPressed: _submit,
-                              minHeight: 48,
-                              borderRadius: BorderRadius.circular(24),
-                              child: const Text('Submit Inspection'),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<int>(
+                              value: _selectedInspectorId,
+                              onChanged: (v) =>
+                                  setState(() => _selectedInspectorId = v),
+                              validator: (v) {
+                                if (v == null)
+                                  return 'Please select an inspector';
+                                return null;
+                              },
+                              items: _inspectorPartners.map((p) {
+                                final int? userId = p['user_id'] as int?;
+                                return DropdownMenuItem<int>(
+                                  value: userId,
+                                  enabled: userId != null,
+                                  child: Text(p['name'] as String),
+                                );
+                              }).toList(),
+                              decoration: InputDecoration(
+                                labelText: 'Inspector',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _nameCtrl,
+                              validator: (v) {
+                                final value = (v ?? '').trim();
+                                if (value.isEmpty)
+                                  return 'Please enter a title';
+                                return null;
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Title',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _dateCtrl,
+                              readOnly: true,
+                              onTap: _pickDate,
+                              validator: (v) {
+                                if (_date == null) return 'Please pick a date';
+                                return null;
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Scheduled Date',
+                                suffixIcon: const Icon(Icons.event),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: GradientButton(
+                                onPressed: _submit,
+                                minHeight: 48,
+                                borderRadius: BorderRadius.circular(24),
+                                child: const Text('Submit Inspection'),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),

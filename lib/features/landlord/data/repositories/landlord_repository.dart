@@ -600,6 +600,46 @@ class LandlordRepository {
 
       if (tenantIds.isEmpty) return rows;
 
+      // Fetch tenant avatars (small image) in one call.
+      final partnersResp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'res.partner',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['id', 'in', tenantIds],
+              ],
+              'fields': ['image_128'],
+              'limit': tenantIds.length,
+            },
+          },
+          'id': 1,
+        },
+      );
+
+      final partnerList = (partnersResp.data['result'] as List?) ?? [];
+      final Map<int, List<int>?> avatarByPartnerId = {};
+      for (final e in partnerList) {
+        final m = Map<String, dynamic>.from(e as Map);
+        final id = (m['id'] as num?)?.toInt();
+        if (id == null) continue;
+        final img = m['image_128'];
+        if (img is String && img.isNotEmpty) {
+          try {
+            avatarByPartnerId[id] = base64Decode(img);
+          } catch (_) {
+            avatarByPartnerId[id] = null;
+          }
+        } else {
+          avatarByPartnerId[id] = null;
+        }
+      }
+
       // Fetch ALL unpaid/partial invoices for all tenants in one call.
       final invoicesResp = await apiClient.post(
         '/web/dataset/call_kw',
@@ -673,7 +713,12 @@ class LandlordRepository {
       }
 
       return rows
-          .map((r) => r.copyWith(status: statusForTenant(r.tenantPartnerId)))
+          .map(
+            (r) => r.copyWith(
+              status: statusForTenant(r.tenantPartnerId),
+              avatarBytes: avatarByPartnerId[r.tenantPartnerId],
+            ),
+          )
           .toList();
     } on DioException catch (e, st) {
       print(st.toString());

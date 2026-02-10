@@ -101,7 +101,6 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
                   itemBuilder: (context, index) {
                     final p = _properties[index];
                     final name = (p['name'] ?? '').toString();
-                    final code = (p['code'] ?? '').toString();
                     final units = (p['units_count'] as int?) ?? 0;
                     final vacant = (p['vacant_count'] as int?) ?? 0;
                     final occ = (p['occupancy_rate'] as double?) ?? 0.0;
@@ -158,29 +157,6 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  if (code.isNotEmpty)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: scheme.primary.withValues(
-                                          alpha: 0.12,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          999,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        code,
-                                        style: TextStyle(
-                                          color: scheme.primary,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
                                 ],
                               ),
                               if (addr.isNotEmpty) ...[
@@ -231,8 +207,8 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: _InfoPill(
-                                      icon: Icons.pie_chart_outline,
-                                      label: 'Occupancy',
+                                      icon: Icons.person_2_rounded,
+                                      label: '',
                                       value: '${occ.toStringAsFixed(0)}%',
                                       color: Colors.amber.shade700,
                                     ),

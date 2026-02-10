@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
+import 'dart:typed_data';
 
 class ActionTile extends StatelessWidget {
   final IconData icon;
+  final List<int>? avatarBytes;
   final String title;
   final String subtitle;
   final String? state; // just the string from your Inspection model
@@ -12,6 +14,7 @@ class ActionTile extends StatelessWidget {
   const ActionTile({
     super.key,
     required this.icon,
+    this.avatarBytes,
     required this.title,
     required this.subtitle,
     this.state,
@@ -27,7 +30,12 @@ class ActionTile extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: scheme.primary.withValues(alpha: 0.10),
-          child: Icon(icon, color: scheme.primary),
+          backgroundImage: (avatarBytes != null && avatarBytes!.isNotEmpty)
+              ? MemoryImage(Uint8List.fromList(avatarBytes!))
+              : null,
+          child: (avatarBytes != null && avatarBytes!.isNotEmpty)
+              ? null
+              : Icon(icon, color: scheme.primary),
         ),
         title: Row(
           children: [

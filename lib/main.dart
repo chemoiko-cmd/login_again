@@ -171,14 +171,6 @@ class _AppRootState extends State<_AppRoot> {
     final messengerContext = _scaffoldMessengerKey.currentContext;
     if (messenger == null || messengerContext == null) return;
 
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Checking for updates...'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-
     try {
       final info = await PackageInfo.fromPlatform();
       final current = info.version;
@@ -189,31 +181,11 @@ class _AppRootState extends State<_AppRoot> {
           githubLatest != null && _isNewerVersion(current, githubLatest);
 
       if (!updateAvailable) {
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              'Current: $current | GitHub: $githubLabel\nNo updates found. App is up to date.',
-            ),
-            duration: const Duration(seconds: 2),
-          ),
-        );
         return;
       }
 
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Current: $current | GitHub: $githubLabel\nUpdate available. Showing update dialog...',
-          ),
-          duration: const Duration(seconds: 3),
-        ),
-      );
-
-      if (!mounted) return;
       final navigatorContext = _rootNavigatorKey.currentContext;
-      if (navigatorContext == null) return;
+      if (navigatorContext == null || !navigatorContext.mounted) return;
 
       await showGeneralDialog<void>(
         context: navigatorContext,
@@ -234,13 +206,7 @@ class _AppRootState extends State<_AppRoot> {
         },
       );
     } catch (e) {
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Update check failed: $e'),
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      // Silent failure: ignore update check errors.
     }
   }
 

@@ -6,6 +6,7 @@ class LandlordTenantRow {
   final String propertyName;
   final String unitName;
   final String? status; // paid | pending | overdue
+  final List<int>? avatarBytes;
 
   const LandlordTenantRow({
     required this.contractId,
@@ -15,6 +16,7 @@ class LandlordTenantRow {
     required this.propertyName,
     required this.unitName,
     this.status,
+    this.avatarBytes,
   });
 
   LandlordTenantRow copyWith({
@@ -25,6 +27,7 @@ class LandlordTenantRow {
     String? propertyName,
     String? unitName,
     String? status,
+    List<int>? avatarBytes,
   }) {
     return LandlordTenantRow(
       contractId: contractId ?? this.contractId,
@@ -34,6 +37,7 @@ class LandlordTenantRow {
       propertyName: propertyName ?? this.propertyName,
       unitName: unitName ?? this.unitName,
       status: status ?? this.status,
+      avatarBytes: avatarBytes ?? this.avatarBytes,
     );
   }
 }

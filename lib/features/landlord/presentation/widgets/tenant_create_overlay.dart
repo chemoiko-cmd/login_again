@@ -49,6 +49,9 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
   @override
   void initState() {
     super.initState();
+    final today = DateTime.now();
+    _startDate = DateTime(today.year, today.month, today.day);
+    _startDateCtrl.text = _formatDate(_startDate!);
     _loadDropdowns();
   }
 
