@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/features/landlord/presentation/cubit/tenants_cubit.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
+import 'dart:typed_data';
 
 class TenantCreateOverlay extends StatefulWidget {
   final VoidCallback onClose;
@@ -19,12 +21,20 @@ class TenantCreateOverlay extends StatefulWidget {
 }
 
 class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
+  final _formKey = GlobalKey<FormState>();
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+
   final _nameCtrl = TextEditingController();
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _mobileCtrl = TextEditingController();
+  final _startDateCtrl = TextEditingController();
+  final _endDateCtrl = TextEditingController();
+
+  final _imagePicker = ImagePicker();
+  Uint8List? _tenantImageBytes;
 
   bool _loadingLists = true;
   List<Map<String, dynamic>> _units = const [];
@@ -42,6 +52,32 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
     _loadDropdowns();
   }
 
+  String _formatDate(DateTime date) => date.toIso8601String().split('T').first;
+
+  bool _isValidEmail(String v) {
+    final value = v.trim();
+    if (value.isEmpty) return true;
+    final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    return regex.hasMatch(value);
+  }
+
+  bool _isValidPhoneOptional(String v) {
+    final value = v.trim();
+    if (value.isEmpty) return true;
+    final digitsOnly = RegExp(r'^\d+$');
+    if (!digitsOnly.hasMatch(value)) return false;
+    return value.length >= 9 && value.length <= 10;
+  }
+
+  String? _validateDateRange() {
+    if (_startDate == null) return 'Please select a start date';
+    if (_endDate == null) return 'Please select an end date';
+    if (!_endDate!.isAfter(_startDate!)) {
+      return 'End date must be after start date';
+    }
+    return null;
+  }
+
   Future<void> _pickEndDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -50,7 +86,15 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 5),
     );
-    if (picked != null) setState(() => _endDate = picked);
+    if (picked != null) {
+      setState(() {
+        _endDate = picked;
+        _endDateCtrl.text = _formatDate(picked);
+      });
+      if (_autoValidateMode != AutovalidateMode.disabled) {
+        _formKey.currentState?.validate();
+      }
+    }
   }
 
   @override
@@ -62,13 +106,29 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _mobileCtrl.dispose();
+    _startDateCtrl.dispose();
+    _endDateCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickTenantImage() async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1024,
+    );
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    if (!mounted) return;
+    setState(() => _tenantImageBytes = bytes);
   }
 
   Future<void> _loadDropdowns() async {
     final repo = context.read<TenantsCubit>().repository;
     final units = await repo.fetchUnits(partnerId: widget.partnerId);
-    final tenants = await repo.fetchTenantPartners();
+    final tenants = await repo.fetchTenantPartnersForLandlord(
+      partnerId: widget.partnerId,
+    );
     if (!mounted) return;
     setState(() {
       _units = units;
@@ -85,38 +145,29 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 3),
     );
-    if (picked != null) setState(() => _startDate = picked);
+    if (picked != null) {
+      setState(() {
+        _startDate = picked;
+        _startDateCtrl.text = _formatDate(picked);
+        if (_endDate != null && !_endDate!.isAfter(picked)) {
+          _endDate = null;
+          _endDateCtrl.text = '';
+        }
+      });
+      if (_autoValidateMode != AutovalidateMode.disabled) {
+        _formKey.currentState?.validate();
+      }
+    }
   }
 
   Future<void> _submit() async {
-    if (_selectedUnitId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a unit')));
-      return;
-    }
-    if (_startDate == null || _endDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please pick start and end dates')),
-      );
-      return;
-    }
-    if (!_endDate!.isAfter(_startDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('End date must be after start date')),
-      );
+    final valid = _formKey.currentState?.validate() ?? false;
+    if (!valid) {
+      setState(() => _autoValidateMode = AutovalidateMode.onUserInteraction);
       return;
     }
     bool ok = false;
     if (_createNewTenant) {
-      // Minimal validation: need at least a first or last name
-      if (_firstNameCtrl.text.trim().isEmpty &&
-          _lastNameCtrl.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter tenant name')),
-        );
-        return;
-      }
       ok = await context.read<TenantsCubit>().createTenantAndContract(
         partnerId: widget.partnerId,
         unitId: _selectedUnitId!,
@@ -136,15 +187,9 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
         mobile: _mobileCtrl.text.trim().isEmpty
             ? null
             : _mobileCtrl.text.trim(),
+        imageBytes: _tenantImageBytes,
       );
     } else {
-      if (_selectedTenantPartnerId == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Please select a tenant')));
-        return;
-      }
-
       ok = await context.read<TenantsCubit>().addTenant(
         partnerId: widget.partnerId,
         unitId: _selectedUnitId!,
@@ -194,227 +239,317 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Add Tenant',
-                              style: t.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: _autoValidateMode,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Add Tenant',
+                                style: t.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: widget.onClose,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        if (_loadingLists)
-                          Builder(
-                            builder: (context) {
-                              return const SizedBox.shrink();
-                            },
-                          )
-                        else ...[
-                          DropdownButtonFormField<int>(
-                            value: _selectedUnitId,
-                            onChanged: (v) =>
-                                setState(() => _selectedUnitId = v),
-                            items: _units
-                                .map(
-                                  (u) => DropdownMenuItem<int>(
-                                    value: u['id'] as int,
-                                    child: Text(u['name'] as String),
-                                  ),
-                                )
-                                .toList(),
-                            decoration: InputDecoration(
-                              labelText: 'Unit',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: widget.onClose,
                               ),
-                            ),
+                            ],
                           ),
                           const SizedBox(height: 12),
-                          CheckboxListTile(
-                            value: _createNewTenant,
-                            onChanged: (v) =>
-                                setState(() => _createNewTenant = v ?? false),
-                            title: const Text('Create new tenant'),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          if (!_createNewTenant) ...[
+                          if (_loadingLists)
+                            Builder(
+                              builder: (context) {
+                                return const SizedBox.shrink();
+                              },
+                            )
+                          else ...[
                             DropdownButtonFormField<int>(
-                              value: _selectedTenantPartnerId,
+                              value: _selectedUnitId,
                               onChanged: (v) =>
-                                  setState(() => _selectedTenantPartnerId = v),
-                              items: _tenantPartners
+                                  setState(() => _selectedUnitId = v),
+                              validator: (v) {
+                                if (v == null) return 'Please select a unit';
+                                return null;
+                              },
+                              items: _units
                                   .map(
-                                    (p) => DropdownMenuItem<int>(
-                                      value: p['id'] as int,
-                                      child: Text(p['name'] as String),
+                                    (u) => DropdownMenuItem<int>(
+                                      value: u['id'] as int,
+                                      child: Text(u['name'] as String),
                                     ),
                                   )
                                   .toList(),
                               decoration: InputDecoration(
-                                labelText: 'Tenant',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ] else ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _firstNameCtrl,
-                                    decoration: InputDecoration(
-                                      labelText: 'First name',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _lastNameCtrl,
-                                    decoration: InputDecoration(
-                                      labelText: 'Last name',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: _emailCtrl,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                labelText: 'Email (optional)',
+                                labelText: 'Unit',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _phoneCtrl,
-                                    keyboardType: TextInputType.phone,
-                                    decoration: InputDecoration(
-                                      labelText: 'Phone (optional)',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _mobileCtrl,
-                                    keyboardType: TextInputType.phone,
-                                    decoration: InputDecoration(
-                                      labelText: 'Mobile (optional)',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            CheckboxListTile(
+                              value: _createNewTenant,
+                              onChanged: (v) {
+                                setState(() {
+                                  _createNewTenant = v ?? false;
+                                  _selectedTenantPartnerId = null;
+                                });
+                                if (_autoValidateMode !=
+                                    AutovalidateMode.disabled) {
+                                  _formKey.currentState?.validate();
+                                }
+                              },
+                              title: const Text('Create new tenant'),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
                             ),
-                          ],
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: _nameCtrl,
-                            decoration: InputDecoration(
-                              labelText: 'Contract reference (optional)',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GradientOutlinedButton(
-                                  onPressed: _pickStartDate,
-                                  minHeight: 48,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.event),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _startDate == null
-                                            ? 'Start Date (optional)'
-                                            : _startDate!
-                                                  .toIso8601String()
-                                                  .split('T')
-                                                  .first,
+                            if (!_createNewTenant) ...[
+                              DropdownButtonFormField<int>(
+                                value: _selectedTenantPartnerId,
+                                onChanged: (v) => setState(
+                                  () => _selectedTenantPartnerId = v,
+                                ),
+                                validator: (v) {
+                                  if (_createNewTenant) return null;
+                                  if (v == null)
+                                    return 'Please select a tenant';
+                                  return null;
+                                },
+                                items: _tenantPartners
+                                    .map(
+                                      (p) => DropdownMenuItem<int>(
+                                        value: p['id'] as int,
+                                        child: Text(p['name'] as String),
                                       ),
-                                    ],
+                                    )
+                                    .toList(),
+                                decoration: InputDecoration(
+                                  labelText: 'Tenant',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: GradientOutlinedButton(
-                                  onPressed: _pickEndDate,
-                                  minHeight: 48,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.event_available),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _endDate == null
-                                            ? 'End Date (optional)'
-                                            : _endDate!
-                                                  .toIso8601String()
-                                                  .split('T')
-                                                  .first,
+                            ] else ...[
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: _pickTenantImage,
+                                    borderRadius: BorderRadius.circular(48),
+                                    child: Container(
+                                      width: 72,
+                                      height: 72,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(48),
                                       ),
-                                    ],
+                                      clipBehavior: Clip.antiAlias,
+                                      child: _tenantImageBytes == null
+                                          ? const Icon(Icons.person)
+                                          : Image.memory(
+                                              _tenantImageBytes!,
+                                              fit: BoxFit.cover,
+                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _pickTenantImage,
+                                      icon: const Icon(Icons.photo_library),
+                                      label: Text(
+                                        _tenantImageBytes == null
+                                            ? 'Add tenant photo'
+                                            : 'Change photo',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _firstNameCtrl,
+                                      validator: (v) {
+                                        if (!_createNewTenant) return null;
+                                        if (_firstNameCtrl.text
+                                                .trim()
+                                                .isEmpty &&
+                                            _lastNameCtrl.text.trim().isEmpty) {
+                                          return 'Enter first or last name';
+                                        }
+                                        return null;
+                                      },
+                                      decoration: InputDecoration(
+                                        labelText: 'First name',
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _lastNameCtrl,
+                                      validator: (v) {
+                                        if (!_createNewTenant) return null;
+                                        if (_firstNameCtrl.text
+                                                .trim()
+                                                .isEmpty &&
+                                            _lastNameCtrl.text.trim().isEmpty) {
+                                          return 'Enter first or last name';
+                                        }
+                                        return null;
+                                      },
+                                      decoration: InputDecoration(
+                                        labelText: 'Last name',
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _emailCtrl,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (v) {
+                                  if (!_createNewTenant) return null;
+                                  if (v == null) return null;
+                                  return _isValidEmail(v)
+                                      ? null
+                                      : 'Enter a valid email';
+                                },
+                                decoration: InputDecoration(
+                                  labelText: 'Email (optional)',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _phoneCtrl,
+                                      keyboardType: TextInputType.phone,
+                                      validator: (v) {
+                                        if (!_createNewTenant) return null;
+                                        if (v == null) return null;
+                                        return _isValidPhoneOptional(v)
+                                            ? null
+                                            : 'Phone must be 9-10 digits';
+                                      },
+                                      decoration: InputDecoration(
+                                        labelText: 'Phone (optional)',
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _mobileCtrl,
+                                      keyboardType: TextInputType.phone,
+                                      validator: (v) {
+                                        if (!_createNewTenant) return null;
+                                        if (v == null) return null;
+                                        return _isValidPhoneOptional(v)
+                                            ? null
+                                            : 'Mobile must be 9-10 digits';
+                                      },
+                                      decoration: InputDecoration(
+                                        labelText: 'Mobile (optional)',
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: GradientButton(
-                              onPressed: _submit,
-                              minHeight: 48,
-                              borderRadius: BorderRadius.circular(24),
-                              child: Text(
-                                _createNewTenant
-                                    ? 'Create Tenant & Contract'
-                                    : 'Add Tenant',
+                            const SizedBox(height: 12),
+
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _startDateCtrl,
+                                    readOnly: true,
+                                    onTap: _pickStartDate,
+                                    validator: (v) => _validateDateRange(),
+                                    decoration: InputDecoration(
+                                      labelText: 'Start Date',
+                                      suffixIcon: const Icon(Icons.event),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _endDateCtrl,
+                                    readOnly: true,
+                                    onTap: _pickEndDate,
+                                    validator: (v) => _validateDateRange(),
+                                    decoration: InputDecoration(
+                                      labelText: 'End Date',
+                                      suffixIcon: const Icon(
+                                        Icons.event_available,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: GradientButton(
+                                onPressed: _submit,
+                                minHeight: 48,
+                                borderRadius: BorderRadius.circular(24),
+                                child: Text(
+                                  _createNewTenant
+                                      ? 'Create Tenant & Contract'
+                                      : 'Add Tenant',
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),

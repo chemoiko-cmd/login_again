@@ -975,6 +975,89 @@ class LandlordRepository {
     }
   }
 
+  /// List tenant partners scoped to a landlord: tenants that appear in contracts
+  /// on properties owned by the given landlord partner.
+  Future<List<Map<String, dynamic>>> fetchTenantPartnersForLandlord({
+    required int partnerId,
+  }) async {
+    try {
+      final contractsResp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.contract',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['property_id.owner_id', '=', partnerId],
+                ['state', '=', 'active'],
+              ],
+              'fields': ['tenant_id'],
+              'limit': 500,
+              'order': 'id desc',
+            },
+          },
+          'id': 1,
+        },
+      );
+
+      final rawContracts = (contractsResp.data['result'] as List?) ?? [];
+      final tenantIds = <int>{};
+      for (final e in rawContracts) {
+        final m = Map<String, dynamic>.from(e as Map);
+        final tenantTuple = m['tenant_id'] as List?;
+        final id = (tenantTuple != null && tenantTuple.isNotEmpty)
+            ? (tenantTuple.first as int?)
+            : null;
+        if (id != null && id > 0) tenantIds.add(id);
+      }
+      if (tenantIds.isEmpty) return const [];
+
+      final partnersResp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'res.partner',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['id', 'in', tenantIds.toList()],
+                ['is_tenant', '=', true],
+              ],
+              'fields': ['name', 'tenant_code'],
+              'limit': 500,
+              'order': 'name',
+            },
+          },
+          'id': 1,
+        },
+      );
+
+      final list = (partnersResp.data['result'] as List?) ?? [];
+      return list.map<Map<String, dynamic>>((e) {
+        final m = Map<String, dynamic>.from(e as Map);
+        final code = (m['tenant_code'] as String?)?.trim();
+        final name = (m['name'] as String?) ?? 'Tenant';
+        return {
+          'id': (m['id'] as num).toInt(),
+          'name': code != null && code.isNotEmpty ? '[$code] $name' : name,
+        };
+      }).toList();
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
+      return [];
+    }
+  }
+
   /// Inspect res.partner model fields to include optional values safely.
   Future<Map<String, dynamic>> fetchPartnerFields() async {
     try {
@@ -1012,6 +1095,7 @@ class LandlordRepository {
     String? email,
     String? phone,
     String? mobile,
+    Uint8List? imageBytes,
   }) async {
     try {
       final fields = await fetchPartnerFields();
@@ -1028,6 +1112,8 @@ class LandlordRepository {
         if (email != null && email.isNotEmpty) 'email': email,
         if (phone != null && phone.isNotEmpty) 'phone': phone,
         if (mobile != null && mobile.isNotEmpty) 'mobile': mobile,
+        if (imageBytes != null && imageBytes.isNotEmpty)
+          'image_1920': base64Encode(imageBytes),
         // Many DBs mark customers by customer_rank >= 1
         'customer_rank': 1,
         // Ensure partner is flagged as tenant for rental module hooks

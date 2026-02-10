@@ -24,9 +24,78 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _canSubmit = false;
+
+  bool _isValidEmail(String input) {
+    final email = input.trim();
+    final reg = RegExp(
+      r'^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$',
+      caseSensitive: false,
+    );
+    return reg.hasMatch(email);
+  }
+
+  bool _isValidPhone(String input) {
+    final phone = input.trim();
+    final normalized = phone.startsWith('+') ? phone.substring(1) : phone;
+    if (!RegExp(r'^[0-9]+$').hasMatch(normalized)) return false;
+    return normalized.length >= 9 && normalized.length <= 10;
+  }
+
+  String? _passwordValidationError(String password) {
+    if (password.trim().isEmpty) return 'Please enter a password';
+    if (password.length < 8) return 'Password must be at least 8 characters';
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return 'Password must include an uppercase letter';
+    }
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      return 'Password must include a lowercase letter';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return 'Password must include a number';
+    }
+    if (!RegExp(r'[^A-Za-z0-9]').hasMatch(password)) {
+      return 'Password must include a symbol';
+    }
+    return null;
+  }
+
+  void _recomputeCanSubmit() {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final password = _passwordController.text;
+    final confirm = _confirmPasswordController.text;
+
+    final next =
+        name.isNotEmpty &&
+        _isValidEmail(email) &&
+        _isValidPhone(phone) &&
+        _passwordValidationError(password) == null &&
+        confirm.isNotEmpty &&
+        confirm == password;
+
+    if (next == _canSubmit) return;
+    setState(() => _canSubmit = next);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_recomputeCanSubmit);
+    _emailController.addListener(_recomputeCanSubmit);
+    _phoneController.addListener(_recomputeCanSubmit);
+    _passwordController.addListener(_recomputeCanSubmit);
+    _confirmPasswordController.addListener(_recomputeCanSubmit);
+  }
 
   @override
   void dispose() {
+    _nameController.removeListener(_recomputeCanSubmit);
+    _emailController.removeListener(_recomputeCanSubmit);
+    _phoneController.removeListener(_recomputeCanSubmit);
+    _passwordController.removeListener(_recomputeCanSubmit);
+    _confirmPasswordController.removeListener(_recomputeCanSubmit);
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
@@ -168,179 +237,184 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                               constraints: const BoxConstraints(maxWidth: 480),
                               child: Form(
                                 key: _formKey,
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: Image.asset(
-                                      'assets/app_icon.png',
-                                      width: 72,
-                                      height: 72,
-                                      fit: BoxFit.contain,
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: Image.asset(
+                                        'assets/app_icon.png',
+                                        width: 72,
+                                        height: 72,
+                                        fit: BoxFit.contain,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Create account',
-                                    textAlign: TextAlign.center,
-                                    style: theme.textTheme.headlineSmall,
-                                  ),
-                                  const SizedBox(height: 24),
-
-                                  _fieldLabel(context, text: 'Full name'),
-                                  TextFormField(
-                                    controller: _nameController,
-                                    decoration: _inputDecoration(
-                                      hint: 'Enter your full name',
-                                      icon: Icons.person,
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Create account',
+                                      textAlign: TextAlign.center,
+                                      style: theme.textTheme.headlineSmall,
                                     ),
-                                    enabled: !isLoading,
-                                    validator: (value) {
-                                      if (value == null ||
-                                          value.trim().isEmpty) {
-                                        return 'Please enter your name';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
+                                    const SizedBox(height: 24),
 
-                                  _fieldLabel(context, text: 'Email'),
-                                  TextFormField(
-                                    controller: _emailController,
-                                    decoration: _inputDecoration(
-                                      hint: 'example@email.com',
-                                      icon: Icons.email,
+                                    _fieldLabel(context, text: 'Full name'),
+                                    TextFormField(
+                                      controller: _nameController,
+                                      decoration: _inputDecoration(
+                                        hint: 'Enter your full name',
+                                        icon: Icons.person,
+                                      ),
+                                      enabled: !isLoading,
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
+                                          return 'Please enter your name';
+                                        }
+                                        return null;
+                                      },
                                     ),
-                                    enabled: !isLoading,
-                                    keyboardType: TextInputType.emailAddress,
-                                    validator: (value) {
-                                      if (value == null ||
-                                          value.trim().isEmpty) {
-                                        return 'Please enter your email';
-                                      }
-                                      if (!value.contains('@')) {
-                                        return 'Please enter a valid email';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
+                                    const SizedBox(height: 16),
 
-                                  _fieldLabel(context, text: 'Phone number'),
-                                  TextFormField(
-                                    controller: _phoneController,
-                                    decoration: _inputDecoration(
-                                      hint: '0700000000',
-                                      icon: Icons.phone,
+                                    _fieldLabel(context, text: 'Email'),
+                                    TextFormField(
+                                      controller: _emailController,
+                                      decoration: _inputDecoration(
+                                        hint: 'example@email.com',
+                                        icon: Icons.email,
+                                      ),
+                                      enabled: !isLoading,
+                                      keyboardType: TextInputType.emailAddress,
+                                      validator: (value) {
+                                        final v = value?.trim() ?? '';
+                                        if (v.isEmpty) {
+                                          return 'Please enter your email';
+                                        }
+                                        if (!_isValidEmail(v)) {
+                                          return 'Please enter a valid email';
+                                        }
+                                        return null;
+                                      },
                                     ),
-                                    enabled: !isLoading,
-                                    keyboardType: TextInputType.phone,
-                                    validator: (value) {
-                                      if (value == null ||
-                                          value.trim().isEmpty) {
-                                        return 'Please enter your phone number';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
+                                    const SizedBox(height: 16),
 
-                                  _fieldLabel(context, text: 'Password'),
-                                  TextFormField(
-                                    controller: _passwordController,
-                                    decoration:
-                                        _inputDecoration(
-                                          hint: 'Enter password',
-                                          icon: Icons.lock,
-                                        ).copyWith(
-                                          suffixIcon: IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                _obscurePassword =
-                                                    !_obscurePassword;
-                                              });
-                                            },
-                                            icon: Icon(
-                                              _obscurePassword
-                                                  ? Icons.visibility
-                                                  : Icons.visibility_off,
+                                    _fieldLabel(context, text: 'Phone number'),
+                                    TextFormField(
+                                      controller: _phoneController,
+                                      decoration: _inputDecoration(
+                                        hint: '0700000000',
+                                        icon: Icons.phone,
+                                      ),
+                                      enabled: !isLoading,
+                                      keyboardType: TextInputType.phone,
+                                      validator: (value) {
+                                        final v = value?.trim() ?? '';
+                                        if (v.isEmpty) {
+                                          return 'Please enter your phone number';
+                                        }
+                                        if (!_isValidPhone(v)) {
+                                          return 'Please enter a valid phone number';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    _fieldLabel(context, text: 'Password'),
+                                    TextFormField(
+                                      controller: _passwordController,
+                                      decoration:
+                                          _inputDecoration(
+                                            hint: 'Enter password',
+                                            icon: Icons.lock,
+                                          ).copyWith(
+                                            suffixIcon: IconButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  _obscurePassword =
+                                                      !_obscurePassword;
+                                                });
+                                              },
+                                              icon: Icon(
+                                                _obscurePassword
+                                                    ? Icons.visibility
+                                                    : Icons.visibility_off,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                    enabled: !isLoading,
-                                    obscureText: _obscurePassword,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter a password';
-                                      }
-                                      if (value.length < 6) {
-                                        return 'Password must be at least 6 characters';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
+                                      enabled: !isLoading,
+                                      obscureText: _obscurePassword,
+                                      validator: (value) {
+                                        return _passwordValidationError(
+                                          value ?? '',
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
 
-                                  _fieldLabel(
-                                    context,
-                                    text: 'Confirm password',
-                                  ),
-                                  TextFormField(
-                                    controller: _confirmPasswordController,
-                                    decoration:
-                                        _inputDecoration(
-                                          hint: 'Re-enter password',
-                                          icon: Icons.lock_outline,
-                                        ).copyWith(
-                                          suffixIcon: IconButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                _obscureConfirmPassword =
-                                                    !_obscureConfirmPassword;
-                                              });
-                                            },
-                                            icon: Icon(
-                                              _obscureConfirmPassword
-                                                  ? Icons.visibility
-                                                  : Icons.visibility_off,
+                                    _fieldLabel(
+                                      context,
+                                      text: 'Confirm password',
+                                    ),
+                                    TextFormField(
+                                      controller: _confirmPasswordController,
+                                      decoration:
+                                          _inputDecoration(
+                                            hint: 'Re-enter password',
+                                            icon: Icons.lock_outline,
+                                          ).copyWith(
+                                            suffixIcon: IconButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  _obscureConfirmPassword =
+                                                      !_obscureConfirmPassword;
+                                                });
+                                              },
+                                              icon: Icon(
+                                                _obscureConfirmPassword
+                                                    ? Icons.visibility
+                                                    : Icons.visibility_off,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                    enabled: !isLoading,
-                                    obscureText: _obscureConfirmPassword,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please confirm your password';
-                                      }
-                                      if (value != _passwordController.text) {
-                                        return 'Passwords do not match';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
-                                  FilledButton(
-                                    onPressed: isLoading ? null : _submit,
-                                    style: FilledButton.styleFrom(
-                                      padding: const EdgeInsets.all(16),
+                                      enabled: !isLoading,
+                                      obscureText: _obscureConfirmPassword,
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
+                                          return 'Please confirm your password';
+                                        }
+                                        if (value != _passwordController.text) {
+                                          return 'Passwords do not match';
+                                        }
+                                        return null;
+                                      },
                                     ),
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : const Text('Register'),
-                                  ),
-                                ],
+                                    const SizedBox(height: 16),
+                                    FilledButton(
+                                      onPressed: (isLoading || !_canSubmit)
+                                          ? null
+                                          : _submit,
+                                      style: FilledButton.styleFrom(
+                                        padding: const EdgeInsets.all(16),
+                                      ),
+                                      child: isLoading
+                                          ? const SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Text('Register'),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
                         ),
                       ),
                     ),

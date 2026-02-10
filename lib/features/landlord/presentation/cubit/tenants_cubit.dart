@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:typed_data';
 import '../../data/repositories/landlord_repository.dart';
 import 'tenants_state.dart';
 
@@ -43,6 +44,7 @@ class TenantsCubit extends Cubit<TenantsState> {
     String? email,
     String? phone,
     String? mobile,
+    Uint8List? imageBytes,
   }) async {
     emit(TenantsLoading());
     final newPartnerId = await repository.createPartner(
@@ -51,6 +53,7 @@ class TenantsCubit extends Cubit<TenantsState> {
       email: email,
       phone: phone,
       mobile: mobile,
+      imageBytes: imageBytes,
     );
     if (newPartnerId == null) {
       emit(const TenantsError('Failed to create tenant'));
