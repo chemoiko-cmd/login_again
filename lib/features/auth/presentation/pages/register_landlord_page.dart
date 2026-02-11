@@ -25,6 +25,7 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _canSubmit = false;
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
 
   bool _isValidEmail(String input) {
     final email = input.trim();
@@ -105,7 +106,14 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
   }
 
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+    final form = _formKey.currentState;
+    if (form == null) return;
+
+    if (_autoValidateMode == AutovalidateMode.disabled) {
+      setState(() => _autoValidateMode = AutovalidateMode.onUserInteraction);
+    }
+
+    if (!form.validate()) return;
 
     context.read<AuthCubit>().registerLandlord(
       database: widget.database,
@@ -237,8 +245,7 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                               constraints: const BoxConstraints(maxWidth: 480),
                               child: Form(
                                 key: _formKey,
-                                autovalidateMode:
-                                    AutovalidateMode.onUserInteraction,
+                                autovalidateMode: _autoValidateMode,
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -394,9 +401,7 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                                     ),
                                     const SizedBox(height: 16),
                                     FilledButton(
-                                      onPressed: (isLoading || !_canSubmit)
-                                          ? null
-                                          : _submit,
+                                      onPressed: isLoading ? null : _submit,
                                       style: FilledButton.styleFrom(
                                         padding: const EdgeInsets.all(16),
                                       ),

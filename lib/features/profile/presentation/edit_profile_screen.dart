@@ -214,6 +214,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _emailCtrl,
+                  readOnly: true,
                   enabled: !_saving,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
