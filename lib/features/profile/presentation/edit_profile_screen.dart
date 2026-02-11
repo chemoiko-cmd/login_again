@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
+import 'package:login_again/core/storage/auth_local_storage.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/landlord/data/models/partner_profile.dart';
@@ -115,6 +116,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
 
       if (ok) {
+        try {
+          if (_pickedAvatarBytes != null && _pickedAvatarBytes!.isNotEmpty) {
+            await AuthLocalStorage().savePartnerAvatarBase64(
+              partnerId: partnerId,
+              base64: base64Encode(_pickedAvatarBytes!),
+            );
+          }
+        } catch (_) {}
         loading.Widgets.hideLoader(context);
         context.pop(true);
         return;

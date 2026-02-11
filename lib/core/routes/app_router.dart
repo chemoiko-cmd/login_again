@@ -11,6 +11,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
 import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
@@ -141,27 +142,34 @@ class _AppBarAvatar extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          FutureBuilder<Uint8List?>(
-            future: _loadAvatarBytes(context, partnerId),
-            builder: (context, snap) {
-              final bytes = snap.data;
+          StreamBuilder(
+            stream: Hive.box<dynamic>(
+              AuthLocalStorage.boxName,
+            ).watch(key: AuthLocalStorage.avatarCacheKey(partnerId)),
+            builder: (context, _) {
+              return FutureBuilder<Uint8List?>(
+                future: _loadAvatarBytes(context, partnerId),
+                builder: (context, snap) {
+                  final bytes = snap.data;
 
-              return CircleAvatar(
-                radius: 18,
-                backgroundColor: scheme.primary.withValues(alpha: 0.12),
-                backgroundImage: (bytes != null && bytes.isNotEmpty)
-                    ? MemoryImage(bytes)
-                    : null,
-                child: (bytes != null && bytes.isNotEmpty)
-                    ? null
-                    : Text(
-                        _initials(userName),
-                        style: TextStyle(
-                          color: scheme.primary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
+                  return CircleAvatar(
+                    radius: 18,
+                    backgroundColor: scheme.primary.withValues(alpha: 0.12),
+                    backgroundImage: (bytes != null && bytes.isNotEmpty)
+                        ? MemoryImage(bytes)
+                        : null,
+                    child: (bytes != null && bytes.isNotEmpty)
+                        ? null
+                        : Text(
+                            _initials(userName),
+                            style: TextStyle(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
+                  );
+                },
               );
             },
           ),

@@ -8,6 +8,8 @@ class AuthLocalStorage {
   static const String _kUserJson = 'user_json';
   static const String _kAvatarPrefix = 'avatar_b64_partner_';
 
+  static String avatarCacheKey(int partnerId) => '$_kAvatarPrefix$partnerId';
+
   Box<dynamic> get _box => Hive.box<dynamic>(boxName);
 
   Future<void> saveSession({required String sessionId}) async {
@@ -48,18 +50,18 @@ class AuthLocalStorage {
     required String base64,
   }) async {
     if (partnerId <= 0 || base64.isEmpty) return;
-    await _box.put('$_kAvatarPrefix$partnerId', base64);
+    await _box.put(avatarCacheKey(partnerId), base64);
   }
 
   Future<String?> getPartnerAvatarBase64(int partnerId) async {
     if (partnerId <= 0) return null;
-    final v = _box.get('$_kAvatarPrefix$partnerId');
+    final v = _box.get(avatarCacheKey(partnerId));
     return v is String && v.isNotEmpty ? v : null;
   }
 
   Future<void> clearPartnerAvatar(int partnerId) async {
     if (partnerId <= 0) return;
-    await _box.delete('$_kAvatarPrefix$partnerId');
+    await _box.delete(avatarCacheKey(partnerId));
   }
 
   Future<void> clearAll() async {
