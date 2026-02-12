@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
@@ -115,35 +116,15 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
         return;
       }
 
-      final login = (res['login'] ?? '').toString();
-      final generatedPassword = (res['password'] ?? '').toString();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Maintainer added')));
 
-      await showDialog<void>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Maintainer Created'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Login: $login'),
-                const SizedBox(height: 8),
-                Text('Password: $generatedPassword'),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-
+      await Future.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;
-      Navigator.of(context).pop();
+      if (context.canPop()) {
+        context.pop();
+      }
     } catch (e) {
       if (!mounted) return;
       loading.Widgets.hideLoader(context);
@@ -162,7 +143,7 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
     final t = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
