@@ -441,7 +441,7 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                                       : 'Enter a valid email';
                                 },
                                 decoration: InputDecoration(
-                                  labelText: 'Email (optional)',
+                                  labelText: 'Email ',
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -462,7 +462,7 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                                             : 'Phone must be 9-10 digits';
                                       },
                                       decoration: InputDecoration(
-                                        labelText: 'Phone (optional)',
+                                        labelText: 'Phone ',
                                         border: OutlineInputBorder(
                                           borderRadius: BorderRadius.circular(
                                             12,

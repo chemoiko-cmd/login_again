@@ -20,6 +20,7 @@ import 'package:login_again/features/profile/data/profile_repository.dart';
 import 'package:login_again/features/landlord/data/models/partner_profile.dart';
 import 'package:login_again/features/landlord/presentation/landlord_maintenance_screen.dart';
 import 'package:login_again/features/landlord/presentation/inspection_screen.dart';
+import 'package:login_again/features/landlord/presentation/add_maintainer_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenant_profile_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenants_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_properties_screen.dart';
@@ -56,6 +57,8 @@ String _shellTitleForLocation(BuildContext context, String location) {
       return 'Tenants';
     case '/landlord-maintenance':
       return 'Maintenance';
+    case '/landlord-maintainers/add':
+      return 'Add Maintainer';
     case '/inspections':
       return 'Inspections';
     case '/maintenance':
@@ -331,6 +334,11 @@ class AppRouter {
           GoRoute(
             path: '/landlord-maintenance',
             builder: (context, state) => const LandlordMaintenanceScreen(),
+          ),
+
+          GoRoute(
+            path: '/landlord-maintainers/add',
+            builder: (context, state) => const AddMaintainerScreen(),
           ),
 
           GoRoute(

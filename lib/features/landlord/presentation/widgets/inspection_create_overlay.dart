@@ -59,7 +59,9 @@ class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
   Future<void> _loadDropdowns() async {
     final repo = context.read<InspectionsCubit>().repository;
     final units = await repo.fetchUnits(partnerId: widget.partnerId);
-    final inspectorPartners = await repo.fetchInspectorPartners();
+    final inspectorPartners = await repo.fetchInspectorPartners(
+      landlordPartnerId: widget.partnerId,
+    );
     if (!mounted) return;
     setState(() {
       _units = units;

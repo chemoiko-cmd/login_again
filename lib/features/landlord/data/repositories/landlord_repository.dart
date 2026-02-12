@@ -49,6 +49,58 @@ class LandlordRepository {
     }
   }
 
+  Future<Map<String, dynamic>?> createMaintainer({
+    required String name,
+    String? email,
+    String? phone,
+    String? street,
+    String? imageBase64,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '/api/mobile/landlord/create_maintainer',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'name': name,
+            if (email != null) 'email': email,
+            if (phone != null) 'phone': phone,
+            if (street != null) 'street': street,
+            if (imageBase64 != null) 'image_base64': imageBase64,
+          },
+        },
+      );
+
+      if (response.statusCode != 200) {
+        return null;
+      }
+
+      final rpcResult = response.data['result'];
+      if (rpcResult is! Map) {
+        return null;
+      }
+
+      final ok = rpcResult['success'] == true;
+      if (!ok) {
+        final msg = (rpcResult['error'] ?? 'Failed to create maintainer')
+            .toString();
+        throw Exception(msg);
+      }
+
+      final result = rpcResult['result'];
+      if (result is Map) {
+        return Map<String, dynamic>.from(result);
+      }
+      return null;
+    } on DioException catch (e) {
+      final msg = e.message ?? _extractOdooErrorMessage(e.response?.data);
+      throw Exception(msg);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   String _extractOdooErrorMessage(dynamic body) {
     try {
       if (body is Map) {
@@ -376,7 +428,9 @@ class LandlordRepository {
   }
 
   /// Fetch maintenance partners (for rental.maintenance.task.assigned_to)
-  Future<List<Map<String, dynamic>>> fetchMaintenancePartners() async {
+  Future<List<Map<String, dynamic>>> fetchMaintenancePartners({
+    required int landlordPartnerId,
+  }) async {
     try {
       // Find group id by name (Rental Maintenance Worker)
       final groupsResp = await apiClient.post(
@@ -421,6 +475,7 @@ class LandlordRepository {
                   'in',
                   [groupId],
                 ],
+                ['maintenance_landlord_id', '=', landlordPartnerId],
               ],
               'fields': ['name'],
               'limit': 200,
@@ -782,7 +837,9 @@ class LandlordRepository {
   }
 
   /// Fetch maintenance partners (labels) with their linked user IDs (for inspector_id)
-  Future<List<Map<String, dynamic>>> fetchInspectorPartners() async {
+  Future<List<Map<String, dynamic>>> fetchInspectorPartners({
+    required int landlordPartnerId,
+  }) async {
     try {
       // Find group id by name (Rental Maintenance Worker)
       final groupsResp = await apiClient.post(
@@ -826,6 +883,7 @@ class LandlordRepository {
                   'in',
                   [groupId],
                 ],
+                ['maintenance_landlord_id', '=', landlordPartnerId],
               ],
               'fields': ['name', 'user_ids'],
               'limit': 200,

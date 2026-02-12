@@ -21,6 +21,9 @@ class MaintenanceTaskCreateOverlay extends StatefulWidget {
 
 class _MaintenanceTaskCreateOverlayState
     extends State<MaintenanceTaskCreateOverlay> {
+  final _formKey = GlobalKey<FormState>();
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+
   final _titleCtrl = TextEditingController();
 
   bool _loadingLists = true;
@@ -94,7 +97,9 @@ class _MaintenanceTaskCreateOverlayState
   Future<void> _loadDropdowns() async {
     final repo = context.read<MaintenanceTasksCubit>().repository;
     final units = await repo.fetchUnits(partnerId: widget.partnerId);
-    final assignees = await repo.fetchMaintenancePartners();
+    final assignees = await repo.fetchMaintenancePartners(
+      landlordPartnerId: widget.partnerId,
+    );
 
     if (!mounted) return;
     setState(() {
@@ -105,20 +110,17 @@ class _MaintenanceTaskCreateOverlayState
   }
 
   Future<void> _submit() async {
-    final title = _titleCtrl.text.trim();
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please provide a task title')),
-      );
-      return;
+    final form = _formKey.currentState;
+    if (form == null) return;
+
+    if (_autoValidateMode == AutovalidateMode.disabled) {
+      setState(() => _autoValidateMode = AutovalidateMode.onUserInteraction);
     }
 
-    if (_selectedUnitId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a unit')));
-      return;
-    }
+    final valid = form.validate();
+    if (!valid) return;
+
+    final title = _titleCtrl.text.trim();
 
     final ok = await context.read<MaintenanceTasksCubit>().addTask(
       partnerId: widget.partnerId,
@@ -169,106 +171,125 @@ class _MaintenanceTaskCreateOverlayState
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'New Maintenance Task',
-                              style: t.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: widget.onClose,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        if (_loadingLists)
-                          Builder(
-                            builder: (context) {
-                              return const SizedBox.shrink();
-                            },
-                          )
-                        else ...[
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              "What's the issue?",
-                              style: t.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _titleCtrl,
-                            decoration: InputDecoration(
-                              hintText: 'e.g., Fix leaking tap',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline,
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: _autoValidateMode,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'New Maintenance Task',
+                                style: t.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: widget.onClose,
                               ),
-                            ),
+                            ],
                           ),
                           const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Unit',
-                              style: t.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
+                          if (_loadingLists)
+                            const SizedBox.shrink()
+                          else ...[
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "What's the issue?",
+                                style: t.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          DropdownButtonFormField<int>(
-                            value: _selectedUnitId,
-                            onChanged: (v) =>
-                                setState(() => _selectedUnitId = v),
-                            items: _units
-                                .map(
-                                  (u) => DropdownMenuItem<int>(
-                                    value: u['id'] as int,
-                                    child: Text(u['name'] as String),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: _titleCtrl,
+                              validator: (v) {
+                                final value = (v ?? '').trim();
+                                if (value.isEmpty) {
+                                  return 'Please provide a task title';
+                                }
+                                return null;
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'e.g., Fix leaking tap',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
                                   ),
-                                )
-                                .toList(),
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline,
                                 ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Unit',
+                                style: t.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            DropdownButtonFormField<int>(
+                              value: _selectedUnitId,
+                              onChanged: (v) =>
+                                  setState(() => _selectedUnitId = v),
+                              validator: (v) {
+                                if (v == null) return 'Please select a unit';
+                                return null;
+                              },
+                              items: _units
+                                  .map(
+                                    (u) => DropdownMenuItem<int>(
+                                      value: u['id'] as int,
+                                      child: Text(u['name'] as String),
+                                    ),
+                                  )
+                                  .toList(),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
@@ -283,6 +304,11 @@ class _MaintenanceTaskCreateOverlayState
                             value: _selectedAssigneePartnerId,
                             onChanged: (v) =>
                                 setState(() => _selectedAssigneePartnerId = v),
+                            validator: (v) {
+                              if (v == null)
+                                return 'Please select a maintainer';
+                              return null;
+                            },
                             items: _assignees
                                 .map(
                                   (p) => DropdownMenuItem<int>(
@@ -348,7 +374,7 @@ class _MaintenanceTaskCreateOverlayState
                             ),
                           ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),

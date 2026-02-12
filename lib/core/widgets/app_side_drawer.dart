@@ -272,6 +272,19 @@ class _AppSideDrawerState extends State<AppSideDrawer> {
                         selected: location == '/landlord-maintenance',
                         selectedTileColor: scheme.primary.withOpacity(0.08),
                       ),
+                      ListTile(
+                        leading: Icon(
+                          Icons.person_add_alt_1,
+                          color: scheme.onSurface.withOpacity(0.7),
+                        ),
+                        title: const Text('Add Maintainer'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          context.go('/landlord-maintainers/add');
+                        },
+                        selected: location == '/landlord-maintainers/add',
+                        selectedTileColor: scheme.primary.withOpacity(0.08),
+                      ),
                     ],
                   ],
                   // ListTile(

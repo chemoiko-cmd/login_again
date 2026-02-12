@@ -5,8 +5,8 @@ class ApiClient {
   final Dio dio;
   final String baseUrl;
 
-  ApiClient({this.baseUrl = 'http://192.168.100.236:8069'})
-    // http://192.168.1.7:8069 http://192.168.100.236:8069 https://rental.kolapro.com
+  ApiClient({this.baseUrl = 'https://rental.kolapro.com'})
+    // http://192.168.1.7:8069 http://192.168.100.236:8069  https://rental.kolapro.com
     : dio = Dio(
         BaseOptions(
           baseUrl: baseUrl,

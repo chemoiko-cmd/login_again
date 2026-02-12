@@ -27,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _databaseController = TextEditingController(text: 'brand');
+  final _databaseController = TextEditingController(text: 'rental');
   bool _obscurePassword = true;
 
   Future<void> _showPolicySheet({required String title}) async {
