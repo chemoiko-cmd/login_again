@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
-import 'package:login_again/core/utils/formatters.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/core/storage/auth_local_storage.dart';
@@ -24,6 +23,7 @@ import 'package:login_again/features/landlord/presentation/add_maintainer_screen
 import 'package:login_again/features/landlord/presentation/landlord_tenant_profile_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenants_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_properties_screen.dart';
+import 'package:login_again/features/landlord/presentation/landlord_maintainers_screen.dart';
 import 'package:login_again/features/maintainer/presentation/maintainer_tasks_screen.dart';
 import 'package:login_again/features/maintainer/presentation/maintainer_inspections_screen.dart';
 import 'package:login_again/features/maintainer/presentation/maintainer_dashboard_screen.dart';
@@ -55,6 +55,8 @@ String _shellTitleForLocation(BuildContext context, String location) {
       return 'Properties';
     case '/landlord-tenants':
       return 'Tenants';
+    case '/landlord-maintainers':
+      return 'Maintainers';
     case '/landlord-maintenance':
       return 'Maintenance';
     case '/landlord-maintainers/add':
@@ -325,6 +327,10 @@ class AppRouter {
           GoRoute(
             path: '/landlord-properties',
             builder: (context, state) => const LandlordPropertiesScreen(),
+          ),
+          GoRoute(
+            path: '/landlord-maintainers',
+            builder: (context, state) => const LandlordMaintainersScreen(),
           ),
           GoRoute(
             path: '/inspections',

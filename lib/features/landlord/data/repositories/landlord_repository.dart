@@ -477,7 +477,7 @@ class LandlordRepository {
                 ],
                 ['maintenance_landlord_id', '=', landlordPartnerId],
               ],
-              'fields': ['name'],
+              'fields': ['name', 'street', 'image_128'],
               'limit': 200,
               'order': 'name',
             },
@@ -489,9 +489,22 @@ class LandlordRepository {
       final partners = (partnersResp.data['result'] as List?) ?? [];
       return partners.map<Map<String, dynamic>>((e) {
         final m = Map<String, dynamic>.from(e);
+        final street = (m['street'] ?? '').toString().trim();
+        final address = street;
+        List<int>? avatarBytes;
+        final img = m['image_128'];
+        if (img is String && img.isNotEmpty) {
+          try {
+            avatarBytes = base64Decode(img);
+          } catch (_) {
+            avatarBytes = null;
+          }
+        }
         return {
           'id': m['id'] as int,
           'name': m['name'] as String? ?? 'Partner',
+          'address': address,
+          'avatarBytes': avatarBytes,
         };
       }).toList();
     } on DioException catch (e, st) {
@@ -1447,6 +1460,7 @@ class LandlordRepository {
   }
 
   /// Create a rental.contract record to link a tenant (partner) to a unit.
+  /// Uses the backend endpoint that creates and confirms in one transaction.
   Future<bool> createRentalContract({
     required int tenantPartnerId,
     required int unitId,
@@ -1459,8 +1473,6 @@ class LandlordRepository {
     String? contractType,
   }) async {
     try {
-      // Probe fields to avoid sending unknown field names
-      final fields = await fetchRentalContractFields();
       // Ensure mandatory pricing is present - prefer property defaults
       double rent = rentAmount ?? 0.0;
       double deposit = depositAmount ?? 0.0;
@@ -1477,73 +1489,49 @@ class LandlordRepository {
       }
       final unitCtx = await getUnitCompanyAndCurrency(unitId);
 
-      final vals = <String, dynamic>{
-        'tenant_id': tenantPartnerId,
-        'unit_id': unitId,
-        if (name != null && name.isNotEmpty) 'name': name,
-        // Required dates
-        'start_date': startDate,
-        'end_date': endDate,
-        // Pricing
-        'rent_amount': rent,
-        'deposit_amount': deposit,
-        'billing_cycle': (billingCycle != null && billingCycle.isNotEmpty)
-            ? billingCycle
-            : 'monthly',
-        'contract_type': (contractType != null && contractType.isNotEmpty)
-            ? contractType
-            : 'long_term',
-        if (unitCtx['company_id'] != null) 'company_id': unitCtx['company_id'],
-        if (unitCtx['currency_id'] != null)
-          'currency_id': unitCtx['currency_id'],
-      };
-
+      // Use the backend endpoint that creates and confirms in one transaction
       final resp = await apiClient.post(
-        '/web/dataset/call_kw',
+        '/rental/api/v1/contract/create_and_confirm',
         data: {
           'jsonrpc': '2.0',
           'method': 'call',
           'params': {
-            'model': 'rental.contract',
-            'method': 'create',
-            'args': [vals],
-            'kwargs': {},
+            'tenant_id': tenantPartnerId,
+            'unit_id': unitId,
+            'start_date': startDate,
+            'end_date': endDate,
+            'rent_amount': rent,
+            'deposit_amount': deposit,
+            if (name != null && name.isNotEmpty) 'name': name,
+            'billing_cycle': (billingCycle != null && billingCycle.isNotEmpty)
+                ? billingCycle
+                : 'monthly',
+            'contract_type': (contractType != null && contractType.isNotEmpty)
+                ? contractType
+                : 'long_term',
+            if (unitCtx['company_id'] != null) 'company_id': unitCtx['company_id'],
+            if (unitCtx['currency_id'] != null) 'currency_id': unitCtx['currency_id'],
           },
           'id': 1,
         },
       );
 
       final result = resp.data['result'];
-      if (result is num) {
-        final contractId = result.toInt();
-        // Try to confirm so it becomes active and visible in list
-        try {
-          await apiClient.post(
-            '/web/dataset/call_kw',
-            data: {
-              'jsonrpc': '2.0',
-              'method': 'call',
-              'params': {
-                'model': 'rental.contract',
-                'method': 'action_confirm',
-                'args': [
-                  [contractId],
-                ],
-                'kwargs': {},
-              },
-              'id': 1,
-            },
-          );
-        } catch (_) {
-          // Even if confirm fails, we still created the contract
+      if (result is Map) {
+        final success = result['success'] == true;
+        if (!success) {
+          final error = result['error'] ?? 'Unknown error';
+          print('Contract creation failed: $error');
         }
-        return true;
+        return success;
       }
       return false;
     } on DioException catch (e, st) {
+      print('DioException creating contract: ${e.message}');
       print(st.toString());
       return false;
     } catch (e, st) {
+      print('Exception creating contract: $e');
       print(st.toString());
       return false;
     }

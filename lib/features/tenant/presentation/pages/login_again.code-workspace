@@ -21,5 +21,12 @@
 	],
 	"settings": {
 		"xml.symbols.enabled": false
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			
+
+		]
 	}
 }
