@@ -6,7 +6,6 @@ import 'package:login_again/features/landlord/presentation/cubit/tenants_state.d
 import 'package:login_again/features/landlord/presentation/widgets/action_tile.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
-import 'package:login_again/features/landlord/presentation/widgets/tenant_create_overlay.dart';
 import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
 
@@ -18,7 +17,6 @@ class LandlordTenantsScreen extends StatefulWidget {
 }
 
 class _LandlordTenantsScreenState extends State<LandlordTenantsScreen> {
-  bool _isCreating = false;
   @override
   void initState() {
     super.initState();
@@ -49,7 +47,7 @@ class _LandlordTenantsScreenState extends State<LandlordTenantsScreen> {
         children: [
           BlocConsumer<TenantsCubit, TenantsState>(
             listener: (context, state) {
-              final shouldShow = state is TenantsLoading && !_isCreating;
+              final shouldShow = state is TenantsLoading;
               if (shouldShow) {
                 loading.Widgets.showLoader(context);
               } else {
@@ -57,7 +55,7 @@ class _LandlordTenantsScreenState extends State<LandlordTenantsScreen> {
               }
             },
             builder: (context, state) {
-              if (state is TenantsLoading && !_isCreating) {
+              if (state is TenantsLoading) {
                 return const SizedBox.shrink();
               }
 
@@ -102,27 +100,23 @@ class _LandlordTenantsScreenState extends State<LandlordTenantsScreen> {
               return const SizedBox.shrink();
             },
           ),
-          if (_isCreating)
-            Builder(
-              builder: (context) {
-                final authState = context.read<AuthCubit>().state;
-                final partnerId = authState is Authenticated
-                    ? authState.user.partnerId
-                    : 0;
-                return TenantCreateOverlay(
-                  partnerId: partnerId,
-                  onClose: () => setState(() => _isCreating = false),
-                );
-              },
-            ),
         ],
       ),
-      floatingActionButton: _isCreating
-          ? null
-          : GradientFloatingActionButton(
-              onPressed: () => setState(() => _isCreating = true),
-              child: const Icon(Icons.person_add_alt_1),
-            ),
+      floatingActionButton: GradientFloatingActionButton(
+        onPressed: () async {
+          final result = await context.push<bool>('/landlord-tenants/add');
+          if (result == true) {
+            final authState = context.read<AuthCubit>().state;
+            final partnerId = authState is Authenticated
+                ? authState.user.partnerId
+                : 0;
+            if (partnerId > 0) {
+              context.read<TenantsCubit>().load(partnerId: partnerId);
+            }
+          }
+        },
+        child: const Icon(Icons.person_add_alt_1),
+      ),
     );
   }
 }

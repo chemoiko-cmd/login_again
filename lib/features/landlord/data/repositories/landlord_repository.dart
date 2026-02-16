@@ -49,6 +49,51 @@ class LandlordRepository {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchUnitsByProperty({
+    required int propertyId,
+  }) async {
+    try {
+      final resp = await apiClient.post(
+        '/web/dataset/call_kw',
+        data: {
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'model': 'rental.unit',
+            'method': 'search_read',
+            'args': [],
+            'kwargs': {
+              'domain': [
+                ['property_id', '=', propertyId],
+              ],
+              'fields': ['name', 'room_count', 'size_m2', 'state'],
+              'limit': 200,
+              'order': 'name',
+            },
+          },
+          'id': 1,
+        },
+      );
+      final list = (resp.data['result'] as List?) ?? [];
+      return list.map<Map<String, dynamic>>((e) {
+        final m = Map<String, dynamic>.from(e);
+        return {
+          'id': (m['id'] as num).toInt(),
+          'name': (m['name'] ?? '').toString(),
+          'room_count': (m['room_count'] as num?)?.toInt() ?? 0,
+          'size_m2': (m['size_m2'] as num?)?.toDouble() ?? 0.0,
+          'state': (m['state'] ?? '').toString(),
+        };
+      }).toList();
+    } on DioException catch (e, st) {
+      print(st.toString());
+      return [];
+    } catch (e, st) {
+      print(st.toString());
+      return [];
+    }
+  }
+
   Future<Map<String, dynamic>?> createMaintainer({
     required String name,
     String? email,
@@ -172,6 +217,8 @@ class LandlordRepository {
     String? code,
     String? street,
     String? city,
+    double? geoLat,
+    double? geoLong,
   }) async {
     try {
       final vals = <String, dynamic>{
@@ -184,6 +231,8 @@ class LandlordRepository {
         if (code != null && code.isNotEmpty) 'code': code,
         if (street != null && street.isNotEmpty) 'street': street,
         if (city != null && city.isNotEmpty) 'city': city,
+        if (geoLat != null) 'geo_lat': geoLat,
+        if (geoLong != null) 'geo_long': geoLong,
       };
 
       final resp = await apiClient.post(
@@ -269,6 +318,7 @@ class LandlordRepository {
     required int propertyId,
     required String propertyName,
     required int totalUnits,
+    int? roomCount,
   }) async {
     if (totalUnits <= 0) return true;
 
@@ -291,6 +341,7 @@ class LandlordRepository {
           'property_id': propertyId,
           'floor_id': floorId,
           'created_from_template': true,
+          if (roomCount != null && roomCount > 0) 'room_count': roomCount,
         });
       }
 
@@ -386,7 +437,11 @@ class LandlordRepository {
                 'occupancy_rate',
                 'street',
                 'city',
-                'image_128',
+                'image_1920',
+                'default_rent_amount',
+                'default_deposit_amount',
+                'geo_lat',
+                'geo_long',
               ],
               'limit': 500,
               'order': 'name',
@@ -400,12 +455,27 @@ class LandlordRepository {
         final m = Map<String, dynamic>.from(e as Map);
 
         Uint8List? imageBytes;
-        final img = m['image_128'];
+        final img = m['image_1920'];
         if (img is String && img.trim().isNotEmpty) {
           try {
             imageBytes = base64Decode(img);
           } catch (_) {}
         }
+        // Handle geo_lat and geo_long which might be false in Odoo when not set
+        double? geoLat;
+        double? geoLong;
+
+        final latValue = m['geo_lat'];
+        final longValue = m['geo_long'];
+
+        if (latValue != null && latValue != false && latValue is num) {
+          geoLat = (latValue as num).toDouble();
+        }
+
+        if (longValue != null && longValue != false && longValue is num) {
+          geoLong = (longValue as num).toDouble();
+        }
+
         return {
           'id': (m['id'] as num).toInt(),
           'name': (m['name'] ?? '').toString(),
@@ -416,6 +486,12 @@ class LandlordRepository {
           'street': (m['street'] ?? '').toString(),
           'city': (m['city'] ?? '').toString(),
           'image_bytes': imageBytes,
+          'default_rent_amount':
+              (m['default_rent_amount'] as num?)?.toDouble() ?? 0.0,
+          'default_deposit_amount':
+              (m['default_deposit_amount'] as num?)?.toDouble() ?? 0.0,
+          'geo_lat': geoLat,
+          'geo_long': geoLong,
         };
       }).toList();
     } on DioException catch (e, st) {
@@ -1509,8 +1585,10 @@ class LandlordRepository {
             'contract_type': (contractType != null && contractType.isNotEmpty)
                 ? contractType
                 : 'long_term',
-            if (unitCtx['company_id'] != null) 'company_id': unitCtx['company_id'],
-            if (unitCtx['currency_id'] != null) 'currency_id': unitCtx['currency_id'],
+            if (unitCtx['company_id'] != null)
+              'company_id': unitCtx['company_id'],
+            if (unitCtx['currency_id'] != null)
+              'currency_id': unitCtx['currency_id'],
           },
           'id': 1,
         },

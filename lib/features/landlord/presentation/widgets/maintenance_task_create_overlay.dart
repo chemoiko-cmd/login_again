@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:login_again/features/landlord/presentation/cubit/maintenance_tasks_cubit.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
+import 'package:animated_custom_dropdown/custom_dropdown.dart';
+
+class _DropdownItem {
+  final int id;
+  final String name;
+  _DropdownItem(this.id, this.name);
+  @override
+  String toString() => name;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _DropdownItem && runtimeType == other.runtimeType && id == other.id;
+  @override
+  int get hashCode => id.hashCode;
+}
 
 class MaintenanceTaskCreateOverlay extends StatefulWidget {
   final VoidCallback onClose;
@@ -21,10 +38,7 @@ class MaintenanceTaskCreateOverlay extends StatefulWidget {
 
 class _MaintenanceTaskCreateOverlayState
     extends State<MaintenanceTaskCreateOverlay> {
-  final _formKey = GlobalKey<FormState>();
-  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
-
-  final _titleCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormBuilderState>();
 
   bool _loadingLists = true;
   List<Map<String, dynamic>> _units = const [];
@@ -90,7 +104,6 @@ class _MaintenanceTaskCreateOverlayState
   @override
   void dispose() {
     loading.Widgets.hideLoader(context);
-    _titleCtrl.dispose();
     super.dispose();
   }
 
@@ -110,17 +123,10 @@ class _MaintenanceTaskCreateOverlayState
   }
 
   Future<void> _submit() async {
-    final form = _formKey.currentState;
-    if (form == null) return;
+    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
 
-    if (_autoValidateMode == AutovalidateMode.disabled) {
-      setState(() => _autoValidateMode = AutovalidateMode.onUserInteraction);
-    }
-
-    final valid = form.validate();
-    if (!valid) return;
-
-    final title = _titleCtrl.text.trim();
+    final formData = _formKey.currentState!.value;
+    final title = (formData['title'] ?? '').toString().trim();
 
     final ok = await context.read<MaintenanceTasksCubit>().addTask(
       partnerId: widget.partnerId,
@@ -171,9 +177,8 @@ class _MaintenanceTaskCreateOverlayState
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: SingleChildScrollView(
-                    child: Form(
+                    child: FormBuilder(
                       key: _formKey,
-                      autovalidateMode: _autoValidateMode,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,15 +212,11 @@ class _MaintenanceTaskCreateOverlayState
                               ),
                             ),
                             const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _titleCtrl,
-                              validator: (v) {
-                                final value = (v ?? '').trim();
-                                if (value.isEmpty) {
-                                  return 'Please provide a task title';
-                                }
-                                return null;
-                              },
+                            FormBuilderTextField(
+                              name: 'title',
+                              validator: FormBuilderValidators.compose([
+                                FormBuilderValidators.required(),
+                              ]),
                               decoration: InputDecoration(
                                 hintText: 'e.g., Fix leaking tap',
                                 border: OutlineInputBorder(
@@ -250,43 +251,66 @@ class _MaintenanceTaskCreateOverlayState
                               ),
                             ),
                             const SizedBox(height: 6),
-                            DropdownButtonFormField<int>(
-                              value: _selectedUnitId,
-                              onChanged: (v) =>
-                                  setState(() => _selectedUnitId = v),
+                            FormField<_DropdownItem>(
+                              initialValue: _selectedUnitId != null
+                                  ? _DropdownItem(_selectedUnitId!, _units.firstWhere((u) => u['id'] == _selectedUnitId)['name'] as String)
+                                  : null,
                               validator: (v) {
                                 if (v == null) return 'Please select a unit';
                                 return null;
                               },
-                              items: _units
-                                  .map(
-                                    (u) => DropdownMenuItem<int>(
-                                      value: u['id'] as int,
-                                      child: Text(u['name'] as String),
+                              builder: (field) {
+                                final unitItems = _units.map((u) => _DropdownItem(u['id'] as int, u['name'] as String)).toList();
+                                final outlineColor = Theme.of(context).colorScheme.outline.withValues(alpha: 0.5);
+                                final fillColor = Theme.of(context).colorScheme.surfaceContainerLow;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Theme(
+                                      data: Theme.of(context).copyWith(
+                                        inputDecorationTheme: const InputDecorationTheme(
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                      ),
+                                      child: CustomDropdown<_DropdownItem>(
+                                        hintText: 'Select unit',
+                                        initialItem: field.value,
+                                        items: unitItems,
+                                        onChanged: (value) {
+                                          field.didChange(value);
+                                          if (value != null) {
+                                            setState(() => _selectedUnitId = value.id);
+                                          }
+                                        },
+                                        decoration: CustomDropdownDecoration(
+                                          closedBorder: Border.all(color: outlineColor, width: 1),
+                                          closedBorderRadius: BorderRadius.circular(12),
+                                          closedFillColor: fillColor,
+                                          closedShadow: [],
+                                        ),
+                                      ),
                                     ),
-                                  )
-                                  .toList(),
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.outline,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                ),
-                              ),
+                                    if (field.hasError)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4, left: 12),
+                                        child: Text(
+                                          field.errorText ?? '',
+                                          style: TextStyle(
+                                            color: Theme.of(context).colorScheme.error,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
                             ),
                             const SizedBox(height: 12),
                           ],
@@ -300,40 +324,66 @@ class _MaintenanceTaskCreateOverlayState
                             ),
                           ),
                           const SizedBox(height: 6),
-                          DropdownButtonFormField<int>(
-                            value: _selectedAssigneePartnerId,
-                            onChanged: (v) =>
-                                setState(() => _selectedAssigneePartnerId = v),
+                          FormField<_DropdownItem>(
+                            initialValue: _selectedAssigneePartnerId != null
+                                ? _DropdownItem(_selectedAssigneePartnerId!, _assignees.firstWhere((p) => p['id'] == _selectedAssigneePartnerId)['name'] as String)
+                                : null,
                             validator: (v) {
-                              if (v == null)
-                                return 'Please select a maintainer';
+                              if (v == null) return 'Please select a maintainer';
                               return null;
                             },
-                            items: _assignees
-                                .map(
-                                  (p) => DropdownMenuItem<int>(
-                                    value: p['id'] as int,
-                                    child: Text(p['name'] as String),
+                            builder: (field) {
+                              final assigneeItems = _assignees.map((p) => _DropdownItem(p['id'] as int, p['name'] as String)).toList();
+                              final outlineColor = Theme.of(context).colorScheme.outline.withValues(alpha: 0.5);
+                              final fillColor = Theme.of(context).colorScheme.surfaceContainerLow;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Theme(
+                                    data: Theme.of(context).copyWith(
+                                      inputDecorationTheme: const InputDecorationTheme(
+                                        border: InputBorder.none,
+                                        enabledBorder: InputBorder.none,
+                                        focusedBorder: InputBorder.none,
+                                        errorBorder: InputBorder.none,
+                                        focusedErrorBorder: InputBorder.none,
+                                        filled: true,
+                                        fillColor: Colors.transparent,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                    child: CustomDropdown<_DropdownItem>(
+                                      hintText: 'Select maintainer',
+                                      initialItem: field.value,
+                                      items: assigneeItems,
+                                      onChanged: (value) {
+                                        field.didChange(value);
+                                        if (value != null) {
+                                          setState(() => _selectedAssigneePartnerId = value.id);
+                                        }
+                                      },
+                                      decoration: CustomDropdownDecoration(
+                                        closedBorder: Border.all(color: outlineColor, width: 1),
+                                        closedBorderRadius: BorderRadius.circular(12),
+                                        closedFillColor: fillColor,
+                                        closedShadow: [],
+                                      ),
+                                    ),
                                   ),
-                                )
-                                .toList(),
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                            ),
+                                  if (field.hasError)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4, left: 12),
+                                      child: Text(
+                                        field.errorText ?? '',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.error,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           Align(

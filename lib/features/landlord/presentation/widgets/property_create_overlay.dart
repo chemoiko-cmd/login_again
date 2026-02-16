@@ -22,6 +22,8 @@ class PropertyCreateOverlay extends StatefulWidget {
 }
 
 class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
+  final _formKey = GlobalKey<FormState>();
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
   final _nameCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
   final _streetCtrl = TextEditingController();
@@ -49,44 +51,25 @@ class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
   }
 
   Future<void> _submit() async {
-    final name = _nameCtrl.text.trim();
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter property name')),
-      );
+    final form = _formKey.currentState;
+    if (form == null) return;
+    if (!form.validate()) {
+      setState(() => _autoValidateMode = AutovalidateMode.onUserInteraction);
       return;
     }
+
+    final name = _nameCtrl.text.trim();
 
     final rentRaw = _rentCtrl.text.trim();
-    final rent = double.tryParse(rentRaw);
-    if (rent == null || rent <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid rent amount')),
-      );
-      return;
-    }
+    final rent = double.tryParse(rentRaw)!;
 
     final depositRaw = _depositCtrl.text.trim();
-    final deposit = double.tryParse(depositRaw);
-    if (deposit == null || deposit < 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid deposit amount')),
-      );
-      return;
-    }
+    final deposit = double.tryParse(depositRaw)!;
 
     final totalUnitsRaw = _totalUnitsCtrl.text.trim();
     int? totalUnits;
     if (totalUnitsRaw.isNotEmpty) {
       totalUnits = int.tryParse(totalUnitsRaw);
-      if (totalUnits == null || totalUnits <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Total units must be a positive number'),
-          ),
-        );
-        return;
-      }
     }
 
     if (_submitting) return;
@@ -165,7 +148,10 @@ class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: SingleChildScrollView(
-                    child: Column(
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: _autoValidateMode,
+                      child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -185,7 +171,7 @@ class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        TextField(
+                        TextFormField(
                           controller: _nameCtrl,
                           textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
@@ -194,6 +180,13 @@ class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
+                          validator: (v) {
+                            final value = (v ?? '').trim();
+                            if (value.isEmpty) {
+                              return 'Please enter property name';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 12),
                         InkWell(
@@ -287,7 +280,7 @@ class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
                         //     ),
                         //   ),
                         // ),
-                        TextField(
+                        TextFormField(
                           controller: _streetCtrl,
                           textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
@@ -296,32 +289,98 @@ class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
+                          validator: (v) {
+                            final value = (v ?? '').trim();
+                            if (value.isEmpty) {
+                              return 'Please enter street';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 12),
-                        TextField(
+                        TextFormField(
                           controller: _cityCtrl,
-                          textInputAction: TextInputAction.done,
+                          textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
                             labelText: 'City ',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
+                          validator: (v) {
+                            final value = (v ?? '').trim();
+                            if (value.isEmpty) {
+                              return 'Please enter city';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 12),
-                        TextField(
+                        TextFormField(
                           controller: _totalUnitsCtrl,
                           keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.done,
+                          textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
                             labelText: 'Total units',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                            suffixIcon: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: _submitting
+                                      ? null
+                                      : () {
+                                          final current = int.tryParse(
+                                                  _totalUnitsCtrl.text.trim()) ??
+                                              0;
+                                          _totalUnitsCtrl.text =
+                                              (current + 1).toString();
+                                          if (_autoValidateMode !=
+                                              AutovalidateMode.disabled) {
+                                            _formKey.currentState?.validate();
+                                          }
+                                        },
+                                  child: const Icon(Icons.keyboard_arrow_up,
+                                      size: 20),
+                                ),
+                                InkWell(
+                                  onTap: _submitting
+                                      ? null
+                                      : () {
+                                          final current = int.tryParse(
+                                                  _totalUnitsCtrl.text.trim()) ??
+                                              0;
+                                          if (current > 0) {
+                                            _totalUnitsCtrl.text =
+                                                (current - 1).toString();
+                                            if (_autoValidateMode !=
+                                                AutovalidateMode.disabled) {
+                                              _formKey.currentState?.validate();
+                                            }
+                                          }
+                                        },
+                                  child: const Icon(Icons.keyboard_arrow_down,
+                                      size: 20),
+                                ),
+                              ],
+                            ),
                           ),
+                          validator: (v) {
+                            final value = (v ?? '').trim();
+                            if (value.isEmpty) {
+                              return 'Please enter total units';
+                            }
+                            final parsed = int.tryParse(value);
+                            if (parsed == null || parsed <= 0) {
+                              return 'Total units must be a positive number';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 12),
-                        TextField(
+                        TextFormField(
                           controller: _rentCtrl,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
@@ -333,9 +392,17 @@ class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
+                          validator: (v) {
+                            final value = (v ?? '').trim();
+                            final rent = double.tryParse(value);
+                            if (rent == null || rent <= 0) {
+                              return 'Please enter a valid rent amount';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 12),
-                        TextField(
+                        TextFormField(
                           controller: _depositCtrl,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
@@ -347,6 +414,14 @@ class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
+                          validator: (v) {
+                            final value = (v ?? '').trim();
+                            final deposit = double.tryParse(value);
+                            if (deposit == null || deposit < 0) {
+                              return 'Please enter a valid deposit amount';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
@@ -367,6 +442,7 @@ class _PropertyCreateOverlayState extends State<PropertyCreateOverlay> {
           ),
         ),
       ),
-    );
+      )
+    );  
   }
 }

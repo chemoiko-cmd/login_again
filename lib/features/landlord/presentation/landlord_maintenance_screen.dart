@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/landlord/presentation/cubit/maintenance_tasks_cubit.dart';
 import 'package:login_again/features/landlord/presentation/cubit/maintenance_tasks_state.dart';
 import 'package:login_again/features/landlord/presentation/widgets/action_tile.dart';
-import 'package:login_again/features/landlord/presentation/widgets/maintenance_task_create_overlay.dart';
 import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
 
@@ -18,8 +18,6 @@ class LandlordMaintenanceScreen extends StatefulWidget {
 }
 
 class _LandlordMaintenanceScreenState extends State<LandlordMaintenanceScreen> {
-  bool _isCreating = false;
-
   @override
   void initState() {
     super.initState();
@@ -55,8 +53,7 @@ class _LandlordMaintenanceScreenState extends State<LandlordMaintenanceScreen> {
         children: [
           BlocConsumer<MaintenanceTasksCubit, MaintenanceTasksState>(
             listener: (context, state) {
-              final shouldShow =
-                  state is MaintenanceTasksLoading && !_isCreating;
+              final shouldShow = state is MaintenanceTasksLoading;
               if (shouldShow) {
                 loading.Widgets.showLoader(context);
               } else {
@@ -64,7 +61,7 @@ class _LandlordMaintenanceScreenState extends State<LandlordMaintenanceScreen> {
               }
             },
             builder: (context, state) {
-              if (state is MaintenanceTasksLoading && !_isCreating) {
+              if (state is MaintenanceTasksLoading) {
                 return const SizedBox.shrink();
               }
 
@@ -103,28 +100,23 @@ class _LandlordMaintenanceScreenState extends State<LandlordMaintenanceScreen> {
               return const SizedBox.shrink();
             },
           ),
-          if (_isCreating)
-            Builder(
-              builder: (context) {
-                final authState = context.read<AuthCubit>().state;
-                final partnerId = authState is Authenticated
-                    ? authState.user.partnerId
-                    : 0;
-
-                return MaintenanceTaskCreateOverlay(
-                  partnerId: partnerId,
-                  onClose: () => setState(() => _isCreating = false),
-                );
-              },
-            ),
         ],
       ),
-      floatingActionButton: _isCreating
-          ? null
-          : GradientFloatingActionButton(
-              onPressed: () => setState(() => _isCreating = true),
-              child: const Icon(Icons.add),
-            ),
+      floatingActionButton: GradientFloatingActionButton(
+        onPressed: () async {
+          final result = await context.push<bool>('/landlord-maintenance/add');
+          if (result == true) {
+            final authState = context.read<AuthCubit>().state;
+            final partnerId = authState is Authenticated
+                ? authState.user.partnerId
+                : 0;
+            if (partnerId > 0) {
+              context.read<MaintenanceTasksCubit>().load(partnerId: partnerId);
+            }
+          }
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }

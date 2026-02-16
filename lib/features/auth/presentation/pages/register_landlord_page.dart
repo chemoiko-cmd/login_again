@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
 
 import '../cubit/auth_cubit.dart';
@@ -15,113 +17,21 @@ class RegisterLandlordPage extends StatefulWidget {
 }
 
 class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-
+  final _formKey = GlobalKey<FormBuilderState>();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _canSubmit = false;
-  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
-
-  bool _isValidEmail(String input) {
-    final email = input.trim();
-    final reg = RegExp(
-      r'^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$',
-      caseSensitive: false,
-    );
-    return reg.hasMatch(email);
-  }
-
-  bool _isValidPhone(String input) {
-    final phone = input.trim();
-    final normalized = phone.startsWith('+') ? phone.substring(1) : phone;
-    if (!RegExp(r'^[0-9]+$').hasMatch(normalized)) return false;
-    return normalized.length >= 9 && normalized.length <= 10;
-  }
-
-  String? _passwordValidationError(String password) {
-    if (password.trim().isEmpty) return 'Please enter a password';
-    if (password.length < 8) return 'Password must be at least 8 characters';
-    if (!RegExp(r'[A-Z]').hasMatch(password)) {
-      return 'Password must include an uppercase letter';
-    }
-    if (!RegExp(r'[a-z]').hasMatch(password)) {
-      return 'Password must include a lowercase letter';
-    }
-    if (!RegExp(r'[0-9]').hasMatch(password)) {
-      return 'Password must include a number';
-    }
-    if (!RegExp(r'[^A-Za-z0-9]').hasMatch(password)) {
-      return 'Password must include a symbol';
-    }
-    return null;
-  }
-
-  void _recomputeCanSubmit() {
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final phone = _phoneController.text.trim();
-    final password = _passwordController.text;
-    final confirm = _confirmPasswordController.text;
-
-    final next =
-        name.isNotEmpty &&
-        _isValidEmail(email) &&
-        _isValidPhone(phone) &&
-        _passwordValidationError(password) == null &&
-        confirm.isNotEmpty &&
-        confirm == password;
-
-    if (next == _canSubmit) return;
-    setState(() => _canSubmit = next);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController.addListener(_recomputeCanSubmit);
-    _emailController.addListener(_recomputeCanSubmit);
-    _phoneController.addListener(_recomputeCanSubmit);
-    _passwordController.addListener(_recomputeCanSubmit);
-    _confirmPasswordController.addListener(_recomputeCanSubmit);
-  }
-
-  @override
-  void dispose() {
-    _nameController.removeListener(_recomputeCanSubmit);
-    _emailController.removeListener(_recomputeCanSubmit);
-    _phoneController.removeListener(_recomputeCanSubmit);
-    _passwordController.removeListener(_recomputeCanSubmit);
-    _confirmPasswordController.removeListener(_recomputeCanSubmit);
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
 
   void _submit() {
-    final form = _formKey.currentState;
-    if (form == null) return;
-
-    if (_autoValidateMode == AutovalidateMode.disabled) {
-      setState(() => _autoValidateMode = AutovalidateMode.onUserInteraction);
+    if (_formKey.currentState?.saveAndValidate() ?? false) {
+      final formData = _formKey.currentState!.value;
+      context.read<AuthCubit>().registerLandlord(
+        database: widget.database,
+        name: formData['name']?.trim() ?? '',
+        email: formData['email']?.trim() ?? '',
+        phone: formData['phone']?.trim() ?? '',
+        password: formData['password'] ?? '',
+      );
     }
-
-    if (!form.validate()) return;
-
-    context.read<AuthCubit>().registerLandlord(
-      database: widget.database,
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      phone: _phoneController.text.trim(),
-      password: _passwordController.text,
-    );
   }
 
   Widget _requiredStar(BuildContext context) {
@@ -241,11 +151,10 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                           child: Center(
-                            child: ConstrainedBox(
+                              child: ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 480),
-                              child: Form(
+                              child: FormBuilder(
                                 key: _formKey,
-                                autovalidateMode: _autoValidateMode,
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -268,70 +177,57 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                                     const SizedBox(height: 24),
 
                                     _fieldLabel(context, text: 'Full name'),
-                                    TextFormField(
-                                      controller: _nameController,
+                                    FormBuilderTextField(
+                                      name: 'name',
                                       decoration: _inputDecoration(
                                         hint: 'Enter your full name',
                                         icon: Icons.person,
                                       ),
                                       enabled: !isLoading,
-                                      validator: (value) {
-                                        if (value == null ||
-                                            value.trim().isEmpty) {
-                                          return 'Please enter your name';
-                                        }
-                                        return null;
-                                      },
+                                      validator: FormBuilderValidators.compose([
+                                        FormBuilderValidators.required(),
+                                      ]),
                                     ),
                                     const SizedBox(height: 16),
 
                                     _fieldLabel(context, text: 'Email'),
-                                    TextFormField(
-                                      controller: _emailController,
+                                    FormBuilderTextField(
+                                      name: 'email',
                                       decoration: _inputDecoration(
                                         hint: 'example@email.com',
                                         icon: Icons.email,
                                       ),
                                       enabled: !isLoading,
                                       keyboardType: TextInputType.emailAddress,
-                                      validator: (value) {
-                                        final v = value?.trim() ?? '';
-                                        if (v.isEmpty) {
-                                          return 'Please enter your email';
-                                        }
-                                        if (!_isValidEmail(v)) {
-                                          return 'Please enter a valid email';
-                                        }
-                                        return null;
-                                      },
+                                      validator: FormBuilderValidators.compose([
+                                        FormBuilderValidators.required(),
+                                        FormBuilderValidators.email(),
+                                      ]),
                                     ),
                                     const SizedBox(height: 16),
 
                                     _fieldLabel(context, text: 'Phone number'),
-                                    TextFormField(
-                                      controller: _phoneController,
+                                    FormBuilderTextField(
+                                      name: 'phone',
                                       decoration: _inputDecoration(
                                         hint: '0700000000',
                                         icon: Icons.phone,
                                       ),
                                       enabled: !isLoading,
                                       keyboardType: TextInputType.phone,
-                                      validator: (value) {
-                                        final v = value?.trim() ?? '';
-                                        if (v.isEmpty) {
-                                          return 'Please enter your phone number';
-                                        }
-                                        if (!_isValidPhone(v)) {
-                                          return 'Please enter a valid phone number';
-                                        }
-                                        return null;
-                                      },
+                                      validator: FormBuilderValidators.compose([
+                                        FormBuilderValidators.required(),
+                                        FormBuilderValidators.numeric(),
+                                        FormBuilderValidators.equalLength(10,
+                                            errorText:
+                                                'Phone number must be exactly 10 digits'),
+                                      ]),
                                     ),
                                     const SizedBox(height: 16),
 
                                     _fieldLabel(context, text: 'Password'),
-                                    TextFormField(
-                                      controller: _passwordController,
+                                    FormBuilderTextField(
+                                      name: 'password',
                                       decoration:
                                           _inputDecoration(
                                             hint: 'Enter password',
@@ -353,11 +249,14 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                                           ),
                                       enabled: !isLoading,
                                       obscureText: _obscurePassword,
-                                      validator: (value) {
-                                        return _passwordValidationError(
-                                          value ?? '',
-                                        );
-                                      },
+                                      validator: FormBuilderValidators.compose([
+                                        FormBuilderValidators.required(),
+                                        FormBuilderValidators.minLength(8),
+                                        FormBuilderValidators.match(
+                                          RegExp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[^A-Za-z0-9])'),
+                                          errorText: 'Password must include uppercase, lowercase, number, and symbol',
+                                        ),
+                                      ]),
                                     ),
                                     const SizedBox(height: 16),
 
@@ -365,8 +264,8 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                                       context,
                                       text: 'Confirm password',
                                     ),
-                                    TextFormField(
-                                      controller: _confirmPasswordController,
+                                    FormBuilderTextField(
+                                      name: 'confirmPassword',
                                       decoration:
                                           _inputDecoration(
                                             hint: 'Re-enter password',
@@ -388,16 +287,16 @@ class _RegisterLandlordPageState extends State<RegisterLandlordPage> {
                                           ),
                                       enabled: !isLoading,
                                       obscureText: _obscureConfirmPassword,
-                                      validator: (value) {
-                                        if (value == null ||
-                                            value.trim().isEmpty) {
-                                          return 'Please confirm your password';
-                                        }
-                                        if (value != _passwordController.text) {
-                                          return 'Passwords do not match';
-                                        }
-                                        return null;
-                                      },
+                                      validator: FormBuilderValidators.compose([
+                                        FormBuilderValidators.required(),
+                                        (value) {
+                                          final password = _formKey.currentState?.fields['password']?.value;
+                                          if (value != password) {
+                                            return 'Passwords do not match';
+                                          }
+                                          return null;
+                                        },
+                                      ]),
                                     ),
                                     const SizedBox(height: 16),
                                     FilledButton(

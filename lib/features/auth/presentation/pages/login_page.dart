@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/core/widgets/glass_background.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
@@ -24,9 +26,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormBuilderState>();
   final _databaseController = TextEditingController(text: 'rental');
   bool _obscurePassword = true;
 
@@ -116,17 +116,16 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void dispose() {
     loading.Widgets.hideLoader(context);
-    _usernameController.dispose();
-    _passwordController.dispose();
     _databaseController.dispose();
     super.dispose();
   }
 
   void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState?.saveAndValidate() ?? false) {
+      final formData = _formKey.currentState!.value;
       context.read<AuthCubit>().login(
-        username: _usernameController.text.trim(),
-        password: _passwordController.text,
+        username: formData['username']?.trim() ?? '',
+        password: formData['password'] ?? '',
         database: _databaseController.text.trim(),
       );
     }
@@ -208,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
                                 constraints: const BoxConstraints(
                                   maxWidth: 480,
                                 ),
-                                child: Form(
+                                child: FormBuilder(
                                   key: _formKey,
                                   child: Column(
                                     crossAxisAlignment:
@@ -230,24 +229,21 @@ class _LoginPageState extends State<LoginPage> {
                                         style: theme.textTheme.headlineSmall,
                                       ),
                                       const SizedBox(height: 24),
-                                      TextFormField(
-                                        controller: _usernameController,
+                                      FormBuilderTextField(
+                                        name: 'username',
                                         decoration: const InputDecoration(
                                           labelText: 'Username or Phone',
                                           prefixIcon: Icon(Icons.person),
                                           border: OutlineInputBorder(),
                                         ),
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Please enter your username or phone';
-                                          }
-                                          return null;
-                                        },
+                                        validator: FormBuilderValidators.compose([
+                                          FormBuilderValidators.required(),
+                                        ]),
                                         enabled: !isLoading,
                                       ),
                                       const SizedBox(height: 16),
-                                      TextFormField(
-                                        controller: _passwordController,
+                                      FormBuilderTextField(
+                                        name: 'password',
                                         decoration: InputDecoration(
                                           labelText: 'Password',
                                           prefixIcon: const Icon(Icons.lock),
@@ -267,12 +263,9 @@ class _LoginPageState extends State<LoginPage> {
                                           ),
                                         ),
                                         obscureText: _obscurePassword,
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Please enter your password';
-                                          }
-                                          return null;
-                                        },
+                                        validator: FormBuilderValidators.compose([
+                                          FormBuilderValidators.required(),
+                                        ]),
                                         enabled: !isLoading,
                                       ),
                                       const SizedBox(height: 12),

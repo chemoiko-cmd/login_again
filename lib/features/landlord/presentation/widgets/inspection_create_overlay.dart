@@ -3,6 +3,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:login_again/features/landlord/presentation/cubit/inspections_cubit.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
+import 'package:animated_custom_dropdown/custom_dropdown.dart';
+
+class _DropdownItem {
+  final int id;
+  final String name;
+  _DropdownItem(this.id, this.name);
+  @override
+  String toString() => name;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _DropdownItem && runtimeType == other.runtimeType && id == other.id;
+  @override
+  int get hashCode => id.hashCode;
+}
 
 class InspectionCreateOverlay extends StatefulWidget {
   final VoidCallback onClose;
@@ -174,53 +189,135 @@ class _InspectionCreateOverlayState extends State<InspectionCreateOverlay> {
                               },
                             )
                           else ...[
-                            DropdownButtonFormField<int>(
-                              value: _selectedUnitId,
-                              onChanged: (v) =>
-                                  setState(() => _selectedUnitId = v),
-                              validator: (v) {
-                                if (v == null) return 'Please select a unit';
-                                return null;
-                              },
-                              items: _units
-                                  .map(
-                                    (u) => DropdownMenuItem<int>(
-                                      value: u['id'] as int,
-                                      child: Text(u['name'] as String),
+                            FormField<_DropdownItem>(
+                              initialValue: _selectedUnitId != null
+                                  ? _DropdownItem(_selectedUnitId!, _units.firstWhere((u) => u['id'] == _selectedUnitId)['name'] as String)
+                                  : null,
+                              // validator: (v) {
+                              //   if (v == null) return 'Please select a unit';
+                              //   return null;
+                              // },
+                              builder: (field) {
+                                final unitItems = _units.map((u) => _DropdownItem(u['id'] as int, u['name'] as String)).toList();
+                                final outlineColor = Theme.of(context).colorScheme.outline.withValues(alpha: 0.5);
+                                final fillColor = Theme.of(context).colorScheme.surfaceContainerLow;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Theme(
+                                      data: Theme.of(context).copyWith(
+                                        inputDecorationTheme: const InputDecorationTheme(
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                      ),
+                                      child: CustomDropdown<_DropdownItem>(
+                                        hintText: 'Unit',
+                                        initialItem: field.value,
+                                        items: unitItems,
+                                        validateOnChange: true,
+                                        validator: (value) => value == null ? 'Please select a unit' : null,
+                                        onChanged: (value) {
+                                          field.didChange(value);
+                                          if (value != null) {
+                                            setState(() => _selectedUnitId = value.id);
+                                          }
+                                        },
+                                        decoration: CustomDropdownDecoration(
+                                          closedBorder: Border.all(color: outlineColor, width: 1),
+                                          closedBorderRadius: BorderRadius.circular(12),
+                                          closedFillColor: fillColor,
+                                          closedShadow: [],
+                                        ),
+                                      ),
                                     ),
-                                  )
-                                  .toList(),
-                              decoration: InputDecoration(
-                                labelText: 'Unit',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
+                                    if (field.hasError)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4, left: 12),
+                                        child: Text(
+                                          field.errorText ?? '',
+                                          style: TextStyle(
+                                            color: Theme.of(context).colorScheme.error,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
                             ),
                             const SizedBox(height: 12),
-                            DropdownButtonFormField<int>(
-                              value: _selectedInspectorId,
-                              onChanged: (v) =>
-                                  setState(() => _selectedInspectorId = v),
-                              validator: (v) {
-                                if (v == null)
-                                  return 'Please select an inspector';
-                                return null;
-                              },
-                              items: _inspectorPartners.map((p) {
-                                final int? userId = p['user_id'] as int?;
-                                return DropdownMenuItem<int>(
-                                  value: userId,
-                                  enabled: userId != null,
-                                  child: Text(p['name'] as String),
+                            FormField<_DropdownItem>(
+                              initialValue: _selectedInspectorId != null
+                                  ? _DropdownItem(_selectedInspectorId!, _inspectorPartners.firstWhere((p) => p['user_id'] == _selectedInspectorId)['name'] as String)
+                                  : null,
+                              // validator: (v) {
+                              //   if (v == null) return 'Please select an inspector';
+                              //   return null;
+                              // },
+                              builder: (field) {
+                                final validInspectors = _inspectorPartners
+                                    .where((p) => p['user_id'] != null)
+                                    .toList();
+                                final inspectorItems = validInspectors.map((p) => _DropdownItem(p['user_id'] as int, p['name'] as String)).toList();
+                                final outlineColor = Theme.of(context).colorScheme.outline.withValues(alpha: 0.5);
+                                final fillColor = Theme.of(context).colorScheme.surfaceContainerLow;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Theme(
+                                      data: Theme.of(context).copyWith(
+                                        inputDecorationTheme: const InputDecorationTheme(
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                      ),
+                                      child: CustomDropdown<_DropdownItem>(
+                                        hintText: 'Inspector',
+                                        initialItem: field.value,
+                                        items: inspectorItems,
+                                        validateOnChange: true,
+                                        validator: (value) => value == null ? 'Please select an inspector' : null,
+                                        onChanged: (value) {
+                                          field.didChange(value);
+                                          if (value != null) {
+                                            setState(() => _selectedInspectorId = value.id);
+                                          }
+                                        },
+                                        decoration: CustomDropdownDecoration(
+                                          closedBorder: Border.all(color: outlineColor, width: 1),
+                                          closedBorderRadius: BorderRadius.circular(12),
+                                          closedFillColor: fillColor,
+                                          closedShadow: [],
+                                        ),
+                                      ),
+                                    ),
+                                    if (field.hasError)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4, left: 12),
+                                        child: Text(
+                                          field.errorText ?? '',
+                                          style: TextStyle(
+                                            color: Theme.of(context).colorScheme.error,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 );
-                              }).toList(),
-                              decoration: InputDecoration(
-                                labelText: 'Inspector',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
+                              },
                             ),
                             const SizedBox(height: 12),
                             TextFormField(

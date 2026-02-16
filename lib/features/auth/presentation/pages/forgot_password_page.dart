@@ -162,13 +162,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ),
             keyboardType: TextInputType.phone,
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
+              FilteringTextInputFormatter.digitsOnly,
             ],
             validator: (value) {
               final v = (value ?? '').trim();
               if (v.isEmpty) return 'Please enter your phone number';
-              if (!RegExp(r'^\+?\d{7,15}$').hasMatch(v)) {
-                return 'Please enter a valid phone number';
+              if (!RegExp(r'^\d{10}$').hasMatch(v)) {
+                return 'Phone number must be exactly 10 digits';
               }
               return null;
             },

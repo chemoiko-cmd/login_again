@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -243,6 +244,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           labelText: 'Phone',
                           border: OutlineInputBorder(),
                         ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -252,9 +256,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         enabled: !_saving,
                         keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
-                          labelText: 'Mobile',
+                          labelText: 'Mobile (10 digits)',
                           border: OutlineInputBorder(),
                         ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'^\d+$')),
+                        ],
                       ),
                     ),
                   ],

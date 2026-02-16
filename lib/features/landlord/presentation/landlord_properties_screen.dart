@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
 import 'package:login_again/features/landlord/data/repositories/landlord_repository.dart';
 import 'package:login_again/core/widgets/glass_surface.dart';
 import 'package:login_again/core/widgets/gradient_floating_action_button.dart';
-import 'package:login_again/features/landlord/presentation/widgets/property_create_overlay.dart';
 import 'package:login_again/theme/app_theme.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
 import 'dart:typed_data';
@@ -22,7 +22,6 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
   bool _loading = false;
   String? _error;
   List<Map<String, dynamic>> _properties = const [];
-  bool _isCreating = false;
 
   @override
   void initState() {
@@ -100,6 +99,7 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
                   padding: const EdgeInsets.all(16),
                   itemBuilder: (context, index) {
                     final p = _properties[index];
+                    final propertyId = (p['id'] as int?) ?? 0;
                     final name = (p['name'] ?? '').toString();
                     final units = (p['units_count'] as int?) ?? 0;
                     final vacant = (p['vacant_count'] as int?) ?? 0;
@@ -115,7 +115,9 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
                       borderRadius: BorderRadius.circular(12),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
-                        onTap: () {},
+                        onTap: () {
+                          context.push('/landlord-properties/$propertyId');
+                        },
                         child: Padding(
                           padding: const EdgeInsets.all(14),
                           child: Column(
@@ -228,28 +230,19 @@ class _LandlordPropertiesScreenState extends State<LandlordPropertiesScreen> {
               },
             ),
           ),
-          if (_isCreating)
-            Builder(
-              builder: (context) {
-                final a = context.read<AuthCubit>().state;
-                final ownerPartnerId = a is Authenticated
-                    ? a.user.partnerId
-                    : 0;
-                return PropertyCreateOverlay(
-                  ownerPartnerId: ownerPartnerId,
-                  onClose: () async {
-                    setState(() => _isCreating = false);
-                    await _load();
-                  },
-                );
-              },
-            ),
         ],
       ),
-      floatingActionButton: (isLandlord && !_isCreating)
+      floatingActionButton: isLandlord
           ? GradientFloatingActionButton(
               tooltip: 'Add Property',
-              onPressed: () => setState(() => _isCreating = true),
+              onPressed: () async {
+                final result = await context.push<bool>(
+                  '/landlord-properties/add',
+                );
+                if (result == true) {
+                  _load();
+                }
+              },
               child: const Icon(Icons.add),
             )
           : null,

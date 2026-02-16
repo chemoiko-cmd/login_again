@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/features/landlord/presentation/cubit/tenants_cubit.dart';
 import 'package:login_again/styles/loading/widgets.dart' as loading;
+import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'dart:typed_data';
+
+class _DropdownItem {
+  final int id;
+  final String name;
+  _DropdownItem(this.id, this.name);
+  @override
+  String toString() => name;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _DropdownItem && runtimeType == other.runtimeType && id == other.id;
+  @override
+  int get hashCode => id.hashCode;
+}
 
 class TenantCreateOverlay extends StatefulWidget {
   final VoidCallback onClose;
@@ -21,17 +38,7 @@ class TenantCreateOverlay extends StatefulWidget {
 }
 
 class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
-  final _formKey = GlobalKey<FormState>();
-  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
-
-  final _nameCtrl = TextEditingController();
-  final _firstNameCtrl = TextEditingController();
-  final _lastNameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  final _mobileCtrl = TextEditingController();
-  final _startDateCtrl = TextEditingController();
-  final _endDateCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormBuilderState>();
 
   final _imagePicker = ImagePicker();
   Uint8List? _tenantImageBytes;
@@ -51,35 +58,10 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
     super.initState();
     final today = DateTime.now();
     _startDate = DateTime(today.year, today.month, today.day);
-    _startDateCtrl.text = _formatDate(_startDate!);
     _loadDropdowns();
   }
 
   String _formatDate(DateTime date) => date.toIso8601String().split('T').first;
-
-  bool _isValidEmail(String v) {
-    final value = v.trim();
-    if (value.isEmpty) return true;
-    final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-    return regex.hasMatch(value);
-  }
-
-  bool _isValidPhoneOptional(String v) {
-    final value = v.trim();
-    if (value.isEmpty) return true;
-    final digitsOnly = RegExp(r'^\d+$');
-    if (!digitsOnly.hasMatch(value)) return false;
-    return value.length >= 9 && value.length <= 10;
-  }
-
-  String? _validateDateRange() {
-    if (_startDate == null) return 'Please select a start date';
-    if (_endDate == null) return 'Please select an end date';
-    if (!_endDate!.isAfter(_startDate!)) {
-      return 'End date must be after start date';
-    }
-    return null;
-  }
 
   Future<void> _pickEndDate() async {
     final now = DateTime.now();
@@ -92,25 +74,16 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
     if (picked != null) {
       setState(() {
         _endDate = picked;
-        _endDateCtrl.text = _formatDate(picked);
+        // Keep the visible form field in sync with the picked value
+        _formKey.currentState?.fields['endDate']
+            ?.didChange(_formatDate(picked));
       });
-      if (_autoValidateMode != AutovalidateMode.disabled) {
-        _formKey.currentState?.validate();
-      }
     }
   }
 
   @override
   void dispose() {
     loading.Widgets.hideLoader(context);
-    _nameCtrl.dispose();
-    _firstNameCtrl.dispose();
-    _lastNameCtrl.dispose();
-    _emailCtrl.dispose();
-    _phoneCtrl.dispose();
-    _mobileCtrl.dispose();
-    _startDateCtrl.dispose();
-    _endDateCtrl.dispose();
     super.dispose();
   }
 
@@ -151,45 +124,48 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
     if (picked != null) {
       setState(() {
         _startDate = picked;
-        _startDateCtrl.text = _formatDate(picked);
+        _formKey.currentState?.fields['startDate']?.didChange(_formatDate(picked));
         if (_endDate != null && !_endDate!.isAfter(picked)) {
           _endDate = null;
-          _endDateCtrl.text = '';
+          _formKey.currentState?.fields['endDate']?.didChange('');
         }
       });
-      if (_autoValidateMode != AutovalidateMode.disabled) {
-        _formKey.currentState?.validate();
-      }
     }
   }
 
+
   Future<void> _submit() async {
-    final valid = _formKey.currentState?.validate() ?? false;
-    if (!valid) {
-      setState(() => _autoValidateMode = AutovalidateMode.onUserInteraction);
-      return;
-    }
+    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
+    
+    if (_startDate == null || _endDate == null) return;
+    if (!_endDate!.isAfter(_startDate!)) return;
+
+    final formData = _formKey.currentState!.value;
     bool ok = false;
     if (_createNewTenant) {
       ok = await context.read<TenantsCubit>().createTenantAndContract(
         partnerId: widget.partnerId,
         unitId: _selectedUnitId!,
-        contractName: _nameCtrl.text.trim().isEmpty
+        contractName: (formData['contractName'] ?? '').toString().trim().isEmpty
             ? null
-            : _nameCtrl.text.trim(),
+            : (formData['contractName'] ?? '').toString().trim(),
         startDate: _startDate!.toIso8601String().split('T').first,
         endDate: _endDate!.toIso8601String().split('T').first,
-        firstName: _firstNameCtrl.text.trim().isEmpty
+        firstName: (formData['firstName'] ?? '').toString().trim().isEmpty
             ? null
-            : _firstNameCtrl.text.trim(),
-        lastName: _lastNameCtrl.text.trim().isEmpty
+            : (formData['firstName'] ?? '').toString().trim(),
+        lastName: (formData['lastName'] ?? '').toString().trim().isEmpty
             ? null
-            : _lastNameCtrl.text.trim(),
-        email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
-        phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-        mobile: _mobileCtrl.text.trim().isEmpty
+            : (formData['lastName'] ?? '').toString().trim(),
+        email: (formData['email'] ?? '').toString().trim().isEmpty 
+            ? null 
+            : (formData['email'] ?? '').toString().trim(),
+        phone: (formData['phone'] ?? '').toString().trim().isEmpty 
+            ? null 
+            : (formData['phone'] ?? '').toString().trim(),
+        mobile: (formData['mobile'] ?? '').toString().trim().isEmpty
             ? null
-            : _mobileCtrl.text.trim(),
+            : (formData['mobile'] ?? '').toString().trim(),
         imageBytes: _tenantImageBytes,
       );
     } else {
@@ -197,7 +173,9 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
         partnerId: widget.partnerId,
         unitId: _selectedUnitId!,
         tenantPartnerId: _selectedTenantPartnerId!,
-        name: _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
+        name: (formData['contractName'] ?? '').toString().trim().isEmpty 
+            ? null 
+            : (formData['contractName'] ?? '').toString().trim(),
         startDate: _startDate!.toIso8601String().split('T').first,
         endDate: _endDate!.toIso8601String().split('T').first,
       );
@@ -242,9 +220,8 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: SingleChildScrollView(
-                    child: Form(
+                    child: FormBuilder(
                       key: _formKey,
-                      autovalidateMode: _autoValidateMode,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,28 +249,68 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                               },
                             )
                           else ...[
-                            DropdownButtonFormField<int>(
-                              value: _selectedUnitId,
-                              onChanged: (v) =>
-                                  setState(() => _selectedUnitId = v),
+                            FormField<_DropdownItem>(
+                              initialValue: _selectedUnitId != null
+                                  ? _DropdownItem(_selectedUnitId!, _units.firstWhere((u) => u['id'] == _selectedUnitId)['name'] as String)
+                                  : null,
                               validator: (v) {
                                 if (v == null) return 'Please select a unit';
                                 return null;
                               },
-                              items: _units
-                                  .map(
-                                    (u) => DropdownMenuItem<int>(
-                                      value: u['id'] as int,
-                                      child: Text(u['name'] as String),
+                              builder: (field) {
+                                final unitItems = _units.map((u) => _DropdownItem(u['id'] as int, u['name'] as String)).toList();
+                                final outlineColor = Theme.of(context).colorScheme.outline.withValues(alpha: 0.5);
+                                final fillColor = Theme.of(context).colorScheme.surfaceContainerLow;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Theme(
+                                      data: Theme.of(context).copyWith(
+                                        inputDecorationTheme: const InputDecorationTheme(
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                      ),
+                                      child: CustomDropdown<_DropdownItem>(
+                                        hintText: 'Unit',
+                                        initialItem: field.value,
+                                        items: unitItems,
+                                        validateOnChange: true,
+                                        validator: (value) => value == null ? 'Please select a unit' : null,
+                                        onChanged: (value) {
+                                          field.didChange(value);
+                                          if (value != null) {
+                                            setState(() => _selectedUnitId = value.id);
+                                          }
+                                        },
+                                        decoration: CustomDropdownDecoration(
+                                          closedBorder: Border.all(color: outlineColor, width: 1),
+                                          closedBorderRadius: BorderRadius.circular(12),
+                                          closedFillColor: fillColor,
+                                          closedShadow: [],
+                                        ),
+                                      ),
                                     ),
-                                  )
-                                  .toList(),
-                              decoration: InputDecoration(
-                                labelText: 'Unit',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
+                                    if (field.hasError)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4, left: 12),
+                                        child: Text(
+                                          field.errorText ?? '',
+                                          style: TextStyle(
+                                            color: Theme.of(context).colorScheme.error,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
                             ),
                             const SizedBox(height: 12),
                             CheckboxListTile(
@@ -303,41 +320,76 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                                   _createNewTenant = v ?? false;
                                   _selectedTenantPartnerId = null;
                                 });
-                                if (_autoValidateMode !=
-                                    AutovalidateMode.disabled) {
-                                  _formKey.currentState?.validate();
-                                }
+                                _formKey.currentState?.fields['tenant']?.didChange(null);
                               },
                               title: const Text('Create new tenant'),
                               controlAffinity: ListTileControlAffinity.leading,
                               contentPadding: EdgeInsets.zero,
                             ),
                             if (!_createNewTenant) ...[
-                              DropdownButtonFormField<int>(
-                                value: _selectedTenantPartnerId,
-                                onChanged: (v) => setState(
-                                  () => _selectedTenantPartnerId = v,
-                                ),
+                              FormField<_DropdownItem>(
+                                initialValue: _selectedTenantPartnerId != null
+                                    ? _DropdownItem(_selectedTenantPartnerId!, _tenantPartners.firstWhere((p) => p['id'] == _selectedTenantPartnerId)['name'] as String)
+                                    : null,
                                 validator: (v) {
                                   if (_createNewTenant) return null;
-                                  if (v == null)
-                                    return 'Please select a tenant';
+                                  if (v == null) return 'Please select a tenant';
                                   return null;
                                 },
-                                items: _tenantPartners
-                                    .map(
-                                      (p) => DropdownMenuItem<int>(
-                                        value: p['id'] as int,
-                                        child: Text(p['name'] as String),
+                                builder: (field) {
+                                  final tenantItems = _tenantPartners.map((p) => _DropdownItem(p['id'] as int, p['name'] as String)).toList();
+                                  final outlineColor = Theme.of(context).colorScheme.outline.withValues(alpha: 0.5);
+                                  final fillColor = Theme.of(context).colorScheme.surfaceContainerLow;
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Theme(
+                                        data: Theme.of(context).copyWith(
+                                          inputDecorationTheme: const InputDecorationTheme(
+                                            border: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            errorBorder: InputBorder.none,
+                                            focusedErrorBorder: InputBorder.none,
+                                            filled: true,
+                                            fillColor: Colors.transparent,
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                        ),
+                                        child: CustomDropdown<_DropdownItem>(
+                                          hintText: 'Tenant',
+                                          initialItem: field.value,
+                                          items: tenantItems,
+                                          validateOnChange: true,
+                                          validator: (value) => value == null ? 'Please select a tenant' : null,
+                                          onChanged: (value) {
+                                            field.didChange(value);
+                                            if (value != null) {
+                                              setState(() => _selectedTenantPartnerId = value.id);
+                                            }
+                                          },
+                                          decoration: CustomDropdownDecoration(
+                                            closedBorder: Border.all(color: outlineColor, width: 1),
+                                            closedBorderRadius: BorderRadius.circular(12),
+                                            closedFillColor: fillColor,
+                                            closedShadow: [],
+                                          ),
+                                        ),
                                       ),
-                                    )
-                                    .toList(),
-                                decoration: InputDecoration(
-                                  labelText: 'Tenant',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
+                                      if (field.hasError)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 4, left: 12),
+                                          child: Text(
+                                            field.errorText ?? '',
+                                            style: TextStyle(
+                                              color: Theme.of(context).colorScheme.error,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
                             ] else ...[
                               Row(
@@ -381,18 +433,20 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: TextFormField(
-                                      controller: _firstNameCtrl,
-                                      validator: (v) {
-                                        if (!_createNewTenant) return null;
-                                        if (_firstNameCtrl.text
-                                                .trim()
-                                                .isEmpty &&
-                                            _lastNameCtrl.text.trim().isEmpty) {
-                                          return 'Enter first or last name';
-                                        }
-                                        return null;
-                                      },
+                                    child: FormBuilderTextField(
+                                      name: 'firstName',
+                                      enabled: _createNewTenant,
+                                      validator: FormBuilderValidators.compose([
+                                        if (_createNewTenant)
+                                          (value) {
+                                            final firstName = (value ?? '').toString().trim();
+                                            final lastName = _formKey.currentState?.fields['lastName']?.value?.toString().trim() ?? '';
+                                            if (firstName.isEmpty && lastName.isEmpty) {
+                                              return 'Enter first or last name';
+                                            }
+                                            return null;
+                                          },
+                                      ]),
                                       decoration: InputDecoration(
                                         labelText: 'First name',
                                         border: OutlineInputBorder(
@@ -405,18 +459,20 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: TextFormField(
-                                      controller: _lastNameCtrl,
-                                      validator: (v) {
-                                        if (!_createNewTenant) return null;
-                                        if (_firstNameCtrl.text
-                                                .trim()
-                                                .isEmpty &&
-                                            _lastNameCtrl.text.trim().isEmpty) {
-                                          return 'Enter first or last name';
-                                        }
-                                        return null;
-                                      },
+                                    child: FormBuilderTextField(
+                                      name: 'lastName',
+                                      enabled: _createNewTenant,
+                                      validator: FormBuilderValidators.compose([
+                                        if (_createNewTenant)
+                                          (value) {
+                                            final lastName = (value ?? '').toString().trim();
+                                            final firstName = _formKey.currentState?.fields['firstName']?.value?.toString().trim() ?? '';
+                                            if (firstName.isEmpty && lastName.isEmpty) {
+                                              return 'Enter first or last name';
+                                            }
+                                            return null;
+                                          },
+                                      ]),
                                       decoration: InputDecoration(
                                         labelText: 'Last name',
                                         border: OutlineInputBorder(
@@ -430,16 +486,14 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              TextFormField(
-                                controller: _emailCtrl,
+                              FormBuilderTextField(
+                                name: 'email',
+                                enabled: _createNewTenant,
                                 keyboardType: TextInputType.emailAddress,
-                                validator: (v) {
-                                  if (!_createNewTenant) return null;
-                                  if (v == null) return null;
-                                  return _isValidEmail(v)
-                                      ? null
-                                      : 'Enter a valid email';
-                                },
+                                validator: FormBuilderValidators.compose([
+                                  if (_createNewTenant)
+                                    FormBuilderValidators.email(),
+                                ]),
                                 decoration: InputDecoration(
                                   labelText: 'Email ',
                                   border: OutlineInputBorder(
@@ -451,16 +505,21 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: TextFormField(
-                                      controller: _phoneCtrl,
+                                    child: FormBuilderTextField(
+                                      name: 'phone',
+                                      enabled: _createNewTenant,
                                       keyboardType: TextInputType.phone,
-                                      validator: (v) {
-                                        if (!_createNewTenant) return null;
-                                        if (v == null) return null;
-                                        return _isValidPhoneOptional(v)
-                                            ? null
-                                            : 'Phone must be 9-10 digits';
-                                      },
+                                      validator: FormBuilderValidators.compose([
+                                        if (_createNewTenant)
+                                          FormBuilderValidators.compose([
+                                            FormBuilderValidators.numeric(),
+                                            FormBuilderValidators.equalLength(
+                                              10,
+                                              errorText:
+                                                  'Phone number must be exactly 10 digits',
+                                            ),
+                                          ]),
+                                      ]),
                                       decoration: InputDecoration(
                                         labelText: 'Phone ',
                                         border: OutlineInputBorder(
@@ -473,16 +532,26 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: TextFormField(
-                                      controller: _mobileCtrl,
+                                    child: FormBuilderTextField(
+                                      name: 'mobile',
+                                      enabled: _createNewTenant,
                                       keyboardType: TextInputType.phone,
-                                      validator: (v) {
-                                        if (!_createNewTenant) return null;
-                                        if (v == null) return null;
-                                        return _isValidPhoneOptional(v)
-                                            ? null
-                                            : 'Mobile must be 9-10 digits';
-                                      },
+                                      validator: FormBuilderValidators.compose([
+                                        if (_createNewTenant)
+                                          (value) {
+                                            final mobile =
+                                                (value ?? '').toString().trim();
+                                            if (mobile.isEmpty) return null;
+                                            if (!RegExp(r'^\d+$')
+                                                .hasMatch(mobile)) {
+                                              return 'Mobile must contain only digits';
+                                            }
+                                            if (mobile.length != 10) {
+                                              return 'Mobile number must be exactly 10 digits';
+                                            }
+                                            return null;
+                                          },
+                                      ]),
                                       decoration: InputDecoration(
                                         labelText: 'Mobile (optional)',
                                         border: OutlineInputBorder(
@@ -497,16 +566,23 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                               ),
                             ],
                             const SizedBox(height: 12),
-
-                            const SizedBox(height: 12),
                             Row(
                               children: [
                                 Expanded(
-                                  child: TextFormField(
-                                    controller: _startDateCtrl,
+                                  child: FormBuilderTextField(
+                                    name: 'startDate',
+                                    initialValue: _formatDate(_startDate!),
                                     readOnly: true,
                                     onTap: _pickStartDate,
-                                    validator: (v) => _validateDateRange(),
+                                    validator: FormBuilderValidators.compose([
+                                      FormBuilderValidators.required(),
+                                      (value) {
+                                        if (_endDate != null && !_endDate!.isAfter(_startDate!)) {
+                                          return 'End date must be after start date';
+                                        }
+                                        return null;
+                                      },
+                                    ]),
                                     decoration: InputDecoration(
                                       labelText: 'Start Date',
                                       suffixIcon: const Icon(Icons.event),
@@ -518,11 +594,19 @@ class _TenantCreateOverlayState extends State<TenantCreateOverlay> {
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: TextFormField(
-                                    controller: _endDateCtrl,
+                                  child: FormBuilderTextField(
+                                    name: 'endDate',
                                     readOnly: true,
                                     onTap: _pickEndDate,
-                                    validator: (v) => _validateDateRange(),
+                                    validator: FormBuilderValidators.compose([
+                                      FormBuilderValidators.required(),
+                                      (value) {
+                                        if (_startDate != null && _endDate != null && !_endDate!.isAfter(_startDate!)) {
+                                          return 'End date must be after start date';
+                                        }
+                                        return null;
+                                      },
+                                    ]),
                                     decoration: InputDecoration(
                                       labelText: 'End Date',
                                       suffixIcon: const Icon(

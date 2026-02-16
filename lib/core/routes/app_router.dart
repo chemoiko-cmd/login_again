@@ -20,6 +20,11 @@ import 'package:login_again/features/landlord/data/models/partner_profile.dart';
 import 'package:login_again/features/landlord/presentation/landlord_maintenance_screen.dart';
 import 'package:login_again/features/landlord/presentation/inspection_screen.dart';
 import 'package:login_again/features/landlord/presentation/add_maintainer_screen.dart';
+import 'package:login_again/features/landlord/presentation/pages/property_create_screen.dart';
+import 'package:login_again/features/landlord/presentation/pages/property_detail_screen.dart';
+import 'package:login_again/features/landlord/presentation/pages/tenant_create_screen.dart';
+import 'package:login_again/features/landlord/presentation/pages/inspection_create_screen.dart';
+import 'package:login_again/features/landlord/presentation/pages/maintenance_task_create_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenant_profile_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_tenants_screen.dart';
 import 'package:login_again/features/landlord/presentation/landlord_properties_screen.dart';
@@ -79,6 +84,14 @@ String _shellTitleForLocation(BuildContext context, String location) {
       return 'Tasks';
     case '/maintainer-inspections':
       return 'Inspections';
+    case '/landlord-properties/add':
+      return 'Add Property';
+    case '/landlord-tenants/add':
+      return 'Add Tenant';
+    case '/inspections/add':
+      return 'New Inspection';
+    case '/landlord-maintenance/add':
+      return 'New Maintenance Task';
     default:
       return 'Odoo Property Management';
   }
@@ -329,6 +342,18 @@ class AppRouter {
             builder: (context, state) => const LandlordPropertiesScreen(),
           ),
           GoRoute(
+            path: '/landlord-properties/add',
+            builder: (context, state) => const PropertyCreateScreen(),
+          ),
+          GoRoute(
+            path: '/landlord-properties/:propertyId',
+            builder: (context, state) {
+              final propertyId =
+                  int.tryParse(state.pathParameters['propertyId'] ?? '0') ?? 0;
+              return PropertyDetailScreen(propertyId: propertyId);
+            },
+          ),
+          GoRoute(
             path: '/landlord-maintainers',
             builder: (context, state) => const LandlordMaintainersScreen(),
           ),
@@ -336,10 +361,18 @@ class AppRouter {
             path: '/inspections',
             builder: (context, state) => const InspectionScreen(),
           ),
+          GoRoute(
+            path: '/inspections/add',
+            builder: (context, state) => const InspectionCreateScreen(),
+          ),
 
           GoRoute(
             path: '/landlord-maintenance',
             builder: (context, state) => const LandlordMaintenanceScreen(),
+          ),
+          GoRoute(
+            path: '/landlord-maintenance/add',
+            builder: (context, state) => const MaintenanceTaskCreateScreen(),
           ),
 
           GoRoute(
@@ -350,6 +383,10 @@ class AppRouter {
           GoRoute(
             path: '/landlord-tenants',
             builder: (context, state) => const LandlordTenantsScreen(),
+          ),
+          GoRoute(
+            path: '/landlord-tenants/add',
+            builder: (context, state) => const TenantCreateScreen(),
           ),
 
           GoRoute(

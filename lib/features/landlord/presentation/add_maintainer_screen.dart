@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:login_again/core/widgets/gradient_button.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:login_again/features/auth/presentation/cubit/auth_state.dart';
@@ -19,13 +21,7 @@ class AddMaintainerScreen extends StatefulWidget {
 }
 
 class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
-  final _formKey = GlobalKey<FormState>();
-  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
-
-  final _nameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  final _streetCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormBuilderState>();
 
   final _imagePicker = ImagePicker();
   Uint8List? _photoBytes;
@@ -35,10 +31,6 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
   @override
   void dispose() {
     loading.Widgets.hideLoader(context);
-    _nameCtrl.dispose();
-    _emailCtrl.dispose();
-    _phoneCtrl.dispose();
-    _streetCtrl.dispose();
     super.dispose();
   }
 
@@ -55,22 +47,8 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
     } catch (_) {}
   }
 
-  bool _isValidEmail(String v) {
-    final s = v.trim();
-    if (s.isEmpty) return true;
-    return s.contains('@') && s.contains('.');
-  }
-
   Future<void> _submit() async {
-    final form = _formKey.currentState;
-    if (form == null) return;
-
-    if (_autoValidateMode == AutovalidateMode.disabled) {
-      setState(() => _autoValidateMode = AutovalidateMode.onUserInteraction);
-    }
-
-    final valid = form.validate();
-    if (!valid) return;
+    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
 
     final auth = context.read<AuthCubit>().state;
     if (auth is! Authenticated || !auth.isLandlord) {
@@ -80,10 +58,11 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
       return;
     }
 
-    final name = _nameCtrl.text.trim();
-    final email = _emailCtrl.text.trim();
-    final phone = _phoneCtrl.text.trim();
-    final street = _streetCtrl.text.trim();
+    final formData = _formKey.currentState!.value;
+    final name = (formData['name'] ?? '').toString().trim();
+    final email = (formData['email'] ?? '').toString().trim();
+    final phone = (formData['phone'] ?? '').toString().trim();
+    final street = (formData['street'] ?? '').toString().trim();
 
     setState(() => _submitting = true);
 
@@ -143,19 +122,27 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
     final t = Theme.of(context).textTheme;
 
     return Scaffold(
-      // backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/landlord-maintainers');
+            }
+          },
+        ),
+        title: const Text('Add Maintainer'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Form(
+        child: FormBuilder(
           key: _formKey,
-          autovalidateMode: _autoValidateMode,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Add Maintainer',
-                style: t.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
               const SizedBox(height: 16),
               Center(
                 child: InkWell(
@@ -177,14 +164,12 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _nameCtrl,
+              FormBuilderTextField(
+                name: 'name',
                 textInputAction: TextInputAction.next,
-                validator: (v) {
-                  final value = (v ?? '').trim();
-                  if (value.isEmpty) return 'Please enter a name';
-                  return null;
-                },
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                ]),
                 decoration: InputDecoration(
                   labelText: 'Full Name',
                   border: OutlineInputBorder(
@@ -193,18 +178,23 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _emailCtrl,
+              FormBuilderTextField(
+                name: 'email',
                 textInputAction: TextInputAction.next,
                 keyboardType: TextInputType.emailAddress,
-                validator: (v) {
-                  final value = (v ?? '').trim();
-                  if (value.isEmpty && _phoneCtrl.text.trim().isEmpty) {
-                    return 'Email or phone is required';
-                  }
-                  if (!_isValidEmail(value)) return 'Enter a valid email';
-                  return null;
-                },
+                validator: FormBuilderValidators.compose([
+                  (value) {
+                    final email = (value ?? '').toString().trim();
+                    final phone = _formKey.currentState?.fields['phone']?.value?.toString().trim() ?? '';
+                    if (email.isEmpty && phone.isEmpty) {
+                      return 'Email or phone is required';
+                    }
+                    if (email.isNotEmpty) {
+                      return FormBuilderValidators.email()(email);
+                    }
+                    return null;
+                  },
+                ]),
                 decoration: InputDecoration(
                   labelText: 'Email',
                   border: OutlineInputBorder(
@@ -213,17 +203,28 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _phoneCtrl,
+              FormBuilderTextField(
+                name: 'phone',
                 textInputAction: TextInputAction.next,
                 keyboardType: TextInputType.phone,
-                validator: (v) {
-                  final value = (v ?? '').trim();
-                  if (value.isEmpty && _emailCtrl.text.trim().isEmpty) {
-                    return 'Email or phone is required';
-                  }
-                  return null;
-                },
+                validator: FormBuilderValidators.compose([
+                  (value) {
+                    final phone = (value ?? '').toString().trim();
+                    final email = _formKey.currentState?.fields['email']?.value?.toString().trim() ?? '';
+                    if (phone.isEmpty && email.isEmpty) {
+                      return 'Email or phone is required';
+                    }
+                    if (phone.isNotEmpty) {
+                      if (!RegExp(r'^\d+$').hasMatch(phone)) {
+                        return 'Phone must contain only digits';
+                      }
+                      if (phone.length != 10) {
+                        return 'Phone number must be exactly 10 digits';
+                      }
+                    }
+                    return null;
+                  },
+                ]),
                 decoration: InputDecoration(
                   labelText: 'Phone',
                   border: OutlineInputBorder(
@@ -233,8 +234,8 @@ class _AddMaintainerScreenState extends State<AddMaintainerScreen> {
               ),
               const SizedBox(height: 12),
 
-              TextFormField(
-                controller: _streetCtrl,
+              FormBuilderTextField(
+                name: 'street',
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
                   labelText: 'Street',

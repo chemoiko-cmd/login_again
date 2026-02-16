@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -39,8 +38,8 @@ class GoogleSignInService {
       final accessToken = auth.accessToken;
       final idToken = auth.idToken;
 
-      if (kDebugMode) {
-        debugPrint('Google id token: $idToken');
+      if (idToken != null && idToken.isNotEmpty) {
+        print('Google id token: $idToken');
       }
       if (accessToken != null && accessToken.isNotEmpty) {
         print('Google access token: $accessToken');
