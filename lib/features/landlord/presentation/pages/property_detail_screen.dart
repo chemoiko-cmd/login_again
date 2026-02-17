@@ -126,6 +126,8 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
 
     final address = [street, city].where((e) => e.isNotEmpty).join(', ');
 
+    final unitsCount = (_property!['units_count'] as int?) ?? 0;
+
     // Calculate average bedroom count from units
     int totalBedrooms = 0;
     if (_units.isNotEmpty) {
@@ -294,31 +296,26 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                   ),
                   const SizedBox(height: 16),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _FacilityItem(
-                        icon: Icons.bed_outlined,
-                        label: 'Bedroom',
-                        value: avgBedrooms > 0 ? '$avgBedrooms' : 'N/A',
+                      Expanded(
+                        // Ensures "Bedroom" takes up half the width
+                        child: _FacilityItem(
+                          icon: Icons.bed_outlined,
+                          label: 'Bedroom',
+                          value: avgBedrooms > 0 ? '$avgBedrooms' : 'N/A',
+                        ),
                       ),
-                      const SizedBox(width: 40),
-                      _FacilityItem(
-                        icon: Icons.bathtub_outlined,
-                        label: 'Bathroom',
-                        value: avgBedrooms > 0 ? '$avgBedrooms' : 'N/A',
+                      Expanded(
+                        child: _FacilityItem(
+                          icon: Icons.apartment_outlined,
+                          label: 'Units',
+                          value: unitsCount > 0 ? '$unitsCount' : 'N/A',
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      _FacilityItem(
-                        icon: Icons.weekend_outlined,
-                        label: 'Balcony',
-                        value: '2',
-                      ),
-                      const SizedBox(width: 45),
-                    ],
-                  ),
+
                   const SizedBox(height: 24),
                   const Text(
                     'Location',
